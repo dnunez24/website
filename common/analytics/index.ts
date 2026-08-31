@@ -1,1 +1,0 @@
-export { TagManagerScript } from "./TagManagerScript";
