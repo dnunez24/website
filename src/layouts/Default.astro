@@ -11,7 +11,7 @@ const { title, description } = Astro.props;
 		<BaseHead title={title} description={description} />
 	</head>
 
-	<body class="font-body bg-surface-base text-primary">
+	<body class="font-body bg-surface-base text-primary transition-focus-ring">
 		<Header />
 		<main class="m-auto max-w-[65ch]">
   	  <h1 class="text-3xl font-semibold">{title}</h1>

@@ -1,11 +1,7 @@
 ---
-if (!import.meta.env.DEV) {
-	return new Response(null, { status: 404 });
-}
-
-import Button from "../components/Button.astro";
-import ProseParagraph from "../components/ProseParagraph.astro";
-import Layout from "../layouts/Default.astro";
+import Button from "../../components/Button.astro";
+import ProseParagraph from "../../components/ProseParagraph.astro";
+import Layout from "../../layouts/Default.astro";
 ---
 
 <Layout title="Design System">

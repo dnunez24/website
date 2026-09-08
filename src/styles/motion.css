@@ -8,25 +8,56 @@
 	--transition-duration-normal: var(--motion-duration-normal);
 	--transition-duration-slow: var(--motion-duration-slow);
 	--transition-duration-slowest: var(--motion-duration-slowest);
+	--default-transition-duration: var(--transition-duration-normal);
 
 	--ease-*: initial;
 	--ease-linear: var(--motion-ease-linear);
 	--ease-in: var(--motion-ease-in);
 	--ease-out: var(--motion-ease-out);
 	--ease-in-out: var(--motion-ease-in-out);
+	--default-transition-timing-function: var(--ease-out);
 
 	--transition-colors:
-		color var(--transition-duration-normal) var(--ease-standard),
-		background-color var(--transition-duration-normal) var(--ease-standard),
-		border-color var(--transition-duration-normal) var(--ease-standard),
-		text-decoration-color var(--transition-duration-normal) var(--ease-standard);
+		color var(--transition-duration-normal) var(--ease-out),
+		background-color var(--transition-duration-normal) var(--ease-out),
+		border-color var(--transition-duration-normal) var(--ease-out),
+		text-decoration-color var(--transition-duration-normal) var(--ease-out);
+
+	/* Ring appearing on :focus-visible — color, size (width), and offset all
+	   ease in together. Shared so components with their own competing
+	   transition-property (e.g. an active:scale animation) can fold this in
+	   instead of losing the global focus-ring default outright. */
+	--transition-focus-ring:
+		outline-color var(--transition-duration-normal) var(--ease-out),
+		outline-width var(--transition-duration-normal) var(--ease-out),
+		outline-offset var(--transition-duration-normal) var(--ease-out);
 }
 
-/*@media (prefers-reduced-motion: reduce) {
-	:root {
-		--duration-fastest: 0ms;
-		--duration-fast: 0ms;
-		--duration-med: 0ms;
-		--duration-slow: 0ms;
+/* Ring appearing on :focus-visible — color, size (width), and offset all
+ * ease in together. Shared so components with their own competing
+ * transition-property (e.g. an active:scale animation) can fold this in
+ * instead of losing the global focus-ring default outright.
+ */
+@utility transition-focus-ring {
+	@apply outline-0 outline-offset-0 outline-accent/0;
+
+	@media (prefers-reduced-motion: no-preference) {
+		/*&:focus-visible {*/
+		:focus-visible {
+			@apply outline-4 outline-offset-2 outline-accent;
+			transition-property: outline-color, outline-width, outline-offset;
+			transition-timing-function: var(--ease-out);
+			transition-duration: var(--transition-duration-fastest);
+		}
 	}
-}*/
+}
+
+@utility transition-active {
+	@media (prefers-reduced-motion: no-preference) {
+		&:active {
+			transition-property: transform, translate, scale;
+			transition-timing-function: var(--transition-duration-fastest);
+			transition-duration: var(--ease-out);
+		}
+	}
+}
