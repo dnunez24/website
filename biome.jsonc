@@ -1,13 +1,33 @@
 {
+	"$schema": "node_modules/@biomejs/biome/configuration_schema.json",
 	"css": {
 		"parser": {
 			"tailwindDirectives": true
 		}
+	},
+	"javascript": {
+		"globals": ["Astro"]
 	},
 	"linter": {
 		"domains": {
 			"astro": "all",
 			"tailwind": "all"
 		}
-	}
+	},
+	"overrides": [
+		{
+			"includes": ["**/*.astro"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						// [2026-09-08] Biome doesn't currently support these rules for
+						// imports that cross language boundaries (JS to HTML). See
+						// https://github.com/biomejs/biome/issues/2233 for details.
+						"noUnusedVariables": "off",
+						"noUnusedImports": "off"
+					}
+				}
+			}
+		}
+	]
 }
