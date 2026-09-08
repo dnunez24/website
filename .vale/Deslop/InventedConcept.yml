@@ -1,0 +1,14 @@
+# Source: adamdunkels/deslop-text -- a made-up-sounding abstract concept
+# built from "the [adjective] [noun-suffix]" (the complexity paradox, the
+# scale trap, feature creep). Only the noun-suffix shape is matchable;
+# whether the specific concept is actually novel or well-established isn't
+# -- that judgment call is left to the reader.
+extends: existence
+message: |
+  '%s' reads as an invented concept dressed up as an established one.
+  Fix: cite the source if it's a real term, or just describe the thing
+  plainly.
+level: warning
+scope: sentence
+raw:
+  - '\bthe [a-z]+ (?:paradox|trap|creep|divide|vacuum|inversion|flywheel|ratchet|treadmill)\b'

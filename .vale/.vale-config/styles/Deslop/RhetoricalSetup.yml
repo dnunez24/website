@@ -1,0 +1,17 @@
+# Source: stephenturner/skill-deslop, adamdunkels/deslop-text (W4) -- a
+# rhetorical question or clipped setup answered by the very next sentence
+# ("The result? Devastating."), a scripted-monologue device.
+#
+# scope: paragraph is required: Vale splits "The result? Devastating." into
+# two sentences, so a sentence-scoped rule can't see the setup and payoff
+# together. Restricting the opener set to The/Its/His/Her/Their/Our exempts
+# a genuine question-answer pair ("How did we solve this? We built a
+# simulator.") without a second rule -- verified this session.
+extends: existence
+message: |
+  This is a scripted rhetorical setup-and-payoff, not a real question.
+  Fix: state the point directly, in one sentence.
+level: warning
+scope: paragraph
+raw:
+  - '(?:\b(?:The|Its|His|Her|Their|Our)\s+\w+(?:\s+\w+){0,2}\?\s+[A-Z]|\b(?:Sound familiar|Coincidence)\?|\bWhat if\s+[^?]{1,60}\?)'

@@ -1,0 +1,41 @@
+# Source: stephenturner/skill-deslop, adamdunkels/deslop-text -- adverbs
+# that assert an effect instead of demonstrating it. Deletable without
+# changing meaning, hence action: remove.
+#
+# Deliberately omits very, really, quite, basically, actually, clearly,
+# obviously, simply, just, and somewhat -- all ten are already
+# House.Weasel tokens at level: error, and in-repo double-alerting is
+# worse than cross-package overlap. Also omits notably, already a
+# Deslop.Subjectivity token. Overlaps with Microsoft.Adverbs (264 tokens,
+# action: remove), which covers only 5 of these 19 (deeply, honestly,
+# interestingly, quietly, really); the other 14 are Deslop-only. Running
+# both Deslop and Microsoft duplicates those 5.
+extends: existence
+message: |
+  '%s' asserts an effect instead of demonstrating it.
+  Fix: cut it, or replace it with the specific evidence that earns it.
+level: warning
+scope: text
+ignorecase: true
+action:
+  name: remove
+tokens:
+  - truly
+  - genuinely
+  - honestly
+  - literally
+  - deeply
+  - fundamentally
+  - inherently
+  - inevitably
+  - interestingly
+  - importantly
+  - crucially
+  - quietly
+  - remarkably
+  - arguably
+  - seamlessly
+  - undoubtedly
+  - certainly
+  - effectively
+  - essentially

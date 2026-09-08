@@ -1,0 +1,13 @@
+# Source: adamdunkels/deslop-text W29 (metronomic sentence-length rhythm).
+# No equivalent in Microsoft/write-good/proselint: Microsoft.SentenceLength
+# caps absolute length (occurrence, max 30 words); this flags *uniformity*
+# across 4 consecutive sentences instead, a different signal. Both can run.
+# md/mdx only: measures rhythm across a whole document, which misfires on a
+# source comment (a file fragment, not a document).
+extends: script
+message: |
+  4 sentences in a row land within 30%% of the same length.
+  Fix: vary sentence length -- mix short and long.
+level: suggestion
+scope: raw
+script: SentenceRhythm.tengo

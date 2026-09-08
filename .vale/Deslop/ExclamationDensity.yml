@@ -1,0 +1,14 @@
+# Source: Wikipedia:Signs of AI writing overlaps with
+# Microsoft.ExclamationPoints (any \w!) and proselint.Hyperbole
+# ([a-z]+[!?]{2,}); neither expresses this sign's per-paragraph threshold,
+# which is the actual AI tell -- occasional enthusiasm is fine, every
+# other sentence ending in "!" isn't. md/mdx only: paragraph-level density
+# is a document-shape measure that doesn't apply inside a source comment.
+extends: occurrence
+message: |
+  %d exclamation points in one paragraph.
+  Fix: keep at most one, and let the content carry the emphasis.
+level: suggestion
+scope: paragraph
+max: 1
+token: '\w!'

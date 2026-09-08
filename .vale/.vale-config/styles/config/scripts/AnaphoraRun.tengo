@@ -1,0 +1,74 @@
+// Deslop.AnaphoraRun (W19, adamdunkels/deslop-text): flags 3+ consecutive
+// sentences opening with the same word of 3+ characters, case-insensitive
+// -- the "You should... You can... You'll..." anaphora-abuse pattern AI
+// writing leans on for false momentum. Genuine rhetorical anaphora ("We
+// came. We saw. We conquered.") is 2 or 3 words at most; 3+ full sentences
+// is the AI tell, not the literary device.
+//
+// Same sentence-splitting and reset-on-blank-line prelude as
+// SentenceRhythm.tengo, duplicated intentionally: Vale gives each script
+// its own isolated interpreter, so there's no way to share a module.
+text := import("text")
+matches := []
+
+document := text.re_replace("(?s)```.*?```", scope, "")
+lines := text.split(document, "\n")
+
+paragraphs := []
+current := []
+for line in lines {
+	trimmed := text.trim_space(line)
+	is_heading := text.has_prefix(trimmed, "#")
+	is_list := text.re_match("^[-*+][ \t]+", trimmed) || text.re_match("^[0-9]+[.)][ \t]+", trimmed)
+	if trimmed == "" || is_heading || is_list {
+		if len(current) > 0 {
+			paragraphs = append(paragraphs, text.join(current, " "))
+			current = []
+		}
+	} else {
+		current = append(current, trimmed)
+	}
+}
+if len(current) > 0 {
+	paragraphs = append(paragraphs, text.join(current, " "))
+}
+
+sentence_pattern := "[A-Z][^.!?]*[.!?]+"
+word_pattern := "^[A-Za-z]+"
+
+for paragraph in paragraphs {
+	found := text.re_find(sentence_pattern, paragraph, -1)
+	if found == undefined {
+		continue
+	}
+	run_word := ""
+	run_count := 0
+	last_sentence := ""
+	for m in found {
+		sentence := m[0].text
+		word_match := text.re_find(word_pattern, sentence, 1)
+		opener := ""
+		if word_match != undefined {
+			opener = text.to_lower(word_match[0][0].text)
+		}
+		if len(opener) >= 3 && opener == run_word {
+			run_count += 1
+			last_sentence = sentence
+		} else if len(opener) >= 3 {
+			run_word = opener
+			run_count = 1
+			last_sentence = sentence
+		} else {
+			run_word = ""
+			run_count = 0
+		}
+		if run_count == 3 {
+			start := text.index(scope, last_sentence)
+			if start != -1 {
+				matches = append(matches, {begin: start, end: start + len(last_sentence)})
+			}
+			run_word = ""
+			run_count = 0
+		}
+	}
+}

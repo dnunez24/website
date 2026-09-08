@@ -1,0 +1,17 @@
+# Source: Wikipedia:Signs of AI writing, "Inline-header vertical lists" --
+# every bullet opening with a bold lead-in, a "key takeaways" mechanical
+# tic. md/mdx only: this is a document-shape rule that measures list
+# formatting across a whole document, which doesn't apply inside a source
+# comment (a file fragment, not a document).
+#
+# Fires at 3+ so a single deliberate bold lead is allowed; max: 2 means
+# the third occurrence trips it. Verified this session.
+extends: occurrence
+message: |
+  %d list items in a row open with a bold lead-in.
+  Fix: use bold for the exceptional item only, not every item.
+link: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing#Inline-header_vertical_lists
+level: suggestion
+scope: raw
+max: 2
+token: '(?m)^[ \t]*[-*+][ \t]+\*\*[^*\n]+\*\*'

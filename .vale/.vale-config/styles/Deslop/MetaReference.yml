@@ -1,0 +1,22 @@
+# Source: stephenturner/skill-deslop, adamdunkels/deslop-text -- a chatbot
+# narrating its own document structure ("In this post, we'll cover...")
+# instead of just writing the content. Deletable without changing meaning,
+# hence action: remove.
+extends: existence
+message: |
+  '%s' narrates the document's own structure instead of writing content.
+  Fix: cut it and get to the point.
+level: warning
+scope: text
+ignorecase: true
+action:
+  name: remove
+tokens:
+  - In this (post|article|section|chapter)
+  - "As (we discussed|mentioned) (above|earlier)"
+  - "As we'?(ll|ve) seen"
+  - "Below, we'?ll cover"
+  - The rest of this (essay|post|article)
+  - "I'?ve organized these"
+  - I grouped them into
+  - I want to walk you through

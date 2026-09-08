@@ -1,0 +1,23 @@
+# Source: Wikipedia:Signs of AI writing, "Section summaries" (a historical
+# indicator: older LLMs ~2023 often added a "Conclusion" section or ended
+# paragraphs by restating their core idea). Deletable without changing
+# meaning, hence action: remove.
+extends: existence
+message: |
+  '%s' announces a conclusion instead of just concluding.
+  Fix: cut it, or fold the point into the final sentence directly.
+link: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing#Section_summaries
+level: warning
+scope: text
+ignorecase: true
+action:
+  name: remove
+tokens:
+  - In conclusion
+  - To sum up
+  - In summary
+  - To summarize
+  - All in all
+  - At the end of the day
+  - When all is said and done
+  - And so we return to where we began

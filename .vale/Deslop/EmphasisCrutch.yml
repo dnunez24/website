@@ -1,0 +1,26 @@
+# Source: stephenturner/skill-deslop, adamdunkels/deslop-text. Canned
+# emphasis phrases that substitute for evidence -- deletable without
+# changing meaning, hence action: remove.
+#
+# nonword: true because several tokens are punctuation-terminated
+# ('Full stop\.') and would match nothing under Vale's default \b wrapping
+# otherwise (verified this session).
+extends: existence
+message: |
+  '%s' asserts emphasis instead of earning it with evidence.
+  Fix: cut it, or replace it with the specific detail that earns the
+  emphasis.
+level: error
+scope: text
+ignorecase: true
+nonword: true
+action:
+  name: remove
+tokens:
+  - Let that sink in
+  - Make no mistake
+  - 'Full stop\.'
+  - "I'?ll say it again"
+  - Say it louder for the people in the back
+  - This matters because
+  - "Here'?s why that matters"

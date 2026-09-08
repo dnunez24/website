@@ -1,0 +1,24 @@
+# Source: stephenturner/skill-deslop, adamdunkels/deslop-text. The
+# classroom-teacher voice AI writing defaults to even in documents that
+# aren't lessons -- deletable without changing meaning, hence
+# action: remove.
+#
+# nonword: true because 'Think about it:' is punctuation-terminated and
+# would match nothing under Vale's default \b wrapping otherwise (verified
+# this session).
+extends: existence
+message: |
+  '%s' is a classroom-teacher framing device.
+  Fix: cut it and go straight to the content.
+level: error
+scope: text
+ignorecase: true
+nonword: true
+action:
+  name: remove
+tokens:
+  - "Let'?s (break this down|unpack|dive in|delve into|explore)"
+  - Think of it (as|like)
+  - 'Think about it:'
+  - "Here'?s what I mean"
+  - Let me walk you through

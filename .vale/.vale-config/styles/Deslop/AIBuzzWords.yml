@@ -1,0 +1,37 @@
+extends: existence
+message: |
+  '%s' is an overused word in AI-generated writing.
+  Fix: Replace with a synonym or restructure the sentence to avoid it.
+  Example: "Don't disable until the release lands." -> "Don't disable until after release."
+scope: text
+level: warning
+# Deliberately excludes: significant (statistical significance in scientific
+# prose), substantial (plain quantitative English), unique (plain English),
+# diverse (demographic and ecological writing), robust (statistics --
+# "robust to outliers"; engineering), framework (law, policy, and academic
+# theory), ecosystem (biology, literally). Each carries an ordinary meaning
+# in at least one common genre, so a hard error on it would punish correct
+# writing. Do not "complete" this list from the Wikipedia article -- the
+# test for admission is that the token is hard to use correctly in *any*
+# genre, which is true of tapestry and delve and false of significant.
+#
+# Also omits ever-evolving: Deslop.GenericOpening's more precision-anchored
+# 'In the ever-evolving' phrase already catches the opener construction this
+# word signals, and keeping both double-alerts on the same span (same
+# precision-anchored-rule-wins precedent as Deslop.Subjectivity dropping
+# showcasing/underscoring for Deslop.SuperficialParticiple).
+tokens:
+  - Additionally
+  - carries (a|the) # Claude overuse
+  - delve
+  - holistic
+  - intricate
+  - '[\w]+ lands' # Claude overuse
+  - multifaceted
+  - myriad
+  - nuanced
+  - plethora
+  - realm
+  - tapestry
+  - treasure trove
+  - unprecedented

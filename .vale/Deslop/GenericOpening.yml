@@ -1,0 +1,20 @@
+# Source: stephenturner/skill-deslop, adamdunkels/deslop-text,
+# Wikipedia:Signs of AI writing. The stock scene-setting opener AI writing
+# reaches for regardless of topic. No equivalent in
+# Microsoft/write-good/proselint.
+extends: existence
+message: |
+  '%s' is a stock scene-setting opener that fits any topic.
+  Fix: open with the actual point instead.
+level: error
+scope: text
+tokens:
+  - 'In today''s [\w-]+ world'
+  - In an era (of|where)
+  - In a world where
+  - As we all know
+  - Have you ever wondered
+  - Imagine a world where
+  - is evolving rapidly
+  - At its core
+  - In the ever-evolving

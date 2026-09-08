@@ -1,0 +1,17 @@
+# Source: stephenturner/skill-deslop, adamdunkels/deslop-text -- an
+# absolute, unqualified generalization asserted without evidence.
+extends: existence
+message: |
+  '%s' is an absolute claim asserted without evidence.
+  Fix: qualify it, or cite the specific evidence that supports it.
+level: suggestion
+scope: text
+ignorecase: true
+tokens:
+  - everyone knows
+  - nobody wants
+  - we all know
+  - has always been
+  - has never been
+  - every single
+  - without exception

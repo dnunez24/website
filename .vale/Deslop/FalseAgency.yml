@@ -1,0 +1,18 @@
+# Source: Wikipedia:Signs of AI writing, "Vague expression of connection or
+# association" -- an abstract noun (the market, the culture, the data) is
+# given human agency it doesn't have, instead of naming who or what
+# actually acts.
+#
+# ignorecase: true -- without it the lowercase 'the' in the pattern misses
+# a sentence-initial "The market rewards patience." Verified firing on
+# that sentence and "The culture shifts slowly."
+extends: existence
+message: |
+  This gives an abstraction ('%s') human agency it doesn't have.
+  Fix: name who or what actually did this.
+link: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing#Vague_expression_of_connection_or_association
+level: warning
+scope: sentence
+ignorecase: true
+raw:
+  - '\b(?:the|a|an) (?:complaint|decision|conversation|culture|market|data|narrative|discourse|momentum) (?:becomes|emerges|shifts|moves|tells|rewards|demands|decides|chooses|wants)\b'

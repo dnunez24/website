@@ -1,0 +1,18 @@
+# Source: Wikipedia:Signs of AI writing, "Superficial analyses" -- a
+# trailing present-participle clause tacked onto a sentence to assert
+# significance instead of demonstrating it ("...the record label sought
+# to project, highlighting its commitment to..."). The leading comma is
+# the precision anchor: it's what distinguishes this construction from an
+# ordinary participial modifier. Deslop.Subjectivity's underscore(s|d)?
+# token is deliberately narrowed to exclude the -ing form so the two rules
+# don't double-alert on the same span.
+extends: existence
+message: |
+  This trailing '-ing' clause asserts significance instead of showing it.
+  Fix: cut the clause, or replace it with the specific evidence that
+  earns the claim.
+link: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing#Superficial_analyses
+level: warning
+scope: sentence
+raw:
+  - ',\s+(?:highlighting|underscoring|emphasizing|reflecting|showcasing|symbolizing|cementing|solidifying|reinforcing|demonstrating|illustrating|contributing to|fostering|cultivating)\s+(?:its|their|the|a|an)\b'

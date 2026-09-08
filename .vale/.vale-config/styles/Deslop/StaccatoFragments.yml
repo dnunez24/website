@@ -1,0 +1,14 @@
+# Source: adamdunkels/deslop-text, and the "dramatic fragmentation for
+# emphasis" AI writing tell ("Speed. That's it. That's the tradeoff.")
+# named across AI-slop writing guides. No equivalent in
+# Microsoft/write-good/proselint. md/mdx only: measures sentence rhythm
+# across a whole document, which misfires on a source comment (a file
+# fragment, not a document).
+extends: script
+message: |
+  3+ sentences in a row run 4 words or fewer.
+  Fix: this is a legitimate device in moderation -- use sparingly, or
+  combine some fragments into full sentences.
+level: suggestion
+scope: raw
+script: StaccatoFragments.tengo

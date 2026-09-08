@@ -1,0 +1,66 @@
+# Tokens are independently curated evaluative words that assert a value
+# judgment instead of demonstrating one -- the kind of unsupported puffery
+# that arXiv:2509.19163 ("Measuring AI Slop in Text") identifies as the Bias
+# code in its slop taxonomy. Deduped against Deslop.MarketingTerms.yml.
+#
+# Cross-checked against Wikipedia:Signs of AI writing, WP:AIPUFFERY /
+# WP:AILEGACY / WP:SUPERFICIAL (https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing,
+# CC BY-SA 4.0), a community-maintained, actively updated list of words AI
+# chatbots specifically overuse -- narrower and more current than a general
+# sentiment lexicon, and it independently confirms several of these terms
+# (profound, groundbreaking) while adding others this list lacked
+# (underscores, testament, pivotal, vibrant, nestled).
+#
+# Per arXiv:2509.19163 (S6), even a full sentiment-lexicon density feature
+# only reached AUPRC 0.52-0.55 against a 0.25-0.27 baseline predicting
+# overall "slop" -- word lists alone don't separate earned from unearned
+# praise. This rule is a high-precision heuristic for the common case, not
+# a slop detector: "a remarkable clinical trial" (reported fact) will still
+# false-positive the same as "our remarkable platform" (puffery).
+extends: existence
+message: |
+  '%s' asserts a value judgment instead of demonstrating one.
+  Fix: cut the adjective or replace it with the specific evidence that earns it.
+  Example: "a phenomenal improvement" becomes "a 40%% cut in p99 latency."
+link: https://arxiv.org/html/2509.19163v2
+level: warning
+ignorecase: true
+tokens:
+  - astonishing
+  - astounding
+  - bolster(s|ed|ing)?
+  - boast(s|ed|ing)?
+  - breathtaking
+  - brilliant
+  - consummate
+  - crucial
+  - elegant
+  - exceptional
+  - exemplary
+  - exemplifies
+  - excellent
+  - exquisite
+  - extraordinary
+  - flawless
+  - impressive
+  - indelible
+  - indispensable
+  - invaluable
+  - magnificent
+  - marvelous
+  - masterful
+  - matchless
+  - nestled
+  - notably
+  - outstanding
+  - paramount
+  - peerless
+  - phenomenal
+  - pivotal
+  - profound
+  - remarkable
+  - renowned
+  - testament
+  - underscore(s|d)?
+  - vibrant
+  - vital

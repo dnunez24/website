@@ -1,0 +1,51 @@
+# Source: stephenturner/skill-deslop, adamdunkels/deslop-text. Overlaps
+# with proselint.CorporateSpeak (24 tokens, error, no autofix); this list
+# is larger and adds action: replace.
+#
+# Every entry whose head word has a literal sense in some genre is
+# anchored to its metaphorical frame, so the literal use survives:
+# "navigate the harbor" / "navigate to checkout", "unpack the boxes", and
+# "harness" as a noun (a climbing harness) must not fire.
+#
+# Deliberately excluded, each because it's standard vocabulary in a genre
+# this rule must not punish: framework (law, policy, academic theory),
+# ecosystem (biology), bare paradigm (a Kuhnian paradigm, an experimental
+# paradigm in psychology -- the corporate "a paradigm shift" sense is
+# caught by Deslop.GrandioseStakes instead), and bare leverage as a
+# finance noun, which the verb-form anchor below sidesteps.
+extends: substitution
+message: "Use the plain word ('%s') instead of the corporate-jargon phrase ('%s')."
+level: warning
+scope: text
+ignorecase: true
+action:
+  name: replace
+swap:
+  'navigat(?:e|ing) the \w+': handle
+  'unpack (?:this|the \w+)': explain
+  'harness the \w+': use
+  'lean into': accept
+  'double down': commit
+  'deep dive': analysis
+  'take a step back': reconsider
+  'moving forward': next
+  'circle back': revisit
+  'touch base': talk
+  'on the same page': agreed
+  'low-hanging fruit': easy wins
+  'move the needle': make a difference
+  'boil the ocean': overreach
+  'think outside the box': try a new approach
+  'take it to the next level': improve
+  'table this': postpone
+  'best practices': proven methods
+  'thought leader': expert
+  'digital transformation': modernization
+  'growth mindset': willingness to learn
+  'game-?changer': turning point
+  'mission-critical': essential
+  'leverag(?:e|es|ed|ing) (?:the|our|its|their|this|these)': use
+  'utilize': use
+  'streamline': simplify
+  'synerg(?:ies|y between our)': cooperation
+  'bandwidth (?:for|to)': capacity

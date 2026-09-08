@@ -1,0 +1,17 @@
+# Source: Wikipedia:Signs of AI writing, "Curly quotation marks and
+# apostrophes" -- chatbot output defaults to typographic quotes, which
+# read as a copy-paste artifact in plain-ASCII source (Markdown, code
+# comments). Conflicts with proselint.Typography, which rewrites the
+# opposite direction; a consumer running both must disable
+# proselint.Typography.
+extends: substitution
+message: "Use a straight quote ('%s') instead of the curly quote ('%s')."
+link: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing#Curly_quotation_marks_and_apostrophes
+level: error
+scope: text
+nonword: true
+action:
+  name: replace
+swap:
+  "[\u201C\u201D]": '"'
+  "[\u2018\u2019]": "'"

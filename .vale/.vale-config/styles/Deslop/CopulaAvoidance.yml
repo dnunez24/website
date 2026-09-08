@@ -1,0 +1,17 @@
+# Source: Wikipedia:Signs of AI writing, "Avoidance of basic copulatives
+# ('is'/'are' phrases)" -- AI writing dresses up a plain "is" as "serves
+# as"/"stands as"/"functions as", or "has" as "boasts". Reaches for a
+# fancier verb where a plain copula/possessive would do.
+extends: substitution
+message: "Use the plain verb ('%s') instead of the dressed-up one ('%s')."
+link: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing#Avoidance_of_basic_copulatives_(%22is%22/%22are%22_phrases)
+level: warning
+scope: text
+action:
+  name: replace
+swap:
+  serves as: is
+  stands as: is
+  functions as: is
+  operates as: is
+  boasts: has

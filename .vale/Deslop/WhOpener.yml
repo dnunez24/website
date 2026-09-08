@@ -1,0 +1,15 @@
+# Source: adamdunkels/deslop-text -- 2+ sentences within one paragraph each
+# opening with a Wh- word ("What if...", "How does..."), a
+# rhetorical-question habit. md/mdx only: this counts openers within a
+# single paragraph, a document-shape measure that doesn't apply inside a
+# source comment. Interview transcripts, FAQs, and Socratic essays
+# legitimately stack Wh- openers; if a clean-corpus genre trips this,
+# raise max from 1 to 2 rather than deleting the rule.
+extends: occurrence
+message: |
+  %d sentences in one paragraph open with a Wh- word.
+  Fix: vary the opener, or answer the question in the same paragraph.
+level: suggestion
+scope: paragraph
+max: 1
+token: '(?:^|(?<=[.!?]\s))(?:What|When|Where|Which|Who|Why|How)\b'

@@ -1,0 +1,146 @@
+// Deslop.WordEcho (W28, adamdunkels/deslop-text; also the "dead metaphor"
+// trope): flags any word of 5+ characters, excluding a stopword set,
+// occurring 3+ times within a single paragraph. `extends: repetition` is
+// adjacent-match-only (verified: zero alerts on "ecosystem" x4 spread
+// across a paragraph), so distributed repetition needs this script.
+//
+// A word counts only if it was seen in lowercase at least once in the
+// paragraph. Every genre repeats its own proper nouns legitimately -- a
+// news report repeats a surname, a paper repeats an analyte, a contract
+// repeats a defined term, a novel repeats a character's name -- and those
+// are always capitalized, so this drops them without needing a name list.
+//
+// Document-level saturation is intentionally not implemented here:
+// paragraph clustering already catches the drafting habit this targets,
+// and a document-wide counter would penalize any long piece that
+// legitimately stays on one subject.
+text := import("text")
+matches := []
+
+// Fenced code blocks and inline code spans aren't prose vocabulary. Table
+// rows and ATX headings are structurally repetitive by design (column
+// labels, a heading's own topic word), not a drafting tell, so they're
+// blanked out too -- same rationale as the heading/list stripping in the
+// other three scripts.
+document := text.re_replace("(?s)```.*?```", scope, "")
+document = text.re_replace("`[^`]*`", document, "")
+
+lines := text.split(document, "\n")
+kept := []
+for line in lines {
+	trimmed := text.trim_space(line)
+	if text.has_prefix(trimmed, "#") || text.has_prefix(trimmed, "|") {
+		kept = append(kept, "")
+	} else {
+		kept = append(kept, line)
+	}
+}
+document = text.join(kept, "\n")
+
+// Common 5+ letter function words: never content-bearing, so their
+// repetition is structural, not a drafting tell.
+stopwords := {
+	about: true,
+	after: true,
+	again: true,
+	against: true,
+	almost: true,
+	although: true,
+	always: true,
+	among: true,
+	another: true,
+	anyone: true,
+	around: true,
+	because: true,
+	before: true,
+	being: true,
+	below: true,
+	between: true,
+	could: true,
+	during: true,
+	either: true,
+	enough: true,
+	every: true,
+	first: true,
+	found: true,
+	further: true,
+	having: true,
+	itself: true,
+	might: true,
+	mostly: true,
+	myself: true,
+	nearly: true,
+	other: true,
+	rather: true,
+	really: true,
+	should: true,
+	shall: true,
+	since: true,
+	simply: true,
+	something: true,
+	still: true,
+	their: true,
+	themselves: true,
+	there: true,
+	therefore: true,
+	these: true,
+	third: true,
+	those: true,
+	though: true,
+	through: true,
+	together: true,
+	under: true,
+	unless: true,
+	until: true,
+	using: true,
+	where: true,
+	whether: true,
+	which: true,
+	while: true,
+	within: true,
+	without: true,
+	would: true,
+	yourself: true
+}
+
+word_pattern := "[A-Za-z']{5,}"
+
+// Offsets are re-derived with text.index(scope, ...) rather than tracked
+// arithmetically, because `document` is shorter than `scope` wherever code
+// fences/spans/tables were blanked out above -- an arithmetic running
+// offset would drift out of sync with the original scope. This carries
+// the same known limitation Vale documents for scope: raw scripts: if the
+// word's lowercase form also appears earlier in the document, the alert
+// points at that earlier occurrence instead of the flagged paragraph.
+paragraphs := text.split(document, "\n\n")
+for paragraph in paragraphs {
+	found := text.re_find(word_pattern, paragraph, -1)
+	if found != undefined {
+		counts := {}
+		for m in found {
+			raw := m[0].text
+			lower := text.to_lower(raw)
+			if stopwords[lower] {
+				continue
+			}
+			if counts[lower] == undefined {
+				counts[lower] = {count: 0, saw_lower: false, sample: ""}
+			}
+			entry := counts[lower]
+			entry.count += 1
+			if raw == lower {
+				entry.saw_lower = true
+				entry.sample = raw
+			}
+			counts[lower] = entry
+		}
+		for key, entry in counts {
+			if entry.count >= 3 && entry.saw_lower {
+				start := text.index(scope, entry.sample)
+				if start != -1 {
+					matches = append(matches, {begin: start, end: start + len(entry.sample)})
+				}
+			}
+		}
+	}
+}

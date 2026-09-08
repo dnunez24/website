@@ -1,0 +1,13 @@
+# Source: stephenturner/skill-deslop -- a run of social-media-style
+# hashtags pasted into a document, a leftover from chatbot output meant
+# for a social post rather than the target document.
+extends: existence
+message: |
+  A run of social-media hashtags doesn't belong in this document.
+  Fix: delete them, or replace with real keywords/tags in the document's
+  own convention.
+level: error
+scope: raw
+nonword: true
+raw:
+  - '(?m)(?:#[A-Za-z][A-Za-z0-9]*[ \t]+){2,}#[A-Za-z]'

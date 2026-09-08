@@ -1,0 +1,26 @@
+# Source: adamdunkels/deslop-text, Wikipedia:Signs of AI writing
+# ("Negative parallelisms" -- Not just X, but also Y / Not X, but Y / X
+# rather than Y), and stephenturner/skill-deslop all independently name
+# this the single most recognizable AI tell. No equivalent in
+# Microsoft/write-good/proselint: those packages don't model cross-clause
+# rhetorical structure.
+#
+# scope: paragraph is required -- the cross-sentence reframe variant
+# ("It's not about speed. It's about reliability.") splits across a
+# sentence boundary Vale's sentence scope can't see across.
+#
+# raw: entries concatenate rather than alternate (verified this session),
+# so every variant lives in one raw: entry as a single alternation group.
+extends: existence
+message: |
+  This sets up a false "not X, but Y" contrast.
+  Fix: state the point directly, without the negative setup.
+link: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing#Negative_parallelisms
+level: error
+scope: paragraph
+ignorecase: true
+raw:
+  # One entry. Alternation order: cross-sentence reframe | single-sentence
+  # contrast | additive hedge | causal variant | softened variant |
+  # false transformation arc.
+  - '(?:\b(?:it|this|that|the \w+)(?:''s| is| was|n''t| isn''t)? not\s+[^.!?]{1,60}[.;]\s+(?:it|this|that|the \w+)(?:''s| is| was)\b|\b(?:is|are|was|were)n''t\s+[^,.]{1,50},\s*(?:it''s|its|they''re|but)\b|\bnot (?:just|only|merely|simply)\s+[^,.]{1,50}[, ]+but\b|\bnot because\s+[^,.]{1,60},?\s*but (?:because|rather)\b|\bless about\s+[^,.]{1,40},?\s*(?:and\s+)?more about\b|\bstops? being\s+[^,.]{1,40}\s+and starts? being\b)'

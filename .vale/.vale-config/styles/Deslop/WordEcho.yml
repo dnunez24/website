@@ -1,0 +1,14 @@
+# Source: adamdunkels/deslop-text W28 (local word clustering) and the
+# "dead metaphor" trope. `extends: repetition` is adjacent-match-only
+# (verified: zero alerts on "ecosystem" repeated 4x across a paragraph), so
+# distributed repetition needs a script. Overlaps with write-good.Illusions
+# and Vale.Repetition, both of which only catch adjacent repeats.
+# md/mdx only: measures word density across a whole document, which
+# misfires on a source comment (a file fragment, not a document).
+extends: script
+message: |
+  A word repeats 3+ times in one paragraph.
+  Fix: vary the vocabulary, or cut the repeats.
+level: suggestion
+scope: raw
+script: WordEcho.tengo

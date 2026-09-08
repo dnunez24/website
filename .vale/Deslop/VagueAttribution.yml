@@ -1,0 +1,20 @@
+# Source: Wikipedia:Signs of AI writing, "Vague attributions and
+# overgeneralization of opinions" -- weasel-worded attribution to an
+# unnamed authority, and exaggerating how many sources hold a view.
+extends: existence
+message: |
+  '%s' attributes a claim to an unnamed authority.
+  Fix: name the actual source, or cut the claim.
+link: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing#Vague_attributions_and_overgeneralization_of_opinions
+level: warning
+scope: text
+tokens:
+  - Experts (argue|say|suggest|believe|agree)
+  - Industry reports (suggest|indicate|show)
+  - Observers have (cited|noted)
+  - Several (publications|sources|outlets) have
+  - Researchers have shown
+  - Studies (have shown|suggest)
+  - It (is|has been) widely believed
+  - It has long been recognized
+  - (Critics|Many|Some) (argue|believe)

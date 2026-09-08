@@ -1,0 +1,19 @@
+# Source: adamdunkels/deslop-text -- the "simple yet powerful" /
+# "small but mighty" paired-contrastive-adjective construction AI writing
+# reaches for regardless of whether the contrast is earned.
+#
+# Message is static because sequence's %s interpolates only the first
+# token in the match (verified this session). Confirmed firing on "simple
+# yet powerful". If POS tagging proves noisy against legitimate
+# contrastive pairs in the clean corpus (e.g. "static but configurable" in
+# reference docs, "poor but proud" in fiction), drop extends: sequence and
+# reimplement as existence with an adjective alternation limited to
+# Deslop.MarketingAdjectives/Deslop.Subjectivity's evaluative tokens.
+extends: sequence
+message: "A paired 'X yet/but Y' adjective contrast asserts a tension instead of showing it. Fix: cut one adjective, or show the specific tradeoff."
+level: warning
+scope: sentence
+tokens:
+  - tag: JJ
+  - pattern: '(?:yet|but)'
+  - tag: JJ

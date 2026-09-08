@@ -1,0 +1,11 @@
+# Source: adamdunkels/deslop-text W19 ("You" starters) and the broader
+# anaphora-abuse pattern. No equivalent in Microsoft/write-good/proselint.
+# md/mdx only: measures a rhetorical pattern across a whole document, which
+# misfires on a source comment (a file fragment, not a document).
+extends: script
+message: |
+  3+ sentences in a row open with the same word.
+  Fix: vary sentence openers.
+level: suggestion
+scope: raw
+script: AnaphoraRun.tengo

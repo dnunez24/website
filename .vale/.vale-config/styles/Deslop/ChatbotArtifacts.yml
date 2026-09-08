@@ -1,0 +1,22 @@
+# Source: Wikipedia:Signs of AI writing, "Collaborative communication" --
+# pasted chatbot correspondence, or a reply the model addressed to its
+# chat user rather than wrote as article/document prose. No equivalent in
+# Microsoft/write-good/proselint: this is AI-specific, not a style issue.
+extends: existence
+message: |
+  '%s' is chatbot correspondence, not document prose.
+  Fix: delete it, or rewrite the surrounding text as prose.
+link: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing#Collaborative_communication
+level: error
+scope: text
+tokens:
+  - I hope this helps
+  - Of course!
+  - Certainly!
+  - You'?re absolutely right
+  - Would you like me to
+  - Is there anything else
+  - Let me know if you'?d like
+  - a more detailed breakdown
+  - '[Aa]s an AI language model'
+  - '[Aa]s a large language model'

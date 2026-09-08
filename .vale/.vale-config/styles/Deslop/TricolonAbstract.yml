@@ -1,0 +1,12 @@
+# Source: Wikipedia:Signs of AI writing, "Rule of three" -- a tricolon of
+# three abstract nouns ("excellence, collaboration, and innovation") in
+# place of specifics. No equivalent in Microsoft/write-good/proselint.
+extends: existence
+message: |
+  A three-abstract-noun list stands in for specifics.
+  Fix: name the actual three things, or cut to one concrete example.
+link: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing#Rule_of_three
+level: suggestion
+scope: sentence
+raw:
+  - '\b\w+(?:ity|ness|ance|ence|tion|sion|ment|ism)\b,\s+\w+(?:ity|ness|ance|ence|tion|sion|ment|ism)\b,\s+and\s+\w+(?:ity|ness|ance|ence|tion|sion|ment|ism)\b'

@@ -1,0 +1,17 @@
+# Source: adamdunkels/deslop-text -- a paragraph stacked with hedges. One
+# hedge is normal, careful writing; a paragraph where every claim is
+# hedged reads as evasive rather than careful. md/mdx only: paragraph-level
+# density is a document-shape measure that doesn't apply inside a source
+# comment.
+#
+# occurrence's token: field does not get Vale's automatic \b wrapping (it
+# applies only to existence's tokens: list), so the alternation below is
+# written with its own explicit boundaries.
+extends: occurrence
+message: |
+  %d hedges in one paragraph.
+  Fix: keep the strongest one, and commit to the rest.
+level: suggestion
+scope: paragraph
+max: 1
+token: '\b(?:it seems like|it appears that|it could be argued|one might say|it is possible that|in some ways|to some extent|perhaps)\b'

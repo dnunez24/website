@@ -1,0 +1,61 @@
+// Deslop.StaccatoFragments (Wikipedia:Signs of AI writing, "dramatic
+// fragmentation for emphasis"): flags 3+ consecutive sentences of 4 or
+// fewer words -- "Speed. That's it. That's the tradeoff." Unlike
+// SentenceRhythm.tengo, this does NOT reset on a short sentence: the short
+// sentences are the signal here, not noise to filter out.
+//
+// Same sentence-splitting and reset-on-blank-line prelude as
+// SentenceRhythm.tengo, duplicated intentionally: Vale gives each script
+// its own isolated interpreter, so there's no way to share a module.
+text := import("text")
+matches := []
+
+document := text.re_replace("(?s)```.*?```", scope, "")
+lines := text.split(document, "\n")
+
+paragraphs := []
+current := []
+for line in lines {
+	trimmed := text.trim_space(line)
+	is_heading := text.has_prefix(trimmed, "#")
+	is_list := text.re_match("^[-*+][ \t]+", trimmed) || text.re_match("^[0-9]+[.)][ \t]+", trimmed)
+	if trimmed == "" || is_heading || is_list {
+		if len(current) > 0 {
+			paragraphs = append(paragraphs, text.join(current, " "))
+			current = []
+		}
+	} else {
+		current = append(current, trimmed)
+	}
+}
+if len(current) > 0 {
+	paragraphs = append(paragraphs, text.join(current, " "))
+}
+
+sentence_pattern := "[A-Z][^.!?]*[.!?]+"
+
+for paragraph in paragraphs {
+	found := text.re_find(sentence_pattern, paragraph, -1)
+	if found == undefined {
+		continue
+	}
+	run := 0
+	last_sentence := ""
+	for m in found {
+		sentence := m[0].text
+		count := len(text.fields(sentence))
+		if count <= 4 {
+			run += 1
+			last_sentence = sentence
+		} else {
+			run = 0
+		}
+		if run == 3 {
+			start := text.index(scope, last_sentence)
+			if start != -1 {
+				matches = append(matches, {begin: start, end: start + len(last_sentence)})
+			}
+			run = 0
+		}
+	}
+}

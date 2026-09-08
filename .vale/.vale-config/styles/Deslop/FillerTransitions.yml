@@ -1,0 +1,30 @@
+# Source: stephenturner/skill-deslop, adamdunkels/deslop-text. Transitional
+# filler that adds no information and can be deleted outright, hence
+# action: remove. Overlaps with write-good.TooWordy and Microsoft.Wordiness
+# in spirit, but those cover generic verbosity; this set is the specific
+# transitional-filler phrases AI writing over-relies on.
+#
+# nonword: true because several tokens are punctuation-terminated
+# ('That said,') and would match nothing under Vale's default \b wrapping
+# otherwise (verified this session).
+extends: existence
+message: |
+  '%s' is filler that adds no information.
+  Fix: cut it.
+level: error
+scope: text
+ignorecase: true
+nonword: true
+action:
+  name: remove
+tokens:
+  - "It'?s worth noting that"
+  - It is worth noting that
+  - It bears mentioning
+  - It goes without saying
+  - "It'?s (important|crucial|critical) to note"
+  - Needless to say
+  - 'That said,'
+  - With that in mind
+  - Having established that
+  - It is also worth mentioning

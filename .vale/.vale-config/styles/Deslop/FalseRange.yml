@@ -1,0 +1,13 @@
+# Source: adamdunkels/deslop-text -- a fake "from X to Y" spectrum. A 3+
+# item chain ("from innovation to implementation to cultural
+# transformation") can't be a spectrum, and pairing two abstract nouns
+# ("from complexity to clarity") is a pseudo-range dressed as one.
+extends: existence
+message: |
+  This isn't a real range -- it's an abstract-noun pair or chain dressed
+  up as a spectrum.
+  Fix: say what actually changed, concretely.
+level: warning
+scope: sentence
+raw:
+  - '(?:\b[Ff]rom\s+[^.,]{3,40}\s+to\s+[^.,]{3,40}\s+to\s+|\b[Ff]rom\s+\w+(?:tion|ment|ity|ness|ism)\s+to\s+\w+(?:tion|ment|ity|ness|ism)\b)'

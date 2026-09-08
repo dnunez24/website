@@ -1,0 +1,19 @@
+extends: existence
+message: |
+  '%s' is an adjective that sells rather than describes.
+  Fix: replace with a specific, factual description.
+  Example: "Powerful search" becomes "search that handles 10M records in under 200ms."
+level: warning
+ignorecase: true
+tokens:
+  - best-in-class
+  - cutting-edge
+  - game-changing
+  - groundbreaking
+  - innovative
+  - next-generation
+  - powerful
+  - revolutionary
+  - seamless
+  - transformative
+  - world-class

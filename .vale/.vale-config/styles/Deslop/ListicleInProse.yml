@@ -1,0 +1,12 @@
+# Source: adamdunkels/deslop-text -- "The first... The second... The
+# third..." ordinal enumeration written as prose sentences instead of an
+# actual list. md/mdx only: this is a document-shape rule about paragraph
+# structure, which doesn't apply inside a source comment.
+extends: existence
+message: |
+  This ordinal ("The first/second/...") belongs in a list, not a sentence.
+  Fix: convert to an actual list, or drop the ordinal framing.
+level: suggestion
+scope: paragraph
+raw:
+  - '(?m)^The (?:first|second|third|fourth|fifth) (?:\w+ ){0,2}(?:is|was|comes)\b'

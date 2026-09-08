@@ -1,0 +1,14 @@
+# Source: stephenturner/skill-deslop, adamdunkels/deslop-text. Overlaps
+# with Deslop.MarketingAdjectives in register but targets the sentence
+# opener specifically, not an isolated adjective. No equivalent in
+# Microsoft/write-good/proselint.
+extends: existence
+message: |
+  '%s' is a press-release opener, not a plain statement.
+  Fix: say what changed, without the announcement framing.
+  Example: "We're excited to announce the new parser." -> "The new parser
+  ships in this release."
+level: error
+scope: text
+raw:
+  - "(?:We'?re|I'?m) (excited|thrilled|proud|pleased|delighted|happy) to (announce|share|present|unveil)"

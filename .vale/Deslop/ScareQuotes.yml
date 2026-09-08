@@ -1,0 +1,16 @@
+# Source: adamdunkels/deslop-text (W13) -- a single lowercase word in
+# straight quotes mid-sentence, used for ironic distance instead of a
+# direct quotation. Ships at suggestion tier because journalism and
+# criticism both legitimately quote a single word from a source; expect
+# this to be the first rule the clean corpus argues with. If it trips
+# more than one clean-corpus genre, narrow the pattern to words ending in
+# -ly only rather than allowing it twice.
+extends: existence
+message: |
+  This scare-quoted word signals ironic distance instead of a real quotation.
+  Fix: cut the quotes and commit to the word, or attribute it to its source.
+level: suggestion
+scope: text
+nonword: true
+raw:
+  - '\s"[a-z]{3,}(?:ly)?"[\s,.]'

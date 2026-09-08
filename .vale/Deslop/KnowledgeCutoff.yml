@@ -1,0 +1,18 @@
+# Source: Wikipedia:Signs of AI writing, "Knowledge-cutoff disclaimers and
+# speculation about gaps in sources". No equivalent in
+# Microsoft/write-good/proselint: this is AI-specific, not a style issue.
+extends: existence
+message: |
+  '%s' is a model disclaiming its own knowledge, not document prose.
+  Fix: state what's known, or cut the sentence.
+link: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing#Knowledge-cutoff_disclaimers_and_speculation_about_gaps_in_sources
+level: error
+scope: text
+tokens:
+  - '[Aa]s of my last (knowledge )?update'
+  - '[Uu]p to my last training update'
+  - '[Bb]ased on available information'
+  - 'While specific details are (limited|scarce)'
+  - 'not widely (available|documented|disclosed)'
+  - 'in the (provided|available) sources'
+  - in search results

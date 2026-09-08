@@ -1,0 +1,18 @@
+# Source: stephenturner/skill-deslop, adamdunkels/deslop-text,
+# Wikipedia:Signs of AI writing (undue emphasis on significance and
+# legacy) -- inflating a change's actual stakes with world-historical
+# language.
+extends: existence
+message: |
+  '%s' inflates this change's actual stakes.
+  Fix: state what actually changed, at its actual scale.
+level: warning
+scope: text
+ignorecase: true
+tokens:
+  - fundamentally reshape
+  - will define the next era
+  - chang(e|ed|es) everything
+  - will never be the same
+  - nothing short of
+  - a paradigm shift

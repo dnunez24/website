@@ -1,0 +1,9 @@
+extends: occurrence
+message: |
+  %d em dashes in one sentence bracket an aside.
+  Fix: give the aside its own sentence, or cut it.
+link: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing#Overuse_of_em_dashes
+level: warning
+scope: sentence
+max: 1
+token: —

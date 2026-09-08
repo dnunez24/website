@@ -1,0 +1,29 @@
+# Source: stephenturner/skill-deslop, adamdunkels/deslop-text. Verbal
+# throat-clearing before the actual point -- deletable without changing
+# meaning, hence action: remove. No equivalent in
+# Microsoft/write-good/proselint.
+#
+# nonword: true because several tokens are punctuation-terminated
+# ('\bLook,', 'Full stop\.') and would match nothing under Vale's default
+# \b wrapping otherwise (verified this session). Not ignorecase: '\bLook,'
+# relies on case to avoid matching "look," mid-sentence.
+extends: existence
+message: |
+  '%s' is throat-clearing before the actual point.
+  Fix: cut it and start with the point.
+level: error
+scope: text
+nonword: true
+action:
+  name: remove
+tokens:
+  - "Here'?s the (thing|deal|kicker|catch)"
+  - "Here'?s where it gets interesting"
+  - "Here'?s what (most people miss|I find interesting)"
+  - "Here'?s the problem though"
+  - Let me be clear
+  - 'The (uncomfortable )?truth is,'
+  - "I'?m going to be honest"
+  - Can we talk about
+  - "So here'?s what happened"
+  - '\bLook,'

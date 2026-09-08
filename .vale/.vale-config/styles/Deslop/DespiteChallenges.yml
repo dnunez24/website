@@ -1,0 +1,22 @@
+# Source: Wikipedia:Signs of AI writing, "Outline-like conclusions about
+# challenges and future prospects" -- the rigid "Despite its [positive
+# words], [subject] faces challenges..." formula that closes out
+# AI-generated articles, often paired with a "Challenges and Legacy" or
+# "Future Outlook" heading. This sign is about the rigid formula, not
+# simply mentioning challenges.
+extends: existence
+message: |
+  '%s' is the rigid "faces challenges, but the future looks bright"
+  closing formula.
+  Fix: name the actual challenge and its actual stakes, or cut the section.
+link: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing#Outline-like_conclusions_about_challenges_and_future_prospects
+level: warning
+scope: text
+tokens:
+  - Despite (these|its|the) challenges
+  - 'Despite its \w+, [^.]{0,60} faces'
+  - faces challenges typical of
+  - challenges and opportunities
+  - Challenges and Legacy
+  - Future Outlook
+  - Future Prospects

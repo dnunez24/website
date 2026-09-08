@@ -1,0 +1,17 @@
+# Source: Wikipedia:Signs of AI writing (W4 in adamdunkels/deslop-text) --
+# "Whether you're a founder or an enterprise CTO, this helps" style false
+# inclusivity, distinct from a genuine question-answer pair. No equivalent
+# in Microsoft/write-good/proselint.
+#
+# The 'or' precedes the comma ("Whether you're X or Y, ..."), so anchoring
+# on a comma would match nothing -- anchor on 'or' instead. Verified firing
+# on that construction.
+extends: existence
+message: |
+  This false-inclusivity opener flatters every reader instead of saying
+  who this is actually for.
+  Fix: name the actual audience, or cut the opener.
+level: error
+scope: sentence
+raw:
+  - '[Ww]hether you(?:''re| are)\s+[^,.]{1,60}\s+or\s+'

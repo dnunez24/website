@@ -1,0 +1,19 @@
+extends: existence
+message: |
+  Em dashes ('—') are overused in AI-generated writing to emphasize clauses or parallelisms. They are also a smell for overly complex sentence structure.
+  Fix: Consider adjusting tone or simplifying sentence structure to eliminate the need for an em dash.
+link: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing#Overuse_of_em_dashes
+level: warning
+scope: sentence
+nonword: true
+tokens:
+  - "—"
+# Vale \b-wraps exception phrases, and no word boundary can hold next to a
+# dash surrounded by spaces -- so a bare '—\s*[^—]+\s*—' exception only
+# exempts closed-up "word—text—word" pairs, not the far more common spaced
+# "word — text — word" style. Anchoring on the word before/after each dash
+# gives \b something to bind to, so both styles get handed off to
+# EmDashAside correctly. Verified this session: without the \w+ anchors, a
+# spaced paired aside fired both EmDashAside and EmDashEmphasis x2.
+exceptions:
+  - '\w+\s*—\s*[^—]+\s*—\s*\w+'

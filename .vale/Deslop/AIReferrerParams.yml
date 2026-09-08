@@ -1,0 +1,15 @@
+# Source: Wikipedia:Signs of AI writing, "utm_source=". ChatGPT tags links
+# it cites with utm_source=chatgpt.com/openai, Copilot with
+# utm_source=copilot.com, Grok with referrer=grok.com -- a leftover from
+# copy-pasting a chatbot's answer, including its outbound tracking params,
+# straight into a document. No equivalent in Microsoft/write-good/proselint.
+extends: existence
+message: |
+  A chatbot referrer/UTM parameter ('%s') leaked into this URL.
+  Fix: strip the tracking parameter before publishing the link.
+link: https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing#utm_source=
+level: error
+scope: raw
+nonword: true
+raw:
+  - '(?:utm_source=(?:chatgpt\.com|openai|copilot\.com|perplexity\.ai)|referrer=grok\.com)'

@@ -1,0 +1,19 @@
+# Source: stephenturner/skill-deslop, adamdunkels/deslop-text -- decorative
+# Unicode arrows/bullets/ellipsis chatbots reach for in place of plain
+# ASCII. Conflicts with proselint.Typography, which rewrites the opposite
+# direction (ASCII -> Unicode, e.g. "..." -> "…"); a consumer running both
+# must disable proselint.Typography.
+extends: substitution
+message: "Use plain ASCII ('%s') instead of the decorative Unicode character ('%s')."
+level: error
+scope: text
+nonword: true
+action:
+  name: replace
+swap:
+  "\u2192": "->"
+  "\u21D2": "=>"
+  "\u2190": "<-"
+  "\u2194": "<->"
+  "\u2022": "-"
+  "\u2026": "..."
