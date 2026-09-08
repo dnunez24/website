@@ -1,0 +1,100 @@
+:root {
+	/******************** COLOR ********************/
+
+	/*
+   * concrete: the primary neutral. Cool, low-chroma; fills most of the surface.
+   */
+	--color-concrete-50: oklch(0.985 0.002 250);
+	--color-concrete-100: oklch(0.955 0.003 250);
+	--color-concrete-200: oklch(0.9 0.004 250);
+	--color-concrete-300: oklch(0.852 0.005 250);
+	--color-concrete-400: oklch(0.715 0.007 250);
+	--color-concrete-500: oklch(0.592 0.009 250);
+	--color-concrete-600: oklch(0.455 0.01 250);
+	--color-concrete-700: oklch(0.392 0.011 250);
+	--color-concrete-800: oklch(0.312 0.01 250);
+	--color-concrete-900: oklch(0.24 0.009 250);
+	--color-concrete-950: oklch(0.16 0.008 250);
+
+	/*
+	 * clay: warm accent #1 (terracotta / brick / teak). Links, marks, emphasis.
+	 */
+	--color-clay-50: oklch(0.978 0.011 62);
+	--color-clay-100: oklch(0.955 0.026 62);
+	--color-clay-200: oklch(0.912 0.05 58);
+	--color-clay-300: oklch(0.848 0.08 55);
+	--color-clay-400: oklch(0.762 0.116 52);
+	--color-clay-500: oklch(0.678 0.14 48);
+	--color-clay-600: oklch(0.596 0.146 45);
+	--color-clay-700: oklch(0.508 0.13 43);
+	--color-clay-800: oklch(0.418 0.104 42);
+	--color-clay-900: oklch(0.344 0.082 42);
+	--color-clay-950: oklch(0.236 0.056 42);
+
+	/*
+	 * verdigris: warm-adjacent accent #2 (oxidised copper).
+	 *
+	 * Used sparingly, never as the sole carrier of meaning. clay vs verdigris
+	 * stay separable under deuteranopia/protanopia because they differ in
+	 * lightness AND hue-family (orange vs cyan), not just hue.
+	 */
+	--color-verdigris-50: oklch(0.98 0.01 195);
+	--color-verdigris-100: oklch(0.955 0.021 195);
+	--color-verdigris-200: oklch(0.91 0.04 196);
+	--color-verdigris-300: oklch(0.845 0.058 197);
+	--color-verdigris-400: oklch(0.752 0.072 198);
+	--color-verdigris-500: oklch(0.66 0.078 200);
+	--color-verdigris-600: oklch(0.57 0.075 202);
+	--color-verdigris-700: oklch(0.474 0.066 204);
+	--color-verdigris-800: oklch(0.386 0.053 206);
+	--color-verdigris-900: oklch(0.312 0.042 208);
+	--color-verdigris-950: oklch(0.212 0.03 210);
+
+	/******************** TYPOGRAPHY ********************/
+
+	--font-family-sans: var(--font-afacad-flux);
+	--font-family-mono: var(--font-jetbrains-mono);
+
+	--font-weight-light: 300;
+	--font-weight-regular: 400;
+	--font-weight-medium: 500;
+	--font-weight-semibold: 600;
+
+	/* a.k.a. letter spacing */
+	--font-tracking-tightest: calc(1 / pow(2, 7) * -1em); /* ≈ -0.78% */
+	--font-tracking-tighter: calc(1 / pow(2, 8) * -1em); /* ≈ -0.39% */
+	--font-tracking-tight: calc(1 / pow(2, 9) * -1em); /* ≈ -0.19% */
+	--font-tracking-normal: 0em; /* = 0% */
+	--font-tracking-wide: calc(1 / pow(2, 7) * 1em); /* ≈ 0.78% */
+	--font-tracking-wider: calc(1 / pow(2, 6) * 1em); /* ≈ 1.5% */
+	--font-tracking-widest: calc(1 / pow(2, 5) * 1em); /* ≈ 3.125% */
+
+	/* a.k.a. line height */
+	/*--leading-*/
+
+	/******************** SIZE & SPACE ********************/
+
+	/******************** SHAPE ********************/
+
+	--radius-none: 0;
+	--radius-sm: 2px;
+	--radius-full: 9999px;
+
+	/******************** MOTION ********************/
+	--motion-duration-instant: 0ms;
+	--motion-duration-fastest: 32ms;
+	--motion-duration-fast: 64ms;
+	--motion-duration-normal: 128ms;
+	--motion-duration-slow: 256ms;
+	--motion-duration-slowest: 512ms;
+
+	/*--ease-standard: cubic-bezier(0.2, 0, 0.3, 1);*/
+	/*--ease-standard: cubic-bezier(0.4, 0, 0.2, 1);*/
+	/*--ease-out: cubic-bezier(0, 0, 0.3, 1);*/
+	/*--ease-out: cubic-bezier(0.16, 1, 0.3, 1);*/
+
+	--motion-ease-linear: linear;
+	--motion-ease-in: cubic-bezier(0.375, 0, 1, 1);
+	--motion-ease-out: cubic-bezier(0, 0, 0.625, 1);
+	--motion-ease-in-out: cubic-bezier(0.375, 0, 0.625, 1);
+}

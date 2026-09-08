@@ -1,0 +1,32 @@
+/* Motion — durations are powers of two in milliseconds. Nothing animates
+   longer than 256ms; nothing moves more than 2px. CSS only. */
+@theme {
+	--transition-duration-*: initial;
+	--transition-duration-instant: var(--motion-duration-instant);
+	--transition-duration-fastest: var(--motion-duration-fastest);
+	--transition-duration-fast: var(--motion-duration-fast);
+	--transition-duration-normal: var(--motion-duration-normal);
+	--transition-duration-slow: var(--motion-duration-slow);
+	--transition-duration-slowest: var(--motion-duration-slowest);
+
+	--ease-*: initial;
+	--ease-linear: var(--motion-ease-linear);
+	--ease-in: var(--motion-ease-in);
+	--ease-out: var(--motion-ease-out);
+	--ease-in-out: var(--motion-ease-in-out);
+
+	--transition-colors:
+		color var(--transition-duration-normal) var(--ease-standard),
+		background-color var(--transition-duration-normal) var(--ease-standard),
+		border-color var(--transition-duration-normal) var(--ease-standard),
+		text-decoration-color var(--transition-duration-normal) var(--ease-standard);
+}
+
+/*@media (prefers-reduced-motion: reduce) {
+	:root {
+		--duration-fastest: 0ms;
+		--duration-fast: 0ms;
+		--duration-med: 0ms;
+		--duration-slow: 0ms;
+	}
+}*/

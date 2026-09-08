@@ -1,0 +1,67 @@
+/* Type — modular scale, ratio 1.2 (minor third's quieter cousin) off a 1rem
+   base. Every line-height snaps to the 0.5rem (2^3 px) vertical rhythm unit,
+   so mixed sans/mono text stays on the same baseline grid.
+   Largest step is 2.074rem (~33px): moderate by intent. */
+:root {
+	--rhythm: 0.5rem; /* 8px  = 2^3 */
+	--leading-unit: 1.5rem; /* 24px = 3 * 2^3 */
+}
+
+/*
+ratio: 1.067 minor 2nd
+base: 1 rem (16px)
+
+2xs:  16 * 1.067**-8 ≈ 9.5
+xs:   16 * 1.067**-4 ≈ 12
+sm:   16 * 1.067**-2 ≈ 14
+base: 16 * 1.067**0 = 16
+lg:   16 * 1.067**2 ≈ 18
+xl:   16 * 1.067**4 ≈ 20
+2xl:  16 * 1.067**8 ≈ 26
+*/
+
+:root {
+	--font-base-unit: 1rem;
+	/* major 2nd */
+	--font-scale-ratio: 1.125;
+	/*--font-scale-ratio: 1.067; */
+}
+
+@theme {
+	--font-*: initial;
+	--font-sans: var(--font-family-sans);
+	--font-mono: var(--font-family-mono);
+
+	/* 12 14 16 20 24 32 */
+	/*--text-*: initial;
+	--text-xs: calc(pow(var(--font-scale-ratio), -4) * var(--font-base-unit));
+	--text-sm: calc(pow(var(--font-scale-ratio), -2) * var(--font-base-unit));
+	--text-base: calc(pow(var(--font-scale-ratio), 0) * var(--font-base-unit));
+	--text-md: calc(pow(var(--font-scale-ratio), 2) * var(--font-base-unit));
+	--text-lg: calc(pow(var(--font-scale-ratio), 4) * var(--font-base-unit));
+	--text-xl: calc(pow(var(--font-scale-ratio), 8) * var(--font-base-unit));
+	--text-2xl: calc(pow(var(--font-scale-ratio), 16) * var(--font-base-unit));*/
+
+	--text-5xl: initial;
+	--text-6xl: initial;
+	--text-9xl: initial;
+
+	--tracking-*: initial;
+	--tracking-tightest: var(--font-tracking-tightest);
+	--tracking-tighter: var(--font-tracking-tighter);
+	--tracking-tight: var(--font-tracking-tight);
+	--tracking-normal: var(--font-tracking-normal);
+	--tracking-wide: var(--font-tracking-wide);
+	--tracking-wider: var(--font-tracking-wider);
+	--tracking-widest: var(--font-tracking-widest);
+
+	/*--leading-*: initial;
+	--leading-2xs: 1rem;
+	--leading-xs: 1rem;
+	--leading-sm: 1.5rem;
+	--leading-base: 1.5;
+	--leading-md: 2rem;
+	--leading-lg: 2rem;
+	--leading-xl: 2.5rem;
+	--leading-2xl: 3rem;*/
+}

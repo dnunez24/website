@@ -1,0 +1,23 @@
+@import "tailwindcss";
+@import "fluidity-tailwind";
+@import "./primitives.css";
+@import "./colors.css";
+@import "./typography.css";
+@import "./spacing.css";
+@import "./semantic.css";
+@import "./motion.css";
+
+:root {
+	--f6y-lower: 20rem;
+	--f6y-upper: var(--breakpoint-lg, 64rem);
+}
+
+@layer base {
+	:not(:focus-visible) {
+		@apply outline-0 outline-offset-0 outline-transparent;
+	}
+
+	:focus-visible {
+		@apply mx-0.5 outline-4 outline-offset-2 outline-accent ease-out duration-fast motion-safe:transition-all;
+	}
+}

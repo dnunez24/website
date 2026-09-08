@@ -1,0 +1,5 @@
+:root {
+	--fluid-min-viewport: calc(360 / 16 * 1rem);
+	--fluid-max-viewport: calc(1024 / 16 * 1rem);
+	--rhythm-unit: calc(var(--text-base) * var(--leading-base));
+}

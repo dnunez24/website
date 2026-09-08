@@ -1,0 +1,18 @@
+---
+if (!import.meta.env.DEV) {
+	return new Response(null, { status: 404 });
+}
+
+import Button from "../components/Button.astro";
+import ProseParagraph from "../components/ProseParagraph.astro";
+import Layout from "../layouts/Default.astro";
+---
+
+<Layout title="Design System">
+  <Button>Click Me</Button>
+  <ProseParagraph>
+    The design system is a collection of components, patterns, and styles that
+    are used to create a consistent and unified user interface across a
+    website or application.
+  </ProseParagraph>
+</Layout>
