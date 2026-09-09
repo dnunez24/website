@@ -1,11 +1,14 @@
 @import "tailwindcss";
 @import "fluidity-tailwind";
 @import "./primitives.css";
+@import "./layout.css";
 @import "./colors.css";
 @import "./typography.css";
 @import "./spacing.css";
 @import "./semantic.css";
 @import "./motion.css";
+@import "./prose.css";
+@import "./typeset.css";
 
 :root {
 	--f6y-lower: 20rem;

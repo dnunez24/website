@@ -1,0 +1,21 @@
+---
+interface Article {
+	title: string;
+	slug: string;
+	publishedDate: Date;
+}
+
+interface Props {
+	articles: Article[];
+}
+
+const { articles } = Astro.props;
+---
+
+<ol>
+  {articles.map((article) => (
+    <li>
+      <a href={`/${article.slug}`}>{article.title}</a>
+    </li>
+  ))}
+</ol>

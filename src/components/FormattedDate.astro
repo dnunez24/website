@@ -1,17 +1,19 @@
 ---
 interface Props {
-	date: Date;
+	date: Date | string;
 }
 
 const { date } = Astro.props;
+const parsedDate = date instanceof Date ? date : new Date(date);
+const formatter = new Intl.DateTimeFormat("en-US", {
+	year: "numeric",
+	month: "short",
+	day: "2-digit",
+});
+const isoDate = parsedDate.toISOString();
+const formattedDate = formatter.format(parsedDate);
 ---
 
-<time datetime={date.toISOString()}>
-	{
-		date.toLocaleDateString('en-us', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-		})
-	}
+<time datetime={isoDate} class="text-mono uppercase text-tertiary">
+	{formattedDate}
 </time>

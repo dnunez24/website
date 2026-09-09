@@ -1,0 +1,46 @@
+---
+import type { MarkdownLayoutProps } from "astro";
+import type { CollectionEntry } from "astro:content";
+import BaseHead from "@components/BaseHead.astro";
+import Footer from "@components/Footer.astro";
+import FormattedDate from "@components/FormattedDate.astro";
+import Header from "@components/Header.astro";
+
+type ArticleData = CollectionEntry<"writing">["data"];
+type Props = ArticleData | MarkdownLayoutProps<ArticleData>;
+
+const props = Astro.props;
+const { title, description, publishedDate, updatedDate } =
+	"frontmatter" in props ? props.frontmatter : props;
+---
+
+<html lang="en">
+	<head>
+		<BaseHead title={title} description={description} />
+	</head>
+
+	<body class="font-body bg-surface text-primary">
+		<Header />
+		<main class="m-auto w-fit">
+			<article class="typeset typeset-article max-w-[68ch]">
+				<div>
+					<div>
+						<div>
+							<FormattedDate date={publishedDate} />
+							{
+								updatedDate && (
+									<div class="last-updated-on">
+										Last updated on <FormattedDate date={updatedDate} />
+									</div>
+								)
+							}
+						</div>
+						<h1>{title}</h1>
+					</div>
+					<slot />
+				</div>
+			</article>
+		</main>
+		<Footer />
+	</body>
+</html>

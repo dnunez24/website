@@ -12,7 +12,7 @@
 }
 
 @theme {
-	--container-*: initial;
+	/*--container-*: initial;*/
 	--container-prose: 68ch; /* article body */
 	--container-narrow: 52ch; /* intros, summaries, captions */
 	--container-wide: 84ch; /* listings, tables, code, figures */

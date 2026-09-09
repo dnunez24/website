@@ -1,55 +1,23 @@
 ---
+import NavLink from "@components/NavLink.astro";
 import { SITE_TITLE } from "../consts";
-import HeaderLink from "./HeaderLink.astro";
+
+const isActiveRoute = (name: string) => {
+	const pathname = Astro.url.pathname.replace(import.meta.env.BASE_URL, "");
+	console.log(pathname);
+	return pathname === name;
+};
 ---
 
-<header>
-	<nav>
-		<h2><a href="/">{SITE_TITLE}</a></h2>
-		<div class="internal-links">
-			<HeaderLink href="/blog">Blog</HeaderLink>
-			<HeaderLink href="/about">About</HeaderLink>
+<header class="py-16 px-4 border-border-subtle border-be">
+  <nav class="flex items-center justify-between max-w-5xl w-full m-auto f6y-exp-px-4/12">
+    <div class="">
+      <h2 class="f6y-text-xl/2xl font-semibold tracking-tighter hover:text-accent motion-safe:transition-colors ease-out duration-slow "><a href="/">{SITE_TITLE}</a></h2>
+      <div class="text-tertiary text-mono uppercase f6y-text-xs/sm">Engineering leadership & creative exploration</div>
+    </div>
+		<div class="flex">
+			<NavLink href="/writing" aria-current={isActiveRoute("writing")}>Writing</NavLink>
+			<NavLink href="/about" aria-current={isActiveRoute("about")}>About</NavLink>
 		</div>
 	</nav>
 </header>
-<style>
-	header {
-		margin: 0;
-		padding: 0 1em;
-		background: white;
-		box-shadow: 0 2px 8px rgba(var(--black), 5%);
-	}
-	h2 {
-		margin: 0;
-		font-size: 1em;
-	}
-
-	h2 a,
-	h2 a.active {
-		text-decoration: none;
-	}
-	nav {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-	nav a {
-		padding: 1em 0.5em;
-		color: var(--black);
-		border-bottom: 4px solid transparent;
-		text-decoration: none;
-	}
-	nav a.active {
-		text-decoration: none;
-		border-bottom-color: var(--accent);
-	}
-	.social-links,
-	.social-links a {
-		display: flex;
-	}
-	@media (max-width: 720px) {
-		.social-links {
-			display: none;
-		}
-	}
-</style>

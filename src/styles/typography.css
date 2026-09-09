@@ -65,3 +65,14 @@ xl:   16 * 1.067**4 ≈ 20
 	--leading-xl: 2.5rem;
 	--leading-2xl: 3rem;*/
 }
+
+::selection {
+	background-color: var(--color-clay-200);
+	color: var(--color-clay-950);
+}
+
+@property --text-underline-offset {
+	syntax: "<length>";
+	inherits: false;
+	initial-value: 0px;
+}

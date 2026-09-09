@@ -12,6 +12,7 @@
 		"astro": "astro"
 	},
 	"dependencies": {
+		"@astrojs/markdown-satteri": "^0.4.0",
 		"@astrojs/mdx": "^7.0.8",
 		"@astrojs/react": "^6.0.5",
 		"@astrojs/rss": "^4.0.19",
@@ -26,6 +27,7 @@
 		"fluidity-tailwind": "^0.1.1",
 		"react": "^19.2.8",
 		"react-dom": "^19.2.8",
+		"satteri-callouts": "^1.0.1",
 		"sharp": "^0.35.0",
 		"tailwindcss": "^4.3.3"
 	},
@@ -33,6 +35,7 @@
 		"esbuild": true
 	},
 	"devDependencies": {
+		"@astrojs/ts-plugin": "^1.10.11",
 		"@biomejs/biome": "2.5.12",
 		"@google/design.md": "^0.4.0"
 	}

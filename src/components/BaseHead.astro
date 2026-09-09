@@ -2,10 +2,10 @@
 // Import the global.css file here so that it is included on
 // all pages through the use of the <BaseHead /> component.
 import "../styles/global.css";
+import { Font } from "astro:assets";
 import type { ImageMetadata } from "astro";
 import FallbackImage from "../assets/blog-placeholder-1.jpg";
 import { SITE_TITLE } from "../consts";
-import { Font } from "astro:assets";
 
 interface Props {
 	title: string;
@@ -32,8 +32,8 @@ const { title, description, image = FallbackImage } = Astro.props;
 />
 <meta name="generator" content={Astro.generator} />
 
-<Font cssVariable="--font-afacad-flux" preload />
-<Font cssVariable="--font-jetbrains-mono" preload />
+<Font cssVariable="--font-family-sans" preload />
+<Font cssVariable="--font-family-mono" preload />
 
 <!-- Canonical URL -->
 <link rel="canonical" href={canonicalURL} />

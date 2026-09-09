@@ -1,8 +1,8 @@
 ---
-title: 'Third post'
+title: 'Second post'
 description: 'Lorem ipsum dolor sit amet'
-pubDate: 'Jul 22 2022'
-heroImage: '../../assets/blog-placeholder-2.jpg'
+publishedDate: 'Jul 15 2022'
+heroImage: '../../assets/blog-placeholder-4.jpg'
 ---
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
@@ -32,8 +32,6 @@ Bibendum neque egestas congue quisque egestas diam.
 Cras ornare arcu dui vivamus arcu felis bibendum.
 Dignissim suspendisse in est ante in nibh mauris.
 Sed tempus urna et pharetra pharetra massa massa ultricies mi.
-
-> Est ut officia qui exercitation ullamco cillum est duis. Esse aliqua id irure exercitation amet.
 
 Mollis nunc sed id semper risus in.
 Convallis a cras semper auctor neque.

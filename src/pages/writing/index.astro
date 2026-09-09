@@ -1,0 +1,26 @@
+---
+import { getCollection } from "astro:content";
+import FormattedDate from "@components/FormattedDate.astro";
+import Layout from "@layouts/Default.astro";
+
+const articles = (await getCollection("writing")).sort(
+	(a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf(),
+);
+---
+
+<Layout title="Writing" description="My collected published thoughts and ideas.">
+	<section>
+		<ol class="grid justify-items-start gap-x-24 gap-y-3 grid-cols-[max-content_minmax(0,1fr)]">
+			{
+				articles.map((article) => (
+					<li class="grid grid-cols-subgrid items-baseline col-start-1 -col-end-1">
+						<FormattedDate date={article.data.publishedDate} />
+            <a href={`/writing/${article.id}/`} class="hover:text-accent hover:underline motion-safe:transition-colors duration-normal ease-out decoration-transparent hover:decoration-accent underline-offset-0 hover:[--text-underline-offset:0.2em] motion-safe:transition-(--text-underline-offset)">
+							<h4 class="f6y-text-lg/xl">{article.data.title}</h4>
+						</a>
+					</li>
+				))
+			}
+		</ol>
+	</section>
+</Layout>

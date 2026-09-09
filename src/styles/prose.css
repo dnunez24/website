@@ -3,3 +3,25 @@
 	--fluid-max-viewport: calc(1024 / 16 * 1rem);
 	--rhythm-unit: calc(var(--text-base) * var(--leading-base));
 }
+
+@layer components {
+	.prose {
+		blockquote {
+			color: var(--color-text-secondary);
+			background-color: var(--color-surface-sunken);
+			border-left: --spacing(2) solid var(--color-accent-secondary);
+			border-radius: var(--radius-sm);
+			padding-block: --spacing(2);
+			margin-block: --spacing(4);
+			margin-inline-start: --spacing(8);
+			padding-inline-start: --spacing(2);
+		}
+
+		[data-footnote-ref] {
+			color: var(--color-accent-secondary);
+			font-size: var(--font-size-sm);
+			font-weight: var(--font-weight-medium);
+			text-decoration: none;
+		}
+	}
+}
