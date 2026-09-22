@@ -175,8 +175,28 @@ No language, no highlighting.
 
 ### Mermaid
 
+A `mermaid` fence renders as a diagram at build.
+Name it with `accTitle` and `accDescr`: they become its accessible name, and the build fails without one.
+
+#### Syntax
+
+````markdown
 ```mermaid
 graph TB
+    accTitle: A decision
+    accDescr: A start leads to a decision between two options; each has its own result, and both end in the same place.
+    A[Start] --> B[Decision]
+    B --> C[Option A]
+    B --> D[Option B]
+```
+````
+
+#### Output
+
+```mermaid
+graph TB
+    accTitle: A decision
+    accDescr: A start leads to a decision between two options; each has its own result, and both end in the same place.
     A[Start] --> B[Decision]
     B --> C[Option A]
     B --> D[Option B]

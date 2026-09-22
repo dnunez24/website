@@ -1,21 +1,15 @@
 ---
+import { renderMermaidFigure } from "@lib/mermaid";
+
 interface Props {
-	/** Accessible description of what the diagram shows. */
-	label: string;
+	/** Mermaid source. Name the diagram with `accTitle` and `accDescr`. */
+	code: string;
 }
 
-const { label } = Astro.props;
+const { code } = Astro.props;
+// Rendered at build by the same renderer as Markdown fences, so both share
+// one markup; components.css styles it.
+const figure = await renderMermaidFigure(code);
 ---
 
-<!--
-  Styles a Mermaid SVG rendered at build time; the rendering step is not wired
-  yet. Pass the SVG as the default slot.
--->
-<figure
-	data-diagram
-	role="img"
-	aria-label={label}
-	class="mx-0 overflow-x-auto rounded-md border border-line bg-surface-inset f6y-p-4"
->
-	<slot />
-</figure>
+<Fragment set:html={figure} />

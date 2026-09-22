@@ -31,20 +31,9 @@ const FLUID_SPACING_ROOT =
 
 /**
  * Classes that are hooks, not utilities: Tailwind's `group` and `peer`
- * markers, the `.prose` component class, and Mermaid's own SVG classes in the
- * sample diagram.
+ * markers and the `.prose` component class.
  */
-const MARKER_CLASSES = new Set([
-	"group",
-	"peer",
-	"prose",
-	"node",
-	"alt",
-	"label",
-	"path",
-	"edgePaths",
-	"arrowMarkerPath",
-]);
+const MARKER_CLASSES = new Set(["group", "peer", "prose"]);
 
 let system: DesignSystem;
 const sources = new Map<string, string[]>();
