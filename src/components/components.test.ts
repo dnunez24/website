@@ -157,7 +157,7 @@ describe("Header", () => {
 		);
 		const current = [...doc.querySelectorAll('nav a[aria-current="page"]')];
 		expect(current.map((link) => link.getAttribute("href"))).toEqual([
-			"/writing",
+			"/writing/",
 		]);
 		expect(doc.querySelector("nav")?.getAttribute("aria-label")).toBe("Main");
 	});

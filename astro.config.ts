@@ -6,6 +6,7 @@ import type { AstroIntegration } from "astro";
 import { defineConfig, fontProviders } from "astro/config";
 import satteriCallouts from "satteri-callouts";
 import { SUBSETS } from "./scripts/fonts.config.ts";
+import { isDevRoute, isPublicPage } from "./src/lib/routes.ts";
 import { syntaxTheme, syntaxTransformers } from "./src/lib/syntax.ts";
 
 function excludeDevPages(): AstroIntegration {
@@ -18,7 +19,7 @@ function excludeDevPages(): AstroIntegration {
 			"astro:build:setup": ({ pages, logger }) => {
 				if (import.meta.env.PROD) {
 					for (const [page, data] of pages.entries()) {
-						if (data.route.route?.match(/^\/dev\//)) {
+						if (data.route.route && isDevRoute(data.route.route)) {
 							logger.info(`page: ${ansiBlue}${data.component}${ansiReset}`);
 							pages.delete(page);
 						}
@@ -31,9 +32,12 @@ function excludeDevPages(): AstroIntegration {
 
 // https://astro.build/config
 export default defineConfig({
-	site: "https://example.com",
+	site: "https://davidanunez.com",
+	// One URL form for the sitemap, canonical links and internal links. GitHub
+	// Pages redirects `/about` to `/about/`, so slashless links cost a hop.
+	trailingSlash: "always",
 
-	integrations: [mdx(), sitemap(), excludeDevPages()],
+	integrations: [mdx(), sitemap({ filter: isPublicPage }), excludeDevPages()],
 
 	markdown: {
 		shikiConfig: {

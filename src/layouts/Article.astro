@@ -32,7 +32,7 @@ const {
 						</span>
 					)
 				}
-				{topics.length > 0 && <TopicList topics={topics.map((name) => ({ name, href: `/topics/${name}` }))} />}
+				{topics.length > 0 && <TopicList topics={topics.map((name) => ({ name, href: `/topics/${name}/` }))} />}
 			</div>
 		</header>
 		<Prose>
