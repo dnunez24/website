@@ -1,6 +1,6 @@
 ---
 import { Code } from "astro:components";
-import { syntaxTheme, syntaxTransformers } from "@lib/syntax";
+import { fenceMeta, syntaxTheme, syntaxTransformers } from "@lib/syntax";
 import type { ComponentProps } from "astro/types";
 
 interface Props {
@@ -12,25 +12,14 @@ interface Props {
 }
 
 const { code, lang, file, caption } = Astro.props;
+// The frame (header, code, caption) comes from the `dn:code-frame`
+// transformer, the one Markdown fences run, so both share one markup.
 ---
 
-<figure data-codeblock class="mx-0 overflow-hidden rounded-md bg-codeblock-ground scheme-dark">
-	<div class="m-0 flex items-baseline justify-between f6y-gap-2 border-b border-codeblock-line f6y-px-4 f6y-py-2 font-mono text-label text-ink-muted">
-		{file && <span class="truncate text-syntax-plain">{file}</span>}
-		<span class="ms-auto whitespace-nowrap lowercase text-syntax-comment">{lang}</span>
-	</div>
-	<Code
-		code={code}
-		lang={lang}
-		theme={syntaxTheme}
-		transformers={syntaxTransformers}
-		class="m-0 overflow-x-auto rounded-none f6y-p-4 font-mono text-code"
-	/>
-	{
-		caption && (
-			<figcaption class="m-0 f6y-px-4 f6y-pb-2 font-mono text-label text-syntax-comment">
-				{caption}
-			</figcaption>
-		)
-	}
-</figure>
+<Code
+	code={code}
+	lang={lang}
+	meta={fenceMeta({ title: file, caption })}
+	theme={syntaxTheme}
+	transformers={syntaxTransformers}
+/>

@@ -4,6 +4,31 @@
  * Shiki's <pre> and Mermaid's <svg>.
  */
 @layer components {
+	/*
+	 * CodeBlock: the frame the `dn:code-frame` Shiki transformer (src/lib/syntax.ts)
+	 * builds around every highlighted block, in Markdown and in CodeBlock.
+	 */
+	[data-codeblock] {
+		@apply mx-0 overflow-hidden rounded-md bg-codeblock-ground scheme-dark;
+	}
+	[data-codeblock-header] {
+		@apply m-0 flex items-baseline justify-between f6y-gap-2 border-b border-codeblock-line f6y-px-4 f6y-py-2 font-mono text-label text-ink-muted;
+	}
+	[data-codeblock-file] {
+		@apply truncate text-syntax-plain;
+	}
+	/* syntax-comment, not ink-muted: ink-muted fails contrast on the dark panel. */
+	[data-codeblock-lang] {
+		@apply ms-auto whitespace-nowrap lowercase text-syntax-comment;
+	}
+	/* The frame carries the corners; a bare `.prose pre` keeps its own. */
+	[data-codeblock] pre {
+		@apply m-0 overflow-x-auto rounded-none f6y-p-4 font-mono text-code;
+	}
+	[data-codeblock] > figcaption {
+		@apply m-0 f6y-px-4 f6y-pb-2 font-mono text-label text-syntax-comment;
+	}
+
 	/* The <pre> scrolls inside a clipped frame, so the frame carries its focus ring. */
 	[data-codeblock] pre:focus-visible {
 		outline: none;

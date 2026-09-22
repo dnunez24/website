@@ -297,13 +297,45 @@ describe("CodeBlock", () => {
 				props: { code: "const answer = 42;", lang: "ts", file: "answer.ts" },
 			}),
 		);
-		expect(doc.querySelector("[data-codeblock]")?.textContent).toContain(
+		const figure = doc.querySelector("figure[data-codeblock]");
+		expect(figure?.querySelector("[data-codeblock-file]")?.textContent).toBe(
 			"answer.ts",
 		);
-		const html = doc.querySelector("pre")?.outerHTML ?? "";
+		expect(figure?.querySelector("[data-codeblock-lang]")?.textContent).toBe(
+			"ts",
+		);
+		const html = figure?.querySelector("pre")?.outerHTML ?? "";
 		expect(html).toContain("var(--color-syntax-keyword)");
 		expect(html).toContain("font-weight:600");
 		expect(html).not.toContain("font-weight:bold");
+	});
+
+	it("names the scrollable code for assistive technology", async () => {
+		const doc = parse(
+			await render(CodeBlock, {
+				props: { code: "pnpm build", lang: "sh", file: "build.sh" },
+			}),
+		);
+		const pre = doc.querySelector("pre");
+		expect(pre?.getAttribute("role")).toBe("group");
+		expect(pre?.getAttribute("aria-label")).toBe("Code: build.sh, sh");
+	});
+
+	it("puts a caption below the code and only when given one", async () => {
+		const withCaption = parse(
+			await render(CodeBlock, {
+				props: { code: "x", lang: "ts", caption: 'Say "hi".' },
+			}),
+		);
+		expect(
+			withCaption.querySelector("figure[data-codeblock] > figcaption")
+				?.textContent,
+		).toBe('Say "hi".');
+		const without = parse(
+			await render(CodeBlock, { props: { code: "x", lang: "ts" } }),
+		);
+		expect(without.querySelector("figcaption")).toBeNull();
+		expect(without.querySelector("[data-codeblock-file]")).toBeNull();
 	});
 });
 
