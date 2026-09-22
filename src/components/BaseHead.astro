@@ -30,7 +30,10 @@ const { title, description, image = FallbackImage } = Astro.props;
 <meta name="generator" content={Astro.generator} />
 
 <Font cssVariable="--font-afacad-flux" preload />
-<Font cssVariable="--font-jetbrains-mono" />
+<!-- Mono sets the nav, tagline and dates, so it paints in the first viewport on every page. Preloaded, it
+     loads with the HTML instead of after the CSS; its Courier New fallback no longer flashes. The italic
+     only sets code comments, below the fold, so it waits. -->
+<Font cssVariable="--font-jetbrains-mono" preload={[{ style: "normal" }]} />
 
 <!-- Canonical URL -->
 <link rel="canonical" href={canonicalURL} />

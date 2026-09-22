@@ -40,6 +40,17 @@
 		font-variation-settings: normal;
 	}
 
+	/* A keycap, not a recess: inline code sinks into a darker ground, while kbd
+	   sits on a lighter one with a heavier bottom edge. No shadow. */
+	kbd {
+		@apply inline-block rounded-sm border border-b-2 border-line-strong bg-surface-inset text-center font-mono text-ink;
+		min-width: 1.6em;
+		padding: 0.05em 0.45em;
+		margin-inline: 0.05em;
+		font-size: 0.8125em;
+		line-height: 1.5;
+	}
+
 	::selection {
 		@apply bg-selection text-ink;
 	}

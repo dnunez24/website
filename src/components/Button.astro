@@ -5,7 +5,7 @@ type Variant = "filled" | "outline" | "ghost";
 
 type Props = {
 	variant?: Variant;
-	/** Marks the current page: `aria-current="page"`, bold label, brand rule. Ghost only. */
+	/** Marks the current page: `aria-current="page"`, bold brand label over a rule in the same color. Ghost only. */
 	current?: boolean;
 	class?: string;
 } & (
@@ -29,8 +29,10 @@ const variants: Record<Variant, string> = {
 		"border-brand f6y-px-4 font-medium text-brand hover:bg-brand-tint hover:text-brand-hover",
 	ghost: "relative border-transparent f6y-px-2 hover:bg-surface-hover",
 };
+// The rule is currentColor, so it always matches the label. Hover brings in
+// the ground and fades the rule; the bold label still marks the page.
 const ghostState = current
-	? "font-bold text-ink-heading after:absolute after:bottom-1 after:h-0.5 after:bg-brand after:f6y-inset-x-2"
+	? "font-bold text-brand after:absolute after:bottom-1 after:h-0.5 after:bg-current after:f6y-inset-x-2 after:transition-opacity hover:after:opacity-0"
 	: "font-normal text-ink";
 
 const classes = [
