@@ -1,0 +1,24 @@
+---
+interface Props {
+	name: string;
+	/** The first year of publication. Later builds show a range. */
+	since: number;
+	/** Adds "All rights reserved." after the name. */
+	rightsReserved?: boolean;
+	/** Defaults to the build year. */
+	year?: number;
+}
+
+const {
+	name,
+	since,
+	rightsReserved = false,
+	year = new Date().getFullYear(),
+} = Astro.props;
+const years = since < year ? `${since}–${year}` : `${year}`;
+---
+
+<!-- The notice wraps as a unit, so it moves to its own line instead of splitting. -->
+<p class="m-0 font-mono text-label text-ink-muted">&copy; {years} {name}{
+	rightsReserved && <Fragment>. <span class="whitespace-nowrap">All rights reserved.</span></Fragment>
+}</p>

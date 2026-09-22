@@ -217,7 +217,10 @@
 	--container-measure: 40rem;
 	--container-portrait: 12rem;
 
-	/* The one layout breakpoint: Pagination swaps its "Page 6 of 12" status for page numbers. */
+	/*
+	 * The one layout breakpoint: Pagination swaps its "Page 6 of 12" status for
+	 * page numbers, and the Footer's stacked nav and copyright share a row.
+	 */
 	--breakpoint-measure: 40rem;
 
 	--ease-standard: cubic-bezier(0.25, 0, 0, 1);

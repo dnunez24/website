@@ -1,0 +1,35 @@
+---
+import ArticleList from "@components/ArticleList.astro";
+import Button from "@components/Button.astro";
+import PageTitle from "@components/PageTitle.astro";
+import Base from "@layouts/Base.astro";
+import { articleHref, getArticles, getTopics } from "@lib/writing";
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+
+export const getStaticPaths = (async () => {
+	const articles = await getArticles();
+	return (await getTopics()).map(({ name }) => ({
+		params: { slug: name },
+		props: {
+			name,
+			articles: articles
+				.filter((article) => article.data.topics?.includes(name))
+				.map((article) => ({
+					title: article.data.title,
+					href: articleHref(article.id),
+					date: article.data.publishedDate,
+				})),
+		},
+	}));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { name, articles } = Astro.props;
+---
+
+<Base title={`#${name}`} description={`Articles about ${name}, newest first.`}>
+	<PageTitle label="Topic"><span aria-hidden="true">#</span>{name}</PageTitle>
+	<ArticleList articles={articles} />
+	<p class="f6y-mt-4"><Button variant="outline" href="/topics/">All topics</Button></p>
+</Base>

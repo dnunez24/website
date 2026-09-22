@@ -6,6 +6,7 @@ import ArticleList from "@components/ArticleList.astro";
 import BlockQuote from "@components/BlockQuote.astro";
 import Button from "@components/Button.astro";
 import CodeBlock from "@components/CodeBlock.astro";
+import Copyright from "@components/Copyright.astro";
 import Figure from "@components/Figure.astro";
 import FormattedDate from "@components/FormattedDate.astro";
 import Intro from "@components/Intro.astro";
@@ -365,6 +366,16 @@ const orderSequence = `sequenceDiagram
 		<Pagination current={1} total={3} href={pageHref} label="First page" />
 		<Pagination current={5} total={12} href={pageHref} label="Middle page" />
 		<Pagination current={12} total={12} href={pageHref} label="Last page" />
+	</section>
+
+	<section aria-labelledby="copyright" class="f6y-mb-16">
+		<SectionTitle id="copyright">Copyright</SectionTitle>
+		<div class="grid f6y-gap-2">
+			<Copyright name="Dave Nuñez" since={2026} year={2026} />
+			<Copyright name="Dave Nuñez" since={2026} year={2026} rightsReserved />
+			<Copyright name="Dave Nuñez" since={2024} year={2026} />
+			<Copyright name="Dave Nuñez" since={2024} year={2026} rightsReserved />
+		</div>
 	</section>
 
 	<section aria-labelledby="portrait" class="f6y-mb-16">

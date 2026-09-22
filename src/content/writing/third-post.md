@@ -2,6 +2,7 @@
 title: Third post
 description: Lorem ipsum dolor sit amet
 publishedDate: 2022-07-26
+topics: [systems]
 heroImage: "@assets/blog-placeholder-2.jpg"
 ---
 

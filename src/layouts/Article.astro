@@ -4,6 +4,7 @@ import FormattedDate from "@components/FormattedDate.astro";
 import Prose from "@components/Prose.astro";
 import TopicList from "@components/TopicList.astro";
 import Base from "@layouts/Base.astro";
+import { topicHref } from "@lib/writing";
 import type { MarkdownLayoutProps } from "astro";
 
 type ArticleData = CollectionEntry<"writing">["data"];
@@ -32,7 +33,7 @@ const {
 						</span>
 					)
 				}
-				{topics.length > 0 && <TopicList topics={topics.map((name) => ({ name, href: `/topics/${name}/` }))} />}
+				{topics.length > 0 && <TopicList topics={topics.map((name) => ({ name, href: topicHref(name) }))} />}
 			</div>
 		</header>
 		<Prose>

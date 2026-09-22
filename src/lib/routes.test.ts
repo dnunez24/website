@@ -1,7 +1,21 @@
 import type { APIContext } from "astro";
 import { describe, expect, it } from "vitest";
 import { GET as robots } from "../pages/robots.txt";
-import { isDevRoute, isPublicPage } from "./routes";
+import { isCurrentSection, isDevRoute, isPublicPage } from "./routes";
+
+describe("isCurrentSection", () => {
+	it("matches the link's own page and the pages under it", () => {
+		expect(isCurrentSection("/topics/", "/topics/")).toBe(true);
+		expect(isCurrentSection("/topics/systems/", "/topics/")).toBe(true);
+		expect(isCurrentSection("/writing/first-post/", "/writing")).toBe(true);
+	});
+
+	it("ignores pages that only share a prefix, and external links", () => {
+		expect(isCurrentSection("/topicsx/", "/topics/")).toBe(false);
+		expect(isCurrentSection("/writing-notes/", "/writing")).toBe(false);
+		expect(isCurrentSection("/", "https://github.com/dnunez24")).toBe(false);
+	});
+});
 
 describe("isDevRoute", () => {
 	it("matches routes under /dev/ and nothing that only starts with dev", () => {
