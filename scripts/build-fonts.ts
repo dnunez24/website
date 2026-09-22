@@ -6,7 +6,7 @@
  * harfbuzz's default layout-feature list, so stylistic sets and other
  * discretionary features are already gone before the browser sees them. To
  * turn a new feature on: add its tag to `features`, rerun, and add it to
- * `--font-sans--font-feature-settings` in `src/styles/typography.css`.
+ * `--font-sans--font-feature-settings` in `src/styles/theme.css`.
  *
  * Requires Node >= 22.18, which runs TypeScript without a build step.
  *

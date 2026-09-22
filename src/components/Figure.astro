@@ -9,7 +9,7 @@ const { caption, wide = false } = Astro.props;
 ---
 
 <figure class:list={["m-0", { "bleed-x-4": wide }]}>
-	<div class="*:block *:h-auto *:max-w-full *:rounded-none *:bg-concrete-200"><slot /></div>
+	<div class="*:block *:h-auto *:max-w-full *:rounded-none *:bg-media-ground"><slot /></div>
 	{
 		caption && (
 			<figcaption class:list={["mt-1 text-small text-ink-muted", { "f6y-px-4": wide }]}>

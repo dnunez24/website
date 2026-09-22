@@ -134,7 +134,7 @@
 		}
 
 		& :is(img, video) {
-			@apply block h-auto max-w-full rounded-none bg-concrete-200;
+			@apply block h-auto max-w-full rounded-none bg-media-ground;
 		}
 		& figure {
 			@apply mx-0;

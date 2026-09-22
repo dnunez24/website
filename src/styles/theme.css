@@ -103,6 +103,7 @@
 	--color-surface-inset: var(--color-concrete-50);
 	--color-surface-hover: var(--color-concrete-200);
 	--color-code-ground: var(--color-concrete-200);
+	--color-media-ground: var(--color-concrete-200);
 	--color-codeblock-selection: var(--color-earth-800);
 	--color-codeblock-line: var(--color-concrete-800);
 	--color-codeblock-ground: var(--color-concrete-950);
@@ -140,6 +141,7 @@
 
 	/* Astro's font API variables (astro.config.ts) already carry the fallbacks. */
 	--font-sans: var(--font-afacad-flux);
+	--font-sans--font-feature-settings: "calt", "case", "pnum", "zero", "ss02";
 	--font-mono: var(--font-jetbrains-mono);
 
 	--font-weight-normal: 400;

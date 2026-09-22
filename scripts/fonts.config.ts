@@ -167,8 +167,9 @@ export const FONTS: FontBuild[] = [
 		stem: "jetbrains-mono-italic",
 		source:
 			"https://raw.githubusercontent.com/google/fonts/main/ofl/jetbrainsmono/JetBrainsMono-Italic%5Bwght%5D.ttf",
-		license:
-			"https://raw.githubusercontent.com/google/fonts/main/ofl/jetbrainsmono/OFL.txt",
+		// Same upstream OFL as the "jetbrains-mono" build above, already
+		// committed as jetbrains-mono-OFL.txt — omit here so a rebuild
+		// doesn't write an untracked duplicate under a different filename.
 		subsets: ["latin"],
 		features: MONO_FEATURES,
 		variants: [{ label: "wght", weight: "100 800", style: "italic" }],

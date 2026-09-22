@@ -5,13 +5,20 @@ import ArticleList from "./ArticleList.astro";
 import BlockQuote from "./BlockQuote.astro";
 import Button from "./Button.astro";
 import CodeBlock from "./CodeBlock.astro";
+import Container from "./Container.astro";
+import Figure from "./Figure.astro";
 import FormattedDate from "./FormattedDate.astro";
 import Header from "./Header.astro";
 import Link from "./Link.astro";
 import Pagination from "./Pagination.astro";
+import Portrait from "./Portrait.astro";
+import Prose from "./Prose.astro";
 import SectionHeading from "./SectionHeading.astro";
 import SectionTitle from "./SectionTitle.astro";
+import SkipLink from "./SkipLink.astro";
 import Topic from "./Topic.astro";
+import TopicList from "./TopicList.astro";
+import WordMark from "./WordMark.astro";
 
 let container: AstroContainer;
 
@@ -301,5 +308,177 @@ describe.each([
 		expect(classes.filter((name) => /^(f6y-)?(m|my|mt)-/.test(name))).toEqual(
 			[],
 		);
+	});
+});
+
+describe("Container", () => {
+	it("renders a div by default and merges the caller's class", async () => {
+		const doc = parse(
+			await render(Container, {
+				props: { class: "f6y-py-2" },
+				slots: { default: "Content" },
+			}),
+		);
+		const el = doc.querySelector("div");
+		expect(el?.classList.contains("max-w-site")).toBe(true);
+		expect(el?.classList.contains("f6y-py-2")).toBe(true);
+		expect(el?.textContent).toBe("Content");
+	});
+
+	it("renders the tag given by the as prop instead of a div", async () => {
+		const doc = parse(
+			await render(Container, {
+				props: { as: "section" },
+				slots: { default: "Content" },
+			}),
+		);
+		expect(doc.querySelector("section")).not.toBeNull();
+		expect(doc.querySelector("div.max-w-site")).toBeNull();
+	});
+});
+
+describe("Prose", () => {
+	it("renders a div with the prose class by default", async () => {
+		const doc = parse(await render(Prose, { slots: { default: "Text" } }));
+		const el = doc.querySelector("div");
+		expect(el?.classList.contains("prose")).toBe(true);
+	});
+
+	it("renders the tag given by the as prop and keeps the prose class", async () => {
+		const doc = parse(
+			await render(Prose, {
+				props: { as: "article", class: "f6y-mb-8" },
+				slots: { default: "Text" },
+			}),
+		);
+		const el = doc.querySelector("article");
+		expect(el?.classList.contains("prose")).toBe(true);
+		expect(el?.classList.contains("f6y-mb-8")).toBe(true);
+	});
+});
+
+describe("SkipLink", () => {
+	it("links to #main by default", async () => {
+		const doc = parse(await render(SkipLink));
+		expect(doc.querySelector("a")?.getAttribute("href")).toBe("#main");
+	});
+
+	it("links to the given target", async () => {
+		const doc = parse(await render(SkipLink, { props: { target: "content" } }));
+		expect(doc.querySelector("a")?.getAttribute("href")).toBe("#content");
+	});
+});
+
+describe("WordMark", () => {
+	it("links to / by default and omits the tagline when absent", async () => {
+		const doc = parse(
+			await render(WordMark, { props: { name: "Dave Nuñez" } }),
+		);
+		const link = doc.querySelector("a");
+		expect(link?.getAttribute("href")).toBe("/");
+		expect(link?.textContent?.trim()).toBe("Dave Nuñez");
+		expect(doc.querySelectorAll("span")).toHaveLength(1);
+	});
+
+	it("renders the tagline and a custom href when given", async () => {
+		const doc = parse(
+			await render(WordMark, {
+				props: {
+					name: "Dave Nuñez",
+					tagline: "Software leader",
+					href: "/about",
+				},
+			}),
+		);
+		const link = doc.querySelector("a");
+		expect(link?.getAttribute("href")).toBe("/about");
+		expect(doc.querySelectorAll("span")).toHaveLength(2);
+		expect(link?.textContent).toContain("Software leader");
+	});
+});
+
+describe("TopicList", () => {
+	const topics = [
+		{ name: "design" },
+		{ name: "markdown", href: "/topics/markdown" },
+	];
+
+	it("renders one Topic per item under the default label", async () => {
+		const doc = parse(await render(TopicList, { props: { topics } }));
+		const list = doc.querySelector("ul");
+		expect(list?.getAttribute("aria-label")).toBe("Topics");
+		expect(list?.querySelectorAll("li")).toHaveLength(2);
+		expect(list?.querySelector("a")?.getAttribute("href")).toBe(
+			"/topics/markdown",
+		);
+	});
+
+	it("uses the index layout's balanced spacing and a custom label", async () => {
+		const doc = parse(
+			await render(TopicList, {
+				props: { topics, index: true, label: "All topics" },
+			}),
+		);
+		const list = doc.querySelector("ul");
+		expect(list?.getAttribute("aria-label")).toBe("All topics");
+		expect(list?.classList.contains("text-balance")).toBe(true);
+		expect(list?.querySelector("li")?.classList.contains("inline-block")).toBe(
+			true,
+		);
+	});
+});
+
+describe("Portrait", () => {
+	it("renders an accessible placeholder when there is no src", async () => {
+		const doc = parse(await render(Portrait, { props: { alt: "Dave Nuñez" } }));
+		const placeholder = doc.querySelector('[role="img"]');
+		expect(placeholder?.getAttribute("aria-label")).toBe("Dave Nuñez");
+		expect(placeholder?.classList.contains("bg-media-ground")).toBe(true);
+		expect(doc.querySelector("img")).toBeNull();
+	});
+
+	it("floats right and adds the circle shape when float is set", async () => {
+		const doc = parse(
+			await render(Portrait, { props: { alt: "Dave Nuñez", float: true } }),
+		);
+		const figure = doc.querySelector("figure");
+		expect(figure?.classList.contains("float-right")).toBe(true);
+		expect(figure?.classList.contains("shape-circle")).toBe(true);
+	});
+});
+
+describe("Figure", () => {
+	it("renders a caption when given one and omits figcaption otherwise", async () => {
+		const withCaption = parse(
+			await render(Figure, {
+				props: { caption: "A diagram." },
+				slots: { default: '<img src="/a.jpg" alt="" />' },
+			}),
+		);
+		expect(withCaption.querySelector("figcaption")?.textContent).toBe(
+			"A diagram.",
+		);
+
+		const withoutCaption = parse(
+			await render(Figure, {
+				slots: { default: '<img src="/a.jpg" alt="" />' },
+			}),
+		);
+		expect(withoutCaption.querySelector("figcaption")).toBeNull();
+	});
+
+	it("bleeds into the gutter and pads the caption when wide is set", async () => {
+		const doc = parse(
+			await render(Figure, {
+				props: { caption: "Wide.", wide: true },
+				slots: { default: '<img src="/a.jpg" alt="" />' },
+			}),
+		);
+		expect(doc.querySelector("figure")?.classList.contains("bleed-x-4")).toBe(
+			true,
+		);
+		expect(
+			doc.querySelector("figcaption")?.classList.contains("f6y-px-4"),
+		).toBe(true);
 	});
 });
