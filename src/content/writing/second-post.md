@@ -2,6 +2,7 @@
 title: 'Second post'
 description: 'Lorem ipsum dolor sit amet'
 publishedDate: 'Jul 15 2022'
+topics: [systems, architecture]
 heroImage: '../../assets/blog-placeholder-4.jpg'
 ---
 

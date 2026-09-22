@@ -1,1 +1,20 @@
-<h1 class="m-0 f6y-mb-4 text-h1 text-balance text-ink-heading"><slot /></h1>
+---
+interface Props {
+	/** A mono label that sits directly above the title, such as "Topic". */
+	label?: string;
+}
+
+const { label } = Astro.props;
+const title = "m-0 f6y-mb-4 text-h1 text-balance text-ink-heading";
+---
+
+{
+	label === undefined ? (
+		<h1 class={title}><slot /></h1>
+	) : (
+		<hgroup>
+			<p class="m-0 font-mono text-label font-medium tracking-caps text-ink-muted uppercase">{label}</p>
+			<h1 class={title}><slot /></h1>
+		</hgroup>
+	)
+}

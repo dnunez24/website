@@ -6,11 +6,14 @@ import BlockQuote from "./BlockQuote.astro";
 import Button from "./Button.astro";
 import CodeBlock from "./CodeBlock.astro";
 import Container from "./Container.astro";
+import Copyright from "./Copyright.astro";
 import Figure from "./Figure.astro";
+import Footer from "./Footer.astro";
 import FormattedDate from "./FormattedDate.astro";
 import Header from "./Header.astro";
 import Link from "./Link.astro";
 import MermaidDiagram from "./MermaidDiagram.astro";
+import PageTitle from "./PageTitle.astro";
 import Pagination from "./Pagination.astro";
 import Portrait from "./Portrait.astro";
 import Prose from "./Prose.astro";
@@ -192,7 +195,9 @@ describe("Header", () => {
 		expect(current.map((link) => link.getAttribute("href"))).toEqual([
 			"/writing/",
 		]);
-		expect(doc.querySelector("nav")?.getAttribute("aria-label")).toBe("Main");
+		expect(doc.querySelector("nav")?.getAttribute("aria-label")).toBe(
+			"Primary",
+		);
 	});
 
 	it("opens with the skip link, before the word mark", async () => {
@@ -212,6 +217,95 @@ describe("Header", () => {
 			await render(Header, { request: new Request("https://example.com/") }),
 		);
 		expect(doc.querySelectorAll("[aria-current]")).toHaveLength(0);
+	});
+});
+
+describe("Footer", () => {
+	const current = async (url: string) => {
+		const doc = parse(await render(Footer, { request: new Request(url) }));
+		return [...doc.querySelectorAll('nav a[aria-current="page"]')].map((link) =>
+			link.getAttribute("href"),
+		);
+	};
+
+	it("marks Topics current on the Topics page and every topic page", async () => {
+		expect(await current("https://example.com/topics/")).toEqual(["/topics/"]);
+		expect(await current("https://example.com/topics/systems/")).toEqual([
+			"/topics/",
+		]);
+		expect(await current("https://example.com/writing/")).toEqual([]);
+	});
+
+	it("labels its navigation Secondary and ends with the copyright", async () => {
+		const doc = parse(
+			await render(Footer, { request: new Request("https://example.com/") }),
+		);
+		expect(doc.querySelector("nav")?.getAttribute("aria-label")).toBe(
+			"Secondary",
+		);
+		// The first year is 2026, so later builds show a range starting there.
+		expect(doc.querySelector("footer p")?.textContent).toMatch(
+			/^© 2026(–\d{4})? Dave Nuñez\. All rights reserved\.$/,
+		);
+	});
+});
+
+describe("Copyright", () => {
+	const text = async (props: Record<string, unknown>) =>
+		parse(
+			await render(Copyright, { props: { name: "Dave Nuñez", ...props } }),
+		).querySelector("p")?.textContent;
+
+	it("shows one year until the build year passes the first year", async () => {
+		expect(await text({ since: 2026, year: 2026 })).toBe("© 2026 Dave Nuñez");
+		expect(await text({ since: 2027, year: 2026 })).toBe("© 2026 Dave Nuñez");
+	});
+
+	it("shows a range after the first year, joined by an en dash", async () => {
+		expect(await text({ since: 2024, year: 2026 })).toBe(
+			"© 2024–2026 Dave Nuñez",
+		);
+	});
+
+	it("adds the notice after a period, wrapping as a unit", async () => {
+		const doc = parse(
+			await render(Copyright, {
+				props: {
+					name: "Dave Nuñez",
+					since: 2024,
+					year: 2026,
+					rightsReserved: true,
+				},
+			}),
+		);
+		expect(doc.querySelector("p")?.textContent).toBe(
+			"© 2024–2026 Dave Nuñez. All rights reserved.",
+		);
+		expect(doc.querySelector("p span")?.className).toBe("whitespace-nowrap");
+	});
+});
+
+describe("PageTitle", () => {
+	it("renders a bare h1 without a label", async () => {
+		const doc = parse(
+			await render(PageTitle, { slots: { default: "Writing" } }),
+		);
+		expect(doc.querySelector("hgroup")).toBeNull();
+		expect(doc.querySelector("h1")?.textContent).toBe("Writing");
+	});
+
+	it("groups a label above the h1", async () => {
+		const doc = parse(
+			await render(PageTitle, {
+				props: { label: "Topic" },
+				slots: { default: "#systems" },
+			}),
+		);
+		const [label, title] = doc.querySelector("hgroup")?.children ?? [];
+		expect(label?.localName).toBe("p");
+		expect(label?.textContent).toBe("Topic");
+		expect(title?.localName).toBe("h1");
+		expect(title?.textContent).toBe("#systems");
 	});
 });
 

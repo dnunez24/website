@@ -2,6 +2,7 @@
 title: 'First post'
 description: 'Lorem ipsum dolor sit amet'
 publishedDate: 'Jul 08 2022'
+topics: [leadership]
 ---
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.

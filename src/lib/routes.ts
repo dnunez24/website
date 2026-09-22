@@ -1,3 +1,8 @@
+/** Navigation marks a link current on its own page and on every page under it. */
+export const isCurrentSection = (pathname: string, href: string): boolean =>
+	pathname === href ||
+	pathname.startsWith(href.endsWith("/") ? href : `${href}/`);
+
 /** Specimen pages under `/dev/` are for local development; production builds drop them. */
 export const isDevRoute = (pathname: string): boolean =>
 	pathname.startsWith("/dev/");

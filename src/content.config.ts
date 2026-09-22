@@ -13,7 +13,17 @@ const writing = defineCollection({
 			// Transform string to Date object
 			publishedDate: z.coerce.date(),
 			updatedDate: z.coerce.date().optional(),
-			topics: z.array(z.string()).optional(),
+			// Lowercase, hyphenated slugs, so a topic's name is its URL.
+			topics: z
+				.array(
+					z
+						.string()
+						.regex(
+							/^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+							"Topics are lowercase, hyphenated slugs, such as developer-experience",
+						),
+				)
+				.optional(),
 		}),
 });
 

@@ -4,11 +4,9 @@ import Container from "@components/Container.astro";
 import SkipLink from "@components/SkipLink.astro";
 import WordMark from "@components/WordMark.astro";
 import { HEADER_NAV_ITEMS, SITE_TAGLINE, SITE_TITLE } from "@constants";
+import { isCurrentSection } from "@lib/routes";
 
 const pathname = Astro.url.pathname;
-const isCurrent = (href: string) =>
-	pathname === href ||
-	pathname.startsWith(href.endsWith("/") ? href : `${href}/`);
 ---
 
 <header class="border-b border-line">
@@ -16,12 +14,12 @@ const isCurrent = (href: string) =>
 		<SkipLink />
 		<!-- Fades while the skip link has focus, so a two-line WordMark doesn't show around it. -->
 		<WordMark name={SITE_TITLE} tagline={SITE_TAGLINE} class="peer-focus-visible:opacity-0" />
-		<nav aria-label="Main">
+		<nav aria-label="Primary">
 			<ul class="m-0 flex list-none flex-wrap p-0 bleed-x-2">
 				{
 					HEADER_NAV_ITEMS.map((item) => (
 						<li>
-							<Button variant="ghost" href={item.href} current={isCurrent(item.href)}>
+							<Button variant="ghost" href={item.href} current={isCurrentSection(pathname, item.href)}>
 								{item.label}
 							</Button>
 						</li>

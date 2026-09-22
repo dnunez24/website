@@ -1,28 +1,29 @@
 ---
 import Button from "@components/Button.astro";
 import Container from "@components/Container.astro";
-import { FOOTER_NAV_ITEMS, SITE_TITLE } from "@constants";
+import Copyright from "@components/Copyright.astro";
+import { FOOTER_NAV_ITEMS, SITE_SINCE, SITE_TITLE } from "@constants";
+import { isCurrentSection } from "@lib/routes";
 
-const year = new Date().getFullYear();
+const pathname = Astro.url.pathname;
 ---
 
 <footer class="f6y-mt-8 border-t border-line">
 	<Container class="flex flex-wrap items-center justify-between f6y-gap-x-4 f6y-gap-y-2 f6y-py-2">
-
-	<nav aria-label="Footer">
-		<ul class="m-0 flex list-none flex-wrap p-0 bleed-x-2">
-			{
-				FOOTER_NAV_ITEMS.map((item) => (
-					<li>
-						<Button variant="ghost" href={item.href}>
-							{item.label}
-						</Button>
-					</li>
-				))
-			}
-		</ul>
-	</nav>
-		<p class="m-0 font-mono text-label text-ink-muted">&copy; {year} {SITE_TITLE}</p>
+		<nav aria-label="Secondary">
+			<ul class="m-0 flex list-none flex-wrap p-0 bleed-x-2">
+				{
+					FOOTER_NAV_ITEMS.map((item) => (
+						<li>
+							<Button variant="ghost" href={item.href} current={isCurrentSection(pathname, item.href)}>
+								{item.label}
+							</Button>
+						</li>
+					))
+				}
+			</ul>
+		</nav>
+		<Copyright name={SITE_TITLE} since={SITE_SINCE} rightsReserved />
 		<slot />
 	</Container>
 </footer>
