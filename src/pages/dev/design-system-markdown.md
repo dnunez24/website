@@ -76,8 +76,8 @@ The block quote element represents content that's quoted from another source, op
 #### Syntax
 
 ```markdown
-> Don't communicate by sharing memory, share memory by communicating.<br>
-> — <cite>Rob Pike[^1]</cite>
+> Don't communicate by sharing memory, share memory by communicating.
+> <cite>Rob Pike[^1]</cite>
 ```
 
 #### Output
