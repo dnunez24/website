@@ -1,63 +1,79 @@
 @theme {
 	--color-*: initial;
 
-	/*
-   * concrete: the primary neutral. Cool, low-chroma; fills most of the surface.
-   */
-	--color-concrete-50: oklch(0.985 0.002 250);
-	--color-concrete-100: oklch(0.955 0.003 250);
-	--color-concrete-200: oklch(0.9 0.004 250);
-	--color-concrete-300: oklch(0.852 0.005 250);
-	--color-concrete-400: oklch(0.715 0.007 250);
-	--color-concrete-500: oklch(0.592 0.009 250);
-	--color-concrete-600: oklch(0.455 0.01 250);
-	--color-concrete-700: oklch(0.392 0.011 250);
-	--color-concrete-800: oklch(0.312 0.01 250);
-	--color-concrete-900: oklch(0.24 0.009 250);
-	--color-concrete-950: oklch(0.16 0.008 250);
+	/** primary color, fills 60% of space */
+	--color-primary-50: var(--color-concrete-50);
+	--color-primary-100: var(--color-concrete-100);
+	--color-primary-200: var(--color-concrete-200);
+	--color-primary-300: var(--color-concrete-300);
+	--color-primary-400: var(--color-concrete-400);
+	--color-primary-500: var(--color-concrete-500);
+	--color-primary-600: var(--color-concrete-600);
+	--color-primary-700: var(--color-concrete-700);
+	--color-primary-800: var(--color-concrete-800);
+	--color-primary-900: var(--color-concrete-900);
+	--color-primary-950: var(--color-concrete-950);
 
-	/*
-	 * clay: warm accent #1 (terracotta / brick / teak). Links, marks, emphasis.
-	 */
-	--color-clay-50: oklch(0.978 0.011 62);
-	--color-clay-100: oklch(0.955 0.026 62);
-	--color-clay-200: oklch(0.912 0.05 58);
-	--color-clay-300: oklch(0.848 0.08 55);
-	--color-clay-400: oklch(0.762 0.116 52);
-	--color-clay-500: oklch(0.678 0.14 48);
-	--color-clay-600: oklch(0.596 0.146 45);
-	--color-clay-700: oklch(0.508 0.13 43);
-	--color-clay-800: oklch(0.418 0.104 42);
-	--color-clay-900: oklch(0.344 0.082 42);
-	--color-clay-950: oklch(0.236 0.056 42);
+	/* secondary color, fills 30% of space */
+	--color-secondary-50: var(--color-vintage-blue-50);
+	--color-secondary-100: var(--color-vintage-blue-100);
+	--color-secondary-200: var(--color-vintage-blue-200);
+	--color-secondary-300: var(--color-vintage-blue-300);
+	--color-secondary-400: var(--color-vintage-blue-400);
+	--color-secondary-500: var(--color-vintage-blue-500);
+	--color-secondary-600: var(--color-vintage-blue-600);
+	--color-secondary-700: var(--color-vintage-blue-700);
+	--color-secondary-800: var(--color-vintage-blue-800);
+	--color-secondary-900: var(--color-vintage-blue-900);
+	--color-secondary-950: var(--color-vintage-blue-950);
 
-	/*
-	 * verdigris: warm-adjacent accent #2 (oxidised copper).
-	 *
-	 * Used sparingly, never as the sole carrier of meaning. clay vs verdigris
-	 * stay separable under deuteranopia/protanopia because they differ in
-	 * lightness AND hue-family (orange vs cyan), not just hue.
-	 */
-	--color-verdigris-50: oklch(0.98 0.01 195);
-	--color-verdigris-100: oklch(0.955 0.021 195);
-	--color-verdigris-200: oklch(0.91 0.04 196);
-	--color-verdigris-300: oklch(0.845 0.058 197);
-	--color-verdigris-400: oklch(0.752 0.072 198);
-	--color-verdigris-500: oklch(0.66 0.078 200);
-	--color-verdigris-600: oklch(0.57 0.075 202);
-	--color-verdigris-700: oklch(0.474 0.066 204);
-	--color-verdigris-800: oklch(0.386 0.053 206);
-	--color-verdigris-900: oklch(0.312 0.042 208);
-	--color-verdigris-950: oklch(0.212 0.03 210);
+	/* accent color, used sparingly for drawing attentiong, around 10% */
+	--color-accent-50: var(--color-leather-50);
+	--color-accent-100: var(--color-leather-100);
+	--color-accent-200: var(--color-leather-200);
+	--color-accent-300: var(--color-leather-300);
+	--color-accent-400: var(--color-leather-400);
+	--color-accent-500: var(--color-leather-500);
+	--color-accent-600: var(--color-leather-600);
+	--color-accent-700: var(--color-leather-700);
+	--color-accent-800: var(--color-leather-800);
+	--color-accent-900: var(--color-leather-900);
+	--color-accent-950: var(--color-leather-950);
 
-	--color-surface-base: var(--color-concrete-200);
-	--color-surface-sunken: var(--color-concrete-300);
-	--color-surface-raised: var(--color-concrete-100);
-	--color-surface-inverse: var(--color-concrete-900);
+	/* Surface — one, and only one. Mid-value concrete. */
+	--color-surface: var(--color-primary-200);
+	/* code blocks, figure mats */
+	--color-surface-sunken: var(--color-primary-300);
+	/* inline code, table stripe */
+	--color-surface-raised: var(--color-primary-100);
+	--color-surface-inverse: var(--color-primary-900);
 
-	--color-text-primary: var(--color-concrete-900);
+	/* Text */
+	--color-text-primary: var(--color-concrete-950);
 	--color-text-secondary: var(--color-concrete-700);
-	--color-text-tertiary: var(--color-concrete-300);
+	--color-text-tertiary: var(--color-concrete-600);
+	--color-text-inverse: var(--color-primary-100);
+	--color-accent: var(--color-accent-700);
+	--color-link: var(--color-secondary-800);
+	--color-link-hover: var(--color-secondary-900);
+	--color-code: var(--color-primary-900);
 
-	--color-accent: var(--color-clay-700);
+	/* Lines */
+	--color-border-subtle: var(--color-concrete-400);
+	--color-border-default: var(--color-concrete-500);
+	--color-border-strong: var(--color-concrete-700);
+	--color-rule: var(--color-concrete-400);
+
+	/* Interaction */
+	--color-focus-ring: var(--color-accent-800);
+	--color-focus-ring-width: var(--border-width-emphasis);
+	--color-focus-ring-offset: var(--spacing-2);
+	--color-selection-bg: var(--color-accent-200);
+	--color-selection-fg: var(--color-primary-950);
+
+	/* Syntax — four roles, that is all */
+	--color-code-plain: var(--color-primary-900);
+	--color-code-muted: var(--color-primary-600);
+	--color-code-keyword: var(--color-accent-800);
+	--color-code-literal: var(--color-secondary-800);
 }

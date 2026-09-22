@@ -7,10 +7,12 @@
 @layer components {
 	.prose {
 		blockquote {
-			color: var(--color-text-secondary);
-			background-color: var(--color-surface-sunken);
-			border-left: --spacing(2) solid var(--color-accent-secondary);
-			border-radius: var(--radius-sm);
+			color: var(--color-verdigris-800);
+			background-color: color-mix(
+				in oklch var(--color-verdigris-800),
+				10%,
+				transparent
+			);
 			padding-block: --spacing(2);
 			margin-block: --spacing(4);
 			margin-inline-start: --spacing(8);

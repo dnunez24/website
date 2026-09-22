@@ -28,7 +28,7 @@ const mainClassNames = "m-auto w-dvw max-w-5xl f6y-my-2/4 f6y-exp-px-4/12";
 		<BaseHead title={titleWithFallback} description={descriptionWithFallback} />
 	</head>
 
-	<body class="font-body bg-surface-base text-primary transition-focus-ring flex flex-col gap-4">
+	<body class="font-sans bg-surface-base text-primary transition-focus-ring flex flex-col gap-4">
 		<Header />
 		<main class:list={[mainClassNames, { typeset: frontmatter?.prose, "typeset-article": frontmatter?.prose }]}>
       <slot />

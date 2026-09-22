@@ -20,6 +20,12 @@ xl:   16 * 1.067**4 ≈ 20
 2xl:  16 * 1.067**8 ≈ 26
 */
 
+/*@font-feature-values "Afacad Flux" {
+	@stylistic {
+		alt-a: 1;
+	}
+}*/
+
 :root {
 	--font-base-unit: 1rem;
 	/* major 2nd */
@@ -30,7 +36,13 @@ xl:   16 * 1.067**4 ≈ 20
 @theme {
 	--font-*: initial;
 	--font-sans: var(--font-family-sans);
+	--font-sans--font-feature-settings: "calt", "case", "pnum", "zero", "ss02";
 	--font-mono: var(--font-family-mono);
+
+	--font-weight-light: 300;
+	--font-weight-normal: 375;
+	--font-weight-medium: 450;
+	--font-weight-semibold: 600;
 
 	/* 12 14 16 20 24 32 */
 	/*--text-*: initial;
