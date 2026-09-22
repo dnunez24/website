@@ -146,6 +146,33 @@ we can use 3 backticks ``` in new line and write snippet and close with 3 backti
 </html>
 ```
 
+### File name and caption
+
+Add `title="…"` after the language to name the file in the header, and `caption="…"` to add a caption below the code.
+
+#### Syntax
+
+````markdown
+```ts title="src/lib/writing.ts" caption="Article URLs end with a slash."
+export const articleHref = (id: string) => `/writing/${id}/`;
+```
+````
+
+#### Output
+
+```ts title="src/lib/writing.ts" caption="Article URLs end with a slash."
+export const articleHref = (id: string) => `/writing/${id}/`;
+```
+
+### Plain text
+
+A fence without a language is labeled `text`.
+
+<!-- rumdl-disable-next-line MD040 -->
+```
+No language, no highlighting.
+```
+
 ### Mermaid
 
 ```mermaid
