@@ -2,19 +2,31 @@
 interface Props {
 	name: string;
 	href?: string;
+	/** Articles on this topic, shown on the Topics page. */
 	count?: number;
 }
 
 const { name, href, count } = Astro.props;
 const Tag = href === undefined ? "span" : "a";
+const isLink = href !== undefined;
 ---
 
 <Tag
 	href={href}
 	class:list={[
-		"inline-block rounded-sm bg-topic-ground f6y-px-2 py-1 font-mono text-label text-topic no-underline transition-colors",
-		{ "hover:bg-topic-ground-hover": href !== undefined },
+		"group inline-block rounded-sm bg-topic-ground f6y-ps-2 py-1 font-mono text-label text-topic no-underline transition-colors",
+		// The count chip sits as far from the end as from the top and bottom.
+		count === undefined ? "f6y-pe-2" : "pe-1",
+		{ "hover:bg-topic-ground-hover": isLink },
 	]}
 ><span aria-hidden="true" class="opacity-70">#</span>{name}{
-		count !== undefined && <span class="ms-1 text-ink-muted">{count}</span>
+		count !== undefined && (
+			<span
+				class:list={[
+					"ms-1 inline-block min-w-label-line rounded-sm bg-topic-count-ground px-1 text-center tabular-nums transition-colors",
+					// On the darker hover chip, the topic's own ink drops to 3.3:1.
+					{ "group-hover:bg-topic-count-ground-hover group-hover:text-topic-count-hover": isLink },
+				]}
+			><span class="sr-only">, </span>{count}<span class="sr-only">{count === 1 ? " article" : " articles"}</span></span>
+		)
 	}</Tag>

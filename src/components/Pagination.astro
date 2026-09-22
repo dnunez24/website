@@ -30,28 +30,23 @@ function entries(): Entry[] {
 }
 
 const cell = "f6y-min-w-8 tabular-nums";
+
+// One row at every width, with the markup in visual order so focus moves left
+// to right. Below the measure breakpoint seven page numbers and both direction
+// links don't fit, so "Page 6 of 12" stands in for the numbers.
 ---
 
-<nav aria-label={label} class="grid grid-cols-2 items-center f6y-gap-2 f6y-py-4 measure:grid-cols-pagination">
+<nav aria-label={label} class="grid grid-cols-pagination items-center f6y-gap-2 f6y-py-4">
 	<div class="justify-self-start bleed-s-2">
 		{
 			current > 1 && (
 				<Button variant="ghost" href={href(current - 1)} rel="prev">
-					&lt; Previous
+					<span aria-hidden="true">&lt;</span> Newer
 				</Button>
 			)
 		}
 	</div>
-	<div class="col-start-2 justify-self-end bleed-e-2 measure:col-start-3">
-		{
-			current < total && (
-				<Button variant="ghost" href={href(current + 1)} rel="next">
-					Next &gt;
-				</Button>
-			)
-		}
-	</div>
-	<ol class="col-span-2 m-0 flex list-none flex-wrap justify-center gap-0.5 p-0 measure:col-span-1 measure:col-start-2 measure:row-start-1">
+	<ol class="m-0 hidden list-none flex-wrap justify-center gap-0.5 p-0 measure:flex">
 		{
 			entries().map((entry) =>
 				"gap" in entry ? (
@@ -80,4 +75,16 @@ const cell = "f6y-min-w-8 tabular-nums";
 			)
 		}
 	</ol>
+	<p class="m-0 font-mono text-label whitespace-nowrap text-ink-muted tabular-nums measure:hidden">
+		Page {current} of {total}
+	</p>
+	<div class="justify-self-end bleed-e-2">
+		{
+			current < total && (
+				<Button variant="ghost" href={href(current + 1)} rel="next">
+					Older <span aria-hidden="true">&gt;</span>
+				</Button>
+			)
+		}
+	</div>
 </nav>
