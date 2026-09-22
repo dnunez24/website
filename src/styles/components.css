@@ -66,6 +66,12 @@
 			fill: var(--color-topic-ground) !important;
 			stroke: var(--color-fungus-700) !important;
 		}
+		/* Boxes take radius-md, like CodeBlock. rx and ry as CSS follow the
+		   token; Safari before 17.4 shows square corners. */
+		& :is(.node > rect, .cluster > rect, rect.actor, rect.note) {
+			rx: var(--radius-md);
+			ry: var(--radius-md);
+		}
 		& :is(.edgePaths .path, .flowchart-link) {
 			stroke: var(--color-concrete-600) !important;
 			fill: none !important;
