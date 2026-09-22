@@ -229,6 +229,26 @@ export async function getArticles(limit = 10) {
     .sort((a, b) => b.data.date - a.data.date)
     .slice(0, limit);
 }`;
+
+const checkoutFlow = `flowchart LR
+  accTitle: Checkout flow
+  accDescr: The product page hands off to the checkout micro-frontend, which calls Payments and sends stock to Inventory.
+  A[Product page] --> B[Checkout MFE]
+  B --> C[Payments]
+  B -- stock --> D[Inventory]:::alt
+  classDef alt fill:#dcdcd0,stroke:#55563b`;
+
+// Wider than the column below 40rem, so it shows the frame scrolling.
+const orderSequence = `sequenceDiagram
+  accTitle: Placing an order
+  accDescr: The product page asks checkout to place an order; checkout authorizes with Payments before it confirms.
+  participant P as Product page
+  participant C as Checkout MFE
+  participant Pay as Payments
+  P->>C: Place order
+  C->>Pay: Authorize
+  Pay-->>C: Approved
+  C-->>P: Order placed`;
 ---
 
 <Base title="Design system" description="Every token and component, rendered with the real styles.">
@@ -399,24 +419,10 @@ export async function getArticles(limit = 10) {
 
 	<section aria-labelledby="diagram" class="f6y-mb-16">
 		<SectionTitle id="diagram">Mermaid diagram</SectionTitle>
-		<MermaidDiagram label="Flowchart: a request goes from the browser to the edge, then to either the static site or the API.">
-			<svg id="sample-diagram" viewBox="0 0 520 160" width="520" height="160" xmlns="http://www.w3.org/2000/svg">
-				<g class="edgePaths">
-					<path class="path" d="M120 80 H190" marker-end="url(#arrow)" />
-					<path class="path" d="M300 70 L370 40" marker-end="url(#arrow)" />
-					<path class="path" d="M300 90 L370 120" marker-end="url(#arrow)" />
-				</g>
-				<defs>
-					<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-						<path class="arrowMarkerPath" d="M0 0 L10 5 L0 10 z" />
-					</marker>
-				</defs>
-				<g class="node"><rect x="10" y="60" width="110" height="40" rx="4" /><g class="label"><text x="65" y="84" text-anchor="middle" font-size="13">Browser</text></g></g>
-				<g class="node"><rect x="190" y="60" width="110" height="40" rx="4" /><g class="label"><text x="245" y="84" text-anchor="middle" font-size="13">Edge</text></g></g>
-				<g class="node"><rect x="370" y="20" width="140" height="40" rx="4" /><g class="label"><text x="440" y="44" text-anchor="middle" font-size="13">Static site</text></g></g>
-				<g class="node alt"><rect x="370" y="100" width="140" height="40" rx="4" /><g class="label"><text x="440" y="124" text-anchor="middle" font-size="13">API</text></g></g>
-			</svg>
-		</MermaidDiagram>
+		<MermaidDiagram code={checkoutFlow} />
+		<div class="f6y-mt-8">
+			<MermaidDiagram code={orderSequence} />
+		</div>
 	</section>
 
 	<section aria-labelledby="markdown">

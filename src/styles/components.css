@@ -38,12 +38,22 @@
 	}
 
 	/*
+	 * MermaidDiagram: the figure src/lib/mermaid.ts renders, in Markdown and in
+	 * the component. The SVG keeps its rendered size so labels stay 13px; a
+	 * diagram wider than the column scrolls inside the frame, which is focusable
+	 * for keyboard scrolling and takes the global focus ring.
+	 */
+	[data-diagram] {
+		@apply mx-0 overflow-x-auto rounded-md border border-line bg-surface-inset f6y-p-4;
+	}
+
+	/*
 	 * Mermaid embeds <style> rules scoped to the svg's id, so these need
 	 * !important. The font size stays at the 13px Mermaid measured with, so
 	 * labels keep fitting their boxes.
 	 */
 	[data-diagram] svg {
-		@apply mx-auto block h-auto max-w-full;
+		@apply mx-auto block h-auto max-w-none;
 		font-family: var(--font-mono) !important;
 		fill: var(--color-ink) !important;
 
@@ -55,6 +65,12 @@
 		& .node.alt :is(rect, circle, ellipse, polygon, path) {
 			fill: var(--color-topic-ground) !important;
 			stroke: var(--color-fungus-700) !important;
+		}
+		/* Boxes take radius-sm, like buttons and topics. rx and ry as CSS
+		   follow the token; Safari before 17.4 shows square corners. */
+		& :is(.node > rect, .cluster > rect, rect.actor, rect.note) {
+			rx: var(--radius-sm);
+			ry: var(--radius-sm);
 		}
 		& :is(.edgePaths .path, .flowchart-link) {
 			stroke: var(--color-concrete-600) !important;

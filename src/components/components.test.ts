@@ -10,6 +10,7 @@ import Figure from "./Figure.astro";
 import FormattedDate from "./FormattedDate.astro";
 import Header from "./Header.astro";
 import Link from "./Link.astro";
+import MermaidDiagram from "./MermaidDiagram.astro";
 import Pagination from "./Pagination.astro";
 import Portrait from "./Portrait.astro";
 import Prose from "./Prose.astro";
@@ -336,6 +337,19 @@ describe("CodeBlock", () => {
 		);
 		expect(without.querySelector("figcaption")).toBeNull();
 		expect(without.querySelector("[data-codeblock-file]")).toBeNull();
+	});
+});
+
+describe("MermaidDiagram", { timeout: 60_000 }, () => {
+	it("renders its code at build into the same figure as Markdown fences", async () => {
+		const doc = parse(
+			await render(MermaidDiagram, {
+				props: { code: "flowchart LR\n  accTitle: Two steps\n  A --> B" },
+			}),
+		);
+		const figure = doc.querySelector("figure[data-diagram]");
+		expect(figure?.getAttribute("aria-label")).toBe("Two steps");
+		expect(figure?.querySelector("svg")).not.toBeNull();
 	});
 });
 
