@@ -243,6 +243,11 @@ describe("Footer", () => {
 		expect(doc.querySelector("nav")?.getAttribute("aria-label")).toBe(
 			"Secondary",
 		);
+		// Stacked and centered below the measure breakpoint, one row from it.
+		const layout = doc.querySelector("footer > div")?.classList;
+		expect(layout).toContain("flex-col");
+		expect(layout).toContain("text-center");
+		expect(layout).toContain("measure:flex-row");
 		// The first year is 2026, so later builds show a range starting there.
 		expect(doc.querySelector("footer p")?.textContent).toMatch(
 			/^© 2026(–\d{4})? Dave Nuñez\. All rights reserved\.$/,

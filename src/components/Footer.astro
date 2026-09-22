@@ -8,10 +8,15 @@ import { isCurrentSection } from "@lib/routes";
 const pathname = Astro.url.pathname;
 ---
 
+<!--
+	Below the measure breakpoint the nav and the copyright stack, centered. From
+	it they share a row that never wraps: a copyright too long for the row drops
+	its notice to a second line, right-aligned, and the nav keeps its width.
+-->
 <footer class="f6y-mt-8 border-t border-line">
-	<Container class="flex flex-wrap items-center justify-between f6y-gap-x-4 f6y-gap-y-2 f6y-py-2">
-		<nav aria-label="Secondary">
-			<ul class="m-0 flex list-none flex-wrap p-0 bleed-x-2">
+	<Container class="flex flex-col items-center f6y-gap-x-4 f6y-gap-y-2 f6y-py-2 text-center measure:flex-row measure:justify-between measure:text-end">
+		<nav aria-label="Secondary" class="shrink-0">
+			<ul class="m-0 flex list-none flex-wrap justify-center p-0 bleed-x-2 measure:justify-start">
 				{
 					FOOTER_NAV_ITEMS.map((item) => (
 						<li>
