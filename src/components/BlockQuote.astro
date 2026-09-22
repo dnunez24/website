@@ -1,0 +1,25 @@
+---
+interface Props {
+	/** Who said it. Rendered after an em dash. */
+	author?: string;
+	/** Title of the work, set upright inside the slanted citation. */
+	source?: string;
+	/** URL of the source, for the `cite` attribute. */
+	cite?: string;
+}
+
+const { author, source, cite } = Astro.props;
+---
+
+<blockquote cite={cite} class="mx-0 f6y-px-8 text-quote-ink slant">
+	<div class="*:m-0 *:text-h3 *:font-normal *:text-balance *:not-first:mt-line-half">
+		<slot />
+	</div>
+	{
+		(author || source) && (
+			<footer class="mt-line-half block font-sans text-body text-quote-cite">
+				{author}{author && source && ", "}{source && <cite>{source}</cite>}
+			</footer>
+		)
+	}
+</blockquote>

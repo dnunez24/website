@@ -4,16 +4,17 @@ interface Props {
 }
 
 const { date } = Astro.props;
-const parsedDate = date instanceof Date ? date : new Date(date);
+const parsed = date instanceof Date ? date : new Date(date);
+// UTC, so a frontmatter date like 2026-08-21 never renders as the day before.
 const formatter = new Intl.DateTimeFormat("en-US", {
 	year: "numeric",
 	month: "short",
 	day: "2-digit",
+	timeZone: "UTC",
 });
-const isoDate = parsedDate.toISOString();
-const formattedDate = formatter.format(parsedDate);
 ---
 
-<time datetime={isoDate} class="text-mono uppercase text-tertiary">
-	{formattedDate}
-</time>
+<time
+	datetime={parsed.toISOString().slice(0, 10)}
+	class="font-mono text-label whitespace-nowrap text-ink-muted uppercase tabular-nums"
+>{formatter.format(parsed)}</time>

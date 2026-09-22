@@ -1,0 +1,220 @@
+/*
+ * Design tokens from the Dave Nuñez design system (tokens.json v1).
+ * Every namespace is reset first so only this system's values generate
+ * utilities. Fluid values interpolate between 320px and 1024px with the same
+ * progress term fluidity-tailwind uses; see `--fluid-progress` in base.css.
+ * `static` keeps every token available as a custom property, used or not.
+ */
+@theme static {
+	--color-*: initial;
+	--shadow-*: initial;
+	--inset-shadow-*: initial;
+	--drop-shadow-*: initial;
+	--text-shadow-*: initial;
+	--blur-*: initial;
+	--perspective-*: initial;
+	--aspect-*: initial;
+	--animate-*: initial;
+	--radius-*: initial;
+	--text-*: initial;
+	--font-*: initial;
+	--font-weight-*: initial;
+	--tracking-*: initial;
+	--leading-*: initial;
+	--container-*: initial;
+	--breakpoint-*: initial;
+	--ease-*: initial;
+
+	/* Palette. Steps 300–400 are decoration only; 500+ pass 4.5:1 on the page. */
+	--color-evergreen-50: oklch(99.0% 0.002 145.6);
+	--color-evergreen-100: oklch(94.5% 0.008 139.4);
+	--color-evergreen-200: oklch(89.2% 0.016 139.4);
+	--color-evergreen-300: oklch(80.9% 0.027 138.3);
+	--color-evergreen-400: oklch(69.5% 0.04 137.9);
+	--color-evergreen-500: oklch(51.8% 0.047 138.5);
+	--color-evergreen-600: oklch(48.4% 0.045 138.2);
+	--color-evergreen-700: oklch(44.4% 0.039 138.3);
+	--color-evergreen-800: oklch(40.7% 0.031 139.8);
+	--color-evergreen-900: oklch(36.8% 0.021 137.1);
+	--color-evergreen-950: oklch(29.1% 0.011 139.4);
+
+	--color-fungus-50: oklch(99.1% 0.003 106.4);
+	--color-fungus-100: oklch(94.5% 0.007 106.5);
+	--color-fungus-200: oklch(89.1% 0.016 106.7);
+	--color-fungus-300: oklch(80.8% 0.029 109.2);
+	--color-fungus-400: oklch(69.7% 0.039 109.1);
+	--color-fungus-500: oklch(51.8% 0.047 109.4);
+	--color-fungus-600: oklch(48.3% 0.047 109.6);
+	--color-fungus-700: oklch(44.5% 0.042 109.8);
+	--color-fungus-800: oklch(40.6% 0.03 110.2);
+	--color-fungus-900: oklch(36.0% 0.02 107.4);
+	--color-fungus-950: oklch(27.8% 0.012 107.2);
+
+	--color-earth-50: oklch(99.1% 0.003 84.6);
+	--color-earth-100: oklch(94.4% 0.006 75.4);
+	--color-earth-200: oklch(89.1% 0.016 77.1);
+	--color-earth-300: oklch(81.0% 0.027 76.8);
+	--color-earth-400: oklch(70.1% 0.039 76.5);
+	--color-earth-500: oklch(51.7% 0.046 77.5);
+	--color-earth-600: oklch(48.1% 0.044 77);
+	--color-earth-700: oklch(44.4% 0.039 77);
+	--color-earth-800: oklch(40.0% 0.031 78.5);
+	--color-earth-900: oklch(35.3% 0.021 75.7);
+	--color-earth-950: oklch(29.2% 0.011 73.5);
+
+	--color-concrete-50: oklch(99.1% 0.001 106.4);
+	--color-concrete-100: oklch(94.6% 0.001 106.4);
+	--color-concrete-200: oklch(89.1% 0.001 106.4);
+	--color-concrete-300: oklch(80.7% 0.003 106.5);
+	--color-concrete-400: oklch(70.2% 0.004 106.5);
+	--color-concrete-500: oklch(49.9% 0.005 106.6);
+	--color-concrete-600: oklch(45.9% 0.005 106.6);
+	--color-concrete-700: oklch(42.3% 0.005 106.6);
+	--color-concrete-800: oklch(38.3% 0.002 106.5);
+	--color-concrete-900: oklch(33.2% 0.003 106.6);
+	--color-concrete-950: oklch(26.4% 0.002 106.5);
+
+	--color-pine-50: oklch(98.9% 0.002 165.1);
+	--color-pine-100: oklch(94.4% 0.007 174.4);
+	--color-pine-200: oklch(89.1% 0.017 168.5);
+	--color-pine-300: oklch(80.7% 0.027 169.1);
+	--color-pine-400: oklch(69.4% 0.04 168.5);
+	--color-pine-500: oklch(51.7% 0.047 168.3);
+	--color-pine-600: oklch(48.3% 0.046 166.9);
+	--color-pine-700: oklch(44.4% 0.04 169.6);
+	--color-pine-800: oklch(40.6% 0.031 167.7);
+	--color-pine-900: oklch(36.8% 0.021 167.3);
+	--color-pine-950: oklch(27.7% 0.011 167.8);
+
+	--color-lake-50: oklch(99.0% 0.002 197.1);
+	--color-lake-100: oklch(94.5% 0.006 197);
+	--color-lake-200: oklch(89.2% 0.017 196.8);
+	--color-lake-300: oklch(80.7% 0.028 199.4);
+	--color-lake-400: oklch(69.5% 0.04 196.3);
+	--color-lake-500: oklch(51.8% 0.047 197.7);
+	--color-lake-600: oklch(48.1% 0.045 197.8);
+	--color-lake-700: oklch(44.5% 0.04 198.1);
+	--color-lake-800: oklch(40.7% 0.03 196);
+	--color-lake-900: oklch(36.9% 0.021 196.3);
+	--color-lake-950: oklch(27.7% 0.011 196.5);
+
+	/* Semantic roles. Components use these, not palette steps. */
+	--color-surface: var(--color-concrete-100);
+	--color-surface-inset: var(--color-concrete-50);
+	--color-surface-hover: var(--color-concrete-200);
+	--color-code-ground: var(--color-concrete-200);
+	--color-codeblock-selection: var(--color-earth-800);
+	--color-codeblock-line: var(--color-concrete-800);
+	--color-codeblock-ground: var(--color-concrete-950);
+	--color-ink: var(--color-concrete-950);
+	--color-ink-heading: var(--color-evergreen-950);
+	--color-ink-muted: var(--color-concrete-600);
+	--color-line: var(--color-concrete-300);
+	--color-line-strong: var(--color-concrete-500);
+	--color-brand: var(--color-evergreen-700);
+	--color-brand-hover: var(--color-evergreen-800);
+	--color-brand-tint: var(--color-evergreen-200);
+	--color-on-brand: var(--color-concrete-50);
+	--color-link: var(--color-evergreen-700);
+	--color-link-hover: var(--color-evergreen-900);
+	--color-topic: var(--color-fungus-800);
+	--color-topic-ground: var(--color-fungus-200);
+	--color-topic-ground-hover: var(--color-fungus-300);
+	--color-focus: var(--color-fungus-600);
+	--color-quote-ink: var(--color-earth-800);
+	--color-quote-cite: var(--color-earth-600);
+	--color-selection: var(--color-earth-200);
+	--color-syntax-plain: var(--color-concrete-200);
+	--color-syntax-comment: var(--color-concrete-400);
+	--color-syntax-punctuation: var(--color-concrete-300);
+	--color-syntax-keyword: oklch(89.2% 0.0464 139.4);
+	--color-syntax-string: oklch(80.8% 0.0841 109.2);
+	--color-syntax-number: oklch(80.7% 0.0783 169.1);
+	--color-syntax-function: oklch(69.5% 0.116 196.3);
+	--color-syntax-type: oklch(81.0% 0.0783 76.8);
+	--color-series-1: var(--color-evergreen-500);
+	--color-series-2: var(--color-fungus-500);
+	--color-series-3: var(--color-earth-500);
+	--color-series-4: var(--color-lake-500);
+	--color-series-5: var(--color-pine-500);
+
+	/* Astro's font API variables (astro.config.ts) already carry the fallbacks. */
+	--font-sans: var(--font-afacad-flux);
+	--font-mono: var(--font-jetbrains-mono);
+
+	--font-weight-normal: 400;
+	--font-weight-medium: 500;
+	--font-weight-semibold: 600;
+	--font-weight-bold: 700;
+
+	--tracking-tight: -0.01em;
+	--tracking-caps: 0.04em;
+
+	/* Type: size, line height, tracking and weight per style, fluid 320 → 1024px. */
+	--text-display: calc(2.25rem + 0.25rem * var(--fluid-progress));
+	--text-display--line-height: calc(2.5rem + 0.25rem * var(--fluid-progress));
+	--text-display--letter-spacing: -0.02em;
+	--text-display--font-weight: 500;
+	--text-h1: calc(1.875rem + 0.25rem * var(--fluid-progress));
+	--text-h1--line-height: calc(2.25rem + 0.25rem * var(--fluid-progress));
+	--text-h1--letter-spacing: -0.015em;
+	--text-h1--font-weight: 500;
+	--text-h2: calc(1.625rem + 0.125rem * var(--fluid-progress));
+	--text-h2--line-height: calc(2rem + 0.25rem * var(--fluid-progress));
+	--text-h2--letter-spacing: -0.01em;
+	--text-h2--font-weight: 500;
+	--text-h3: calc(1.375rem + 0.125rem * var(--fluid-progress));
+	--text-h3--line-height: calc(1.75rem + 0.25rem * var(--fluid-progress));
+	--text-h3--font-weight: 600;
+	--text-h4: calc(1.125rem + 0.125rem * var(--fluid-progress));
+	--text-h4--line-height: calc(1.5rem + 0.25rem * var(--fluid-progress));
+	--text-h4--font-weight: 600;
+	--text-h5: calc(1rem + 0.125rem * var(--fluid-progress));
+	--text-h5--line-height: calc(1.5rem + 0.25rem * var(--fluid-progress));
+	--text-h5--font-weight: 600;
+	--text-h6: calc(0.75rem + 0.125rem * var(--fluid-progress));
+	--text-h6--line-height: calc(1rem + 0.25rem * var(--fluid-progress));
+	--text-h6--letter-spacing: 0.04em;
+	--text-h6--font-weight: 500;
+	--text-prose: calc(1.125rem + 0.125rem * var(--fluid-progress));
+	--text-prose--line-height: calc(1.75rem + 0.25rem * var(--fluid-progress));
+	--text-body: calc(1rem + 0.125rem * var(--fluid-progress));
+	--text-body--line-height: calc(1.5rem + 0.25rem * var(--fluid-progress));
+	--text-small: calc(0.875rem + 0.125rem * var(--fluid-progress));
+	--text-small--line-height: calc(1.25rem + 0.25rem * var(--fluid-progress));
+	--text-label: calc(0.75rem + 0.125rem * var(--fluid-progress));
+	--text-label--line-height: calc(1rem + 0.25rem * var(--fluid-progress));
+	--text-code: calc(0.875rem + 0.125rem * var(--fluid-progress));
+	--text-code--line-height: calc(1.5rem + 0.25rem * var(--fluid-progress));
+
+	/*
+	 * Spacing keeps Tailwind's 0.25rem multiplier, which fluidity needs:
+	 * space-1 = 0.5, space-2 = 1, space-3…7 = f6y-*-2, 4, 8, 16, 32.
+	 * Prose rhythm is measured in prose lines, so it gets named keys.
+	 */
+	--spacing-line: var(--text-prose--line-height);
+	--spacing-line-half: calc(var(--text-prose--line-height) / 2);
+	--spacing-line-quarter: calc(var(--text-prose--line-height) / 4);
+	--spacing-line-double: calc(var(--text-prose--line-height) * 2);
+
+	--grid-template-columns-log: 12ch minmax(0, 1fr);
+	--grid-template-columns-pagination: 1fr auto 1fr;
+
+	--radius-none: 0;
+	--radius-sm: 2px;
+	--radius-md: 4px;
+
+	--container-site: 64rem;
+	/* The design system's container-prose. Renamed because Tailwind's built-in max-w-prose (65ch) wins over a token. */
+	--container-measure: 40rem;
+	--container-portrait: 12rem;
+
+	/* The one layout breakpoint: Pagination puts page numbers on the direction row. */
+	--breakpoint-measure: 40rem;
+
+	--ease-standard: cubic-bezier(0.25, 0, 0, 1);
+
+	/* `transition-colors` and friends default to the system's motion. */
+	--default-transition-duration: 128ms;
+	--default-transition-timing-function: var(--ease-standard);
+}

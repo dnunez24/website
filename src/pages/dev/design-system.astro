@@ -1,14 +1,417 @@
 ---
+import { Image } from "astro:assets";
+import photo from "@assets/blog-placeholder-2.jpg";
+import portrait from "@assets/blog-placeholder-about.jpg";
+import ArticleList from "@components/ArticleList.astro";
+import BlockQuote from "@components/BlockQuote.astro";
 import Button from "@components/Button.astro";
-import ProseParagraph from "@components/ProseParagraph.astro";
-import Layout from "@layouts/Default.astro";
+import CodeBlock from "@components/CodeBlock.astro";
+import Figure from "@components/Figure.astro";
+import FormattedDate from "@components/FormattedDate.astro";
+import Intro from "@components/Intro.astro";
+import Link from "@components/Link.astro";
+import MermaidDiagram from "@components/MermaidDiagram.astro";
+import PageTitle from "@components/PageTitle.astro";
+import Pagination from "@components/Pagination.astro";
+import Portrait from "@components/Portrait.astro";
+import Prose from "@components/Prose.astro";
+import SectionHeading from "@components/SectionHeading.astro";
+import SectionTitle from "@components/SectionTitle.astro";
+import Topic from "@components/Topic.astro";
+import TopicList from "@components/TopicList.astro";
+import WordMark from "@components/WordMark.astro";
+import Base from "@layouts/Base.astro";
+
+// Literal class names, so Tailwind generates every swatch.
+const palette = [
+	{
+		name: "concrete",
+		steps: [
+			"bg-concrete-50",
+			"bg-concrete-100",
+			"bg-concrete-200",
+			"bg-concrete-300",
+			"bg-concrete-400",
+			"bg-concrete-500",
+			"bg-concrete-600",
+			"bg-concrete-700",
+			"bg-concrete-800",
+			"bg-concrete-900",
+			"bg-concrete-950",
+		],
+	},
+	{
+		name: "evergreen",
+		steps: [
+			"bg-evergreen-50",
+			"bg-evergreen-100",
+			"bg-evergreen-200",
+			"bg-evergreen-300",
+			"bg-evergreen-400",
+			"bg-evergreen-500",
+			"bg-evergreen-600",
+			"bg-evergreen-700",
+			"bg-evergreen-800",
+			"bg-evergreen-900",
+			"bg-evergreen-950",
+		],
+	},
+	{
+		name: "fungus",
+		steps: [
+			"bg-fungus-50",
+			"bg-fungus-100",
+			"bg-fungus-200",
+			"bg-fungus-300",
+			"bg-fungus-400",
+			"bg-fungus-500",
+			"bg-fungus-600",
+			"bg-fungus-700",
+			"bg-fungus-800",
+			"bg-fungus-900",
+			"bg-fungus-950",
+		],
+	},
+	{
+		name: "earth",
+		steps: [
+			"bg-earth-50",
+			"bg-earth-100",
+			"bg-earth-200",
+			"bg-earth-300",
+			"bg-earth-400",
+			"bg-earth-500",
+			"bg-earth-600",
+			"bg-earth-700",
+			"bg-earth-800",
+			"bg-earth-900",
+			"bg-earth-950",
+		],
+	},
+	{
+		name: "pine",
+		steps: [
+			"bg-pine-50",
+			"bg-pine-100",
+			"bg-pine-200",
+			"bg-pine-300",
+			"bg-pine-400",
+			"bg-pine-500",
+			"bg-pine-600",
+			"bg-pine-700",
+			"bg-pine-800",
+			"bg-pine-900",
+			"bg-pine-950",
+		],
+	},
+	{
+		name: "lake",
+		steps: [
+			"bg-lake-50",
+			"bg-lake-100",
+			"bg-lake-200",
+			"bg-lake-300",
+			"bg-lake-400",
+			"bg-lake-500",
+			"bg-lake-600",
+			"bg-lake-700",
+			"bg-lake-800",
+			"bg-lake-900",
+			"bg-lake-950",
+		],
+	},
+];
+const semantic = [
+	["surface", "bg-surface"],
+	["surface-inset", "bg-surface-inset"],
+	["surface-hover", "bg-surface-hover"],
+	["code-ground", "bg-code-ground"],
+	["codeblock-ground", "bg-codeblock-ground"],
+	["ink", "bg-ink"],
+	["ink-heading", "bg-ink-heading"],
+	["ink-muted", "bg-ink-muted"],
+	["line", "bg-line"],
+	["line-strong", "bg-line-strong"],
+	["brand", "bg-brand"],
+	["brand-hover", "bg-brand-hover"],
+	["brand-tint", "bg-brand-tint"],
+	["on-brand", "bg-on-brand"],
+	["link", "bg-link"],
+	["link-hover", "bg-link-hover"],
+	["topic", "bg-topic"],
+	["topic-ground", "bg-topic-ground"],
+	["topic-ground-hover", "bg-topic-ground-hover"],
+	["focus", "bg-focus"],
+	["quote-ink", "bg-quote-ink"],
+	["quote-cite", "bg-quote-cite"],
+	["selection", "bg-selection"],
+	["series-1", "bg-series-1"],
+	["series-2", "bg-series-2"],
+	["series-3", "bg-series-3"],
+	["series-4", "bg-series-4"],
+	["series-5", "bg-series-5"],
+];
+
+const typeStyles = [
+	["display", "text-display", "Non officia commodo anim"],
+	["h1", "text-h1", "Aliqua ipsum reprehenderit ullamco et ut aliquip"],
+	["h2", "text-h2", "Ex exercitation ut sunt magna"],
+	["h3", "text-h3", "Nulla nostrud amet est"],
+	["h4", "text-h4", "Adipisicing laboris qui velit elit"],
+	["h5", "text-h5", "Cillum reprehenderit nulla"],
+	["h6", "font-mono text-h6 uppercase", "Qui commodo qui"],
+	[
+		"prose",
+		"text-prose",
+		"Nostrud proident adipisicing aliquip elit sit excepteur reprehenderit irure duis laboris mollit. Quis sunt duis dolore commodo consequat do non adipisicing qui.",
+	],
+	[
+		"body",
+		"text-body",
+		"Commodo qui quis dolor ipsum exercitation fugiat consequat exercitation.",
+	],
+	["small", "text-small", "Sunt ullamco eiusmod esse aute veniam tempor."],
+	["label", "font-mono text-label uppercase", "Aug 21, 2026"],
+	["code", "font-mono text-code", "git log --oneline --since=2017"],
+] as const;
+
+const spacing = [
+	["space-1", "2px", "w-0.5"],
+	["space-2", "4px", "w-1"],
+	["space-3", "8 → 12px", "f6y-w-2"],
+	["space-4", "16 → 24px", "f6y-w-4"],
+	["space-5", "32 → 48px", "f6y-w-8"],
+	["space-6", "64 → 96px", "f6y-w-16"],
+	["space-7", "128 → 192px", "f6y-w-32"],
+] as const;
+
+const articles = [
+	{
+		title: "Ex velit et id fugiat occaecat anim id",
+		href: "#",
+		date: new Date("2026-08-21"),
+		summary:
+			"Labore tempor reprehenderit duis ipsum duis deserunt proident proident in ad culpa enim enim aliquip nostrud.",
+	},
+	{
+		title: "Duis eu labore pariatur voluptate aute",
+		href: "#",
+		date: new Date("2026-06-02"),
+	},
+	{
+		title: "Ipsum ex ullamco tempor duis",
+		href: "#",
+		date: new Date("2025-11-14"),
+		summary: "Magna consequat ex exercitation proident ex anim.",
+	},
+];
+
+const topics = [
+	{ name: "leadership", href: "#", count: 12 },
+	{ name: "systems", href: "#", count: 9 },
+	{ name: "architecture", href: "#", count: 7 },
+	{ name: "hiring", href: "#", count: 4 },
+	{ name: "craft", href: "#", count: 6 },
+	{ name: "micro-frontends", href: "#", count: 3 },
+	{ name: "writing", href: "#", count: 2 },
+	{ name: "teams", href: "#", count: 8 },
+];
+
+const pageHref = (page: number) => `#page-${page}`;
+
+const code = `import { getCollection } from "astro:content";
+
+// Newest first.
+export async function getArticles(limit = 10) {
+  const articles = await getCollection("writing");
+  return articles
+    .sort((a, b) => b.data.date - a.data.date)
+    .slice(0, limit);
+}`;
 ---
 
-<Layout title="Design System" description="Inventory of design system components">
-  <Button>Click Me</Button>
-  <ProseParagraph>
-    The design system is a collection of components, patterns, and styles that
-    are used to create a consistent and unified user interface across a
-    website or application.
-  </ProseParagraph>
-</Layout>
+<Base title="Design system" description="Every token and component, rendered with the real styles.">
+	<PageTitle>Design system</PageTitle>
+	<Intro>Every token and component, rendered with the real styles.</Intro>
+
+	<section aria-labelledby="color" class="f6y-mb-16">
+		<SectionTitle id="color">Color</SectionTitle>
+		<SectionHeading as="h3">Palette</SectionHeading>
+		<div class="grid f6y-gap-2">
+			{
+				palette.map((family) => (
+					<div>
+						<p class="m-0 mb-1 font-mono text-label text-ink-muted">{family.name}</p>
+						<ul class="m-0 grid list-none grid-cols-11 gap-0.5 p-0">
+							{family.steps.map((swatch) => (
+								<li class:list={["aspect-square", swatch]} title={swatch.replace("bg-", "")} />
+							))}
+						</ul>
+					</div>
+				))
+			}
+		</div>
+		<SectionHeading as="h3" class="f6y-mt-8">Semantic</SectionHeading>
+		<ul class="m-0 grid list-none grid-cols-2 f6y-gap-2 p-0 measure:grid-cols-4">
+			{
+				semantic.map(([name, swatch]) => (
+					<li class="flex items-center gap-1">
+						<span class:list={["size-6 shrink-0 rounded-sm border border-line", swatch]} />
+						<span class="truncate font-mono text-label">{name}</span>
+					</li>
+				))
+			}
+		</ul>
+	</section>
+
+	<section aria-labelledby="type" class="f6y-mb-16">
+		<SectionTitle id="type">Typography</SectionTitle>
+		<dl class="m-0 grid f6y-gap-4">
+			{
+				typeStyles.map(([name, classes, sample]) => (
+					<div>
+						<dt class="font-mono text-label text-ink-muted">{name}</dt>
+						<dd class:list={["m-0 text-ink-heading", classes]}>{sample}</dd>
+					</div>
+				))
+			}
+		</dl>
+	</section>
+
+	<section aria-labelledby="space" class="f6y-mb-16">
+		<SectionTitle id="space">Spacing</SectionTitle>
+		<dl class="m-0 grid gap-1">
+			{
+				spacing.map(([name, value, width]) => (
+					<div class="flex items-center f6y-gap-2">
+						<dt class="w-24 shrink-0 font-mono text-label">{name}</dt>
+						<dd class:list={["m-0 h-4 bg-brand", width]} />
+						<dd class="m-0 font-mono text-label text-ink-muted">{value}</dd>
+					</div>
+				))
+			}
+		</dl>
+		<SectionHeading as="h3" class="f6y-mt-8">Radius and lines</SectionHeading>
+		<div class="flex flex-wrap f6y-gap-4">
+			<div class="size-16 rounded-none border border-line-strong" title="radius-none" />
+			<div class="size-16 rounded-sm border border-line-strong" title="radius-sm" />
+			<div class="size-16 rounded-md border border-line-strong" title="radius-md" />
+			<div class="size-16 rounded-full bg-concrete-200" title="Portrait circle" />
+		</div>
+	</section>
+
+	<section aria-labelledby="buttons" class="f6y-mb-16">
+		<SectionTitle id="buttons">Button</SectionTitle>
+		<div class="flex flex-wrap items-center f6y-gap-2">
+			<Button>Subscribe</Button>
+			<Button variant="outline">Read the archive</Button>
+			<Button variant="ghost">Writing</Button>
+			<Button variant="ghost" href="#buttons" current>About</Button>
+			<Button href="#buttons">Filled link</Button>
+		</div>
+	</section>
+
+	<section aria-labelledby="links" class="f6y-mb-16">
+		<SectionTitle id="links">Link and word mark</SectionTitle>
+		<p class="m-0 f6y-mb-4">
+		Excepteur sit amet ipsum est duis <Link href="#links">enim veniam</Link>. Occaecat fugiat nostrud pariatur ex nulla eiusmod <Link href="https://www.w3.org/WAI/WCAG22/quickref/">excepteur</Link> esse in nulla magna voluptate.
+		</p>
+		<WordMark name="Dave Nuñez" tagline="Ex veniam consequat anim exercitation" />
+	</section>
+
+	<section aria-labelledby="topics" class="f6y-mb-16">
+		<SectionTitle id="topics">Topic</SectionTitle>
+		<div class="f6y-mb-4 flex flex-wrap items-center f6y-gap-2">
+			<Topic name="leadership" />
+			<Topic name="systems" href="#topics" />
+			<Topic name="craft" href="#topics" count={6} />
+		</div>
+		<SectionHeading as="h3">Topics index</SectionHeading>
+		<TopicList topics={topics} index />
+	</section>
+
+	<section aria-labelledby="dates" class="f6y-mb-16">
+		<SectionTitle id="dates">Date and article list</SectionTitle>
+		<p class="m-0 f6y-mb-4"><FormattedDate date={new Date("2026-08-21")} /></p>
+		<ArticleList articles={articles} />
+	</section>
+
+	<section aria-labelledby="pagination" class="f6y-mb-16">
+		<SectionTitle id="pagination">Pagination</SectionTitle>
+		<Pagination current={1} total={3} href={pageHref} label="First page" />
+		<Pagination current={5} total={12} href={pageHref} label="Middle page" />
+		<Pagination current={12} total={12} href={pageHref} label="Last page" />
+	</section>
+
+	<section aria-labelledby="portrait" class="f6y-mb-16">
+		<SectionTitle id="portrait">Portrait</SectionTitle>
+		<div class="flow-root">
+			<Portrait src={portrait} alt="Dave Nuñez" float />
+			<Prose>
+				<p>
+					The Portrait floats right inside the reading column and the text wraps its circle,
+					not its square box. It is 30% of the column, between 6rem and 12rem. Photos use
+					natural light, stay muted, and are never tinted into the palette. This paragraph
+					runs long enough to show the wrap at every width, so the curve of the circle
+					reads in the ragged edge of the lines beside it.
+				</p>
+			</Prose>
+		</div>
+		<div class="f6y-mt-4 flex f6y-gap-4">
+			<Portrait alt="Placeholder portrait" />
+		</div>
+	</section>
+
+	<section aria-labelledby="quote" class="f6y-mb-16">
+		<SectionTitle id="quote">Block quote</SectionTitle>
+		<BlockQuote author="Charles Eames" source="Design Q&A">
+			<p>Recognizing the need is the primary condition for design.</p>
+		</BlockQuote>
+	</section>
+
+	<section aria-labelledby="code" class="f6y-mb-16">
+		<SectionTitle id="code">Code block</SectionTitle>
+		<CodeBlock code={code} lang="ts" file="src/lib/writing.ts" caption="Articles sorted newest first." />
+	</section>
+
+	<section aria-labelledby="figure" class="f6y-mb-16">
+		<SectionTitle id="figure">Figure</SectionTitle>
+		<Figure caption="Officia in sint minim deserunt eu quis laborum occaecat.">
+			<Image src={photo} alt="A placeholder landscape." widths={[640, 1280]} sizes="40rem" />
+		</Figure>
+		<div class="f6y-mt-8">
+			<Figure caption="A wide figure bleeds into the gutter." wide>
+				<Image src={photo} alt="The same landscape, wide." widths={[640, 1280]} sizes="42rem" />
+			</Figure>
+		</div>
+	</section>
+
+	<section aria-labelledby="diagram" class="f6y-mb-16">
+		<SectionTitle id="diagram">Mermaid diagram</SectionTitle>
+		<MermaidDiagram label="Flowchart: a request goes from the browser to the edge, then to either the static site or the API.">
+			<svg id="sample-diagram" viewBox="0 0 520 160" width="520" height="160" xmlns="http://www.w3.org/2000/svg">
+				<g class="edgePaths">
+					<path class="path" d="M120 80 H190" marker-end="url(#arrow)" />
+					<path class="path" d="M300 70 L370 40" marker-end="url(#arrow)" />
+					<path class="path" d="M300 90 L370 120" marker-end="url(#arrow)" />
+				</g>
+				<defs>
+					<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+						<path class="arrowMarkerPath" d="M0 0 L10 5 L0 10 z" />
+					</marker>
+				</defs>
+				<g class="node"><rect x="10" y="60" width="110" height="40" rx="4" /><g class="label"><text x="65" y="84" text-anchor="middle" font-size="13">Browser</text></g></g>
+				<g class="node"><rect x="190" y="60" width="110" height="40" rx="4" /><g class="label"><text x="245" y="84" text-anchor="middle" font-size="13">Edge</text></g></g>
+				<g class="node"><rect x="370" y="20" width="140" height="40" rx="4" /><g class="label"><text x="440" y="44" text-anchor="middle" font-size="13">Static site</text></g></g>
+				<g class="node alt"><rect x="370" y="100" width="140" height="40" rx="4" /><g class="label"><text x="440" y="124" text-anchor="middle" font-size="13">API</text></g></g>
+			</svg>
+		</MermaidDiagram>
+	</section>
+
+	<section aria-labelledby="markdown">
+		<SectionTitle id="markdown">Prose</SectionTitle>
+		<p class="m-0">
+			Markdown elements render on <Link href="/dev/design-system-markdown">the Markdown page</Link>.
+		</p>
+	</section>
+</Base>

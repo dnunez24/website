@@ -1,0 +1,13 @@
+---
+import type { HTMLAttributes, HTMLTag } from "astro/types";
+
+interface Props extends HTMLAttributes<"h2"> {
+	as?: HTMLTag;
+}
+
+// No top margin: preflight zeroes heading margins and the space above is the
+// caller's to set. A value here would compete with the caller's class.
+const { as: Tag = "h2", class: className, ...attrs } = Astro.props;
+---
+
+<Tag class:list={["f6y-mb-4 font-sans text-h4 text-ink-heading", className]} {...attrs}><slot /></Tag>

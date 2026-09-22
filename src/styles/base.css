@@ -1,0 +1,59 @@
+/* biome-ignore-all lint/complexity/noImportantStyles: reduced motion must beat every transition utility. */
+/*
+ * Fluid scaling runs from 320px to 1024px. With a 1.5 ratio a fluidity
+ * utility's min becomes its max, so `f6y-p-4` is space-4 (16px → 24px).
+ */
+:root {
+	--f6y-lower: 20rem;
+	--f6y-upper: 64rem;
+	--f6y-ratio: 1.5;
+	/* 0 at 320px, 1 at 1024px. The theme's text tokens interpolate on it. */
+	--fluid-progress: clamp(
+		0,
+		tan(atan2(100vw - var(--f6y-lower), var(--f6y-upper) - var(--f6y-lower))),
+		1
+	);
+}
+
+@layer base {
+	html {
+		text-size-adjust: 100%;
+	}
+
+	body {
+		@apply bg-surface font-sans text-body text-ink antialiased;
+		font-optical-sizing: auto;
+	}
+
+	/* Afacad Flux has no italic file; emphasis leans on its slant axis. */
+	:is(em, i) {
+		@apply slant;
+	}
+
+	/* Quotations: the dash before the attribution, and a work title set upright
+	   inside the slanted quote, the conventional reversal. */
+	blockquote > footer::before {
+		content: "\2014\2009";
+	}
+	blockquote cite {
+		font-style: normal;
+		font-variation-settings: normal;
+	}
+
+	::selection {
+		@apply bg-selection text-ink;
+	}
+
+	:focus-visible {
+		@apply outline-4 outline-offset-2 outline-focus;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			transition-duration: 0ms !important;
+			animation: none !important;
+		}
+	}
+}

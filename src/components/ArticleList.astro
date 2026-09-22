@@ -1,21 +1,35 @@
 ---
-interface Article {
+import FormattedDate from "@components/FormattedDate.astro";
+
+interface ArticleItem {
 	title: string;
-	slug: string;
-	publishedDate: Date;
+	href: string;
+	date: Date;
+	summary?: string;
 }
 
 interface Props {
-	articles: Article[];
+	articles: ArticleItem[];
 }
 
 const { articles } = Astro.props;
 ---
 
-<ol>
-  {articles.map((article) => (
-    <li>
-      <a href={`/${article.slug}`}>{article.title}</a>
-    </li>
-  ))}
+<ol class="m-0 grid list-none f6y-gap-4 p-0">
+	{
+		articles.map((article) => (
+			<li class="grid grid-cols-log items-baseline f6y-gap-x-2">
+				<FormattedDate date={article.date} />
+				<a
+					href={article.href}
+					class="rounded-sm text-body font-medium text-ink-heading no-underline decoration-2 underline-offset-2 transition-colors hover:text-link-hover hover:underline"
+				>
+					{article.title}
+				</a>
+				{article.summary && (
+					<p class="col-start-2 m-0 text-small text-ink-muted">{article.summary}</p>
+				)}
+			</li>
+		))
+	}
 </ol>

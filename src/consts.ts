@@ -1,6 +1,14 @@
-// Place any global data in this file.
-// You can import this data from anywhere in your site by using the `import` keyword.
-
 export const SITE_TITLE = "Dave Nuñez";
-export const SITE_DESCRIPTION =
-	"Official website of Dave Nuñez, executive software leader and creative.";
+export const SITE_TAGLINE = "Example Tagline";
+export const SITE_DESCRIPTION = "Example description";
+
+export const HEADER_NAV_ITEMS = [
+	{ label: "Writing", href: "/writing" },
+	{ label: "About", href: "/about" },
+] as const;
+
+export const FOOTER_NAV_ITEMS = [
+	{ label: "Topics", href: "/topics" },
+	{ label: "LinkedIn", href: "https://www.linkedin.com/in/dave-nunez" },
+	{ label: "GitHub", href: "https://www.github.com/dnunez24" },
+];

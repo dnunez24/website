@@ -1,46 +1,49 @@
 ---
-import type { MarkdownLayoutProps } from "astro";
 import type { CollectionEntry } from "astro:content";
-import BaseHead from "@components/BaseHead.astro";
-import Footer from "@components/Footer.astro";
 import FormattedDate from "@components/FormattedDate.astro";
-import Header from "@components/Header.astro";
+import Prose from "@components/Prose.astro";
+import TopicList from "@components/TopicList.astro";
+import Base from "@layouts/Base.astro";
+import type { MarkdownLayoutProps } from "astro";
 
 type ArticleData = CollectionEntry<"writing">["data"];
 type Props = ArticleData | MarkdownLayoutProps<ArticleData>;
 
 const props = Astro.props;
-const { title, description, publishedDate, updatedDate } =
-	"frontmatter" in props ? props.frontmatter : props;
+const {
+	title,
+	description,
+	publishedDate,
+	updatedDate,
+	topics = [],
+} = "frontmatter" in props ? props.frontmatter : props;
 ---
 
-<html lang="en">
-	<head>
-		<BaseHead title={title} description={description} />
-	</head>
-
-	<body class="font-sans bg-surface text-text-primary font-normal">
-		<Header />
-		<main class="m-auto w-fit">
-			<article class="typeset typeset-article max-w-[60ch]">
-				<div>
-					<div>
-						<div>
-							<FormattedDate date={publishedDate} />
-							{
-								updatedDate && (
-									<div class="last-updated-on">
-										Last updated on <FormattedDate date={updatedDate} />
-									</div>
-								)
-							}
-						</div>
-						<h1>{title}</h1>
-					</div>
-					<slot />
-				</div>
-			</article>
-		</main>
-		<Footer />
-	</body>
-</html>
+<Base title={title} description={description}>
+	<article>
+		<header class="f6y-mb-8">
+			<h1 class="f6y-mt-2 f6y-mb-4 text-h1 text-balance text-ink-heading">{title}</h1>
+			<div class="flex flex-wrap items-center f6y-gap-x-4 gap-y-1">
+				<FormattedDate date={publishedDate} />
+				{
+					updatedDate && (
+						<span class="font-mono text-label text-ink-muted">
+							Updated <FormattedDate date={updatedDate} />
+						</span>
+					)
+				}
+				{topics.length > 0 && <TopicList topics={topics.map((name) => ({ name, href: `/topics/${name}` }))} />}
+			</div>
+		</header>
+		<Prose>
+			<slot />
+		</Prose>
+		{
+			Astro.slots.has("footer") && (
+				<footer class="f6y-mt-8 border-t border-line f6y-pt-4">
+					<slot name="footer" />
+				</footer>
+			)
+		}
+	</article>
+</Base>
