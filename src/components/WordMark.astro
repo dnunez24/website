@@ -3,12 +3,13 @@ interface Props {
 	name: string;
 	tagline?: string;
 	href?: string;
+	class?: string;
 }
 
-const { name, tagline, href = "/" } = Astro.props;
+const { name, tagline, href = "/", class: className } = Astro.props;
 ---
 
-<a href={href} class="group inline-flex flex-col rounded-sm text-ink-heading no-underline">
+<a href={href} class:list={["group inline-flex flex-col rounded-sm text-ink-heading no-underline", className]}>
 	<span class="text-h4 tracking-tight transition-colors group-hover:text-brand-hover">{name}</span>
 	{tagline && <span class="font-mono text-label text-ink-muted">{tagline}</span>}
 </a>

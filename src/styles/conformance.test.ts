@@ -30,11 +30,13 @@ const FLUID_SPACING_ROOT =
 	/^(f6y-(p|px|py|ps|pe|pt|pr|pb|pl|m|mx|my|ms|me|mt|mr|mb|ml|gap|gap-x|gap-y|space-x|space-y|inset|inset-x|inset-y|start|end|top|right|bottom|left)|bleed-[xseb])$/;
 
 /**
- * Classes that are hooks, not utilities: Tailwind's `group` marker, the
- * `.prose` component class, and Mermaid's own SVG classes in the sample diagram.
+ * Classes that are hooks, not utilities: Tailwind's `group` and `peer`
+ * markers, the `.prose` component class, and Mermaid's own SVG classes in the
+ * sample diagram.
  */
 const MARKER_CLASSES = new Set([
 	"group",
+	"peer",
 	"prose",
 	"node",
 	"alt",

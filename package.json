@@ -24,6 +24,7 @@
 		"@tailwindcss/vite": "^4.3.3",
 		"astro": "^7.3.2",
 		"fluidity-tailwind": "^0.1.1",
+		"satteri": "^0.10.5",
 		"satteri-callouts": "^1.0.1",
 		"sharp": "^0.35.4",
 		"tailwindcss": "^4.3.3"

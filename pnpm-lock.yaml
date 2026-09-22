@@ -29,6 +29,9 @@ importers:
       fluidity-tailwind:
         specifier: ^0.1.1
         version: 0.1.1(tailwindcss@4.3.3)
+      satteri:
+        specifier: ^0.10.5
+        version: 0.10.5
       satteri-callouts:
         specifier: ^1.0.1
         version: 1.0.1(satteri@0.10.5)

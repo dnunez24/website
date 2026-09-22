@@ -73,6 +73,19 @@ describe("Button", () => {
 		expect(link?.className).toContain("font-bold");
 	});
 
+	it("draws the current page's rule in the label's color and hides it on hover", async () => {
+		const doc = parse(
+			await render(Button, {
+				props: { href: "/about", variant: "ghost", current: true },
+				slots: { default: "About" },
+			}),
+		);
+		const classes = doc.querySelector("a")?.classList;
+		expect(classes).toContain("text-brand");
+		expect(classes).toContain("after:bg-current");
+		expect(classes).toContain("hover:after:opacity-0");
+	});
+
 	it.each(["filled", "outline", "ghost"] as const)(
 		"applies the %s variant",
 		async (variant) => {
@@ -160,6 +173,18 @@ describe("Header", () => {
 			"/writing/",
 		]);
 		expect(doc.querySelector("nav")?.getAttribute("aria-label")).toBe("Main");
+	});
+
+	it("opens with the skip link, before the word mark", async () => {
+		const doc = parse(
+			await render(Header, { request: new Request("https://example.com/") }),
+		);
+		const [skip, wordmark] = doc.querySelectorAll("header a");
+		expect(skip?.getAttribute("href")).toBe("#main");
+		expect(skip?.textContent?.trim()).toBe("Skip to content");
+		// The focused skip link stands in for the WordMark, which fades.
+		expect(skip?.classList).toContain("peer");
+		expect(wordmark?.classList).toContain("peer-focus-visible:opacity-0");
 	});
 
 	it("marks nothing on the home page", async () => {

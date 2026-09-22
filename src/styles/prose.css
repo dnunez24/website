@@ -86,14 +86,46 @@
 			font-size: 0.8em;
 		}
 
+		/*
+		 * Task lists: a checkbox takes the en dash's place in the gutter. It sits
+		 * out of the text flow, so item text keeps the list's edge and the box
+		 * centers on the first line whether or not it holds a check. Prose
+		 * checkboxes are disabled, so they're drawn rather than left greyed out.
+		 */
+		& li.task-list-item {
+			@apply relative list-none;
+		}
+		& li.task-list-item > input[type="checkbox"] {
+			@apply absolute m-0 grid appearance-none place-content-center rounded-sm border border-line-strong bg-surface-inset;
+			font: inherit;
+			inset-inline-start: -1.375em;
+			top: calc((1lh - 0.875em) / 2);
+			width: 0.875em;
+			height: 0.875em;
+
+			&:checked {
+				@apply border-brand bg-brand;
+			}
+			&:checked::before {
+				@apply bg-on-brand;
+				content: "";
+				width: 0.625em;
+				height: 0.625em;
+				mask:
+					url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='square'%3E%3Cpath d='M3 8.5l3 3 7-7'/%3E%3C/svg%3E")
+					center / contain no-repeat;
+			}
+		}
+
 		& blockquote {
 			@apply f6y-px-8 text-quote-ink slant;
 
 			& > * + * {
 				@apply mt-line-half;
 			}
+			/* Pretty, not balanced: the indent already narrows the measure. */
 			& p {
-				@apply m-0 text-h3 font-normal text-balance;
+				@apply m-0 text-h3 font-normal text-pretty;
 			}
 			& footer {
 				@apply mt-line-half block font-sans text-body text-quote-cite;

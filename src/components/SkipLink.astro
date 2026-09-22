@@ -4,11 +4,14 @@ interface Props {
 }
 
 const { target = "main" } = Astro.props;
+// The header's first child. Invisible but focusable until focused, then
+// centered in the header bar over the WordMark, whatever the bar's height.
+// `peer` lets the WordMark fade while this link has focus.
 ---
 
 <a
 	href={`#${target}`}
-	class="absolute top-1 z-10 -translate-y-16 rounded-sm bg-brand f6y-start-4 f6y-px-2 py-1 font-mono text-label text-on-brand no-underline focus-visible:translate-y-0"
+	class="peer pointer-events-none absolute inset-y-0 z-10 my-auto h-fit rounded-sm bg-brand f6y-start-4 f6y-px-2 py-1 font-mono text-label text-on-brand no-underline opacity-0 focus-visible:pointer-events-auto focus-visible:opacity-100"
 >
 	Skip to content
 </a>

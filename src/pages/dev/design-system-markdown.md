@@ -73,11 +73,15 @@ The block quote element represents content that's quoted from another source, op
 
 ### Block quote with attribution
 
+End the quote with a paragraph that starts with an em dash; it renders as the quote's `footer`.
+Wrap a work title in `<cite>`, never a person's name.
+
 #### Syntax
 
 ```markdown
 > Don't communicate by sharing memory, share memory by communicating.
-> <cite>Rob Pike[^1]</cite>
+>
+> — Rob Pike, <cite>Go Proverbs</cite>[^1]
 ```
 
 #### Output
@@ -85,7 +89,7 @@ The block quote element represents content that's quoted from another source, op
 <!-- rumdl-disable no-inline-html -->
 > Don't communicate by sharing memory, share memory by communicating.
 >
-> — <cite>Rob Pike[^1]</cite>
+> — Rob Pike, <cite>Go Proverbs</cite>[^1]
 <!-- rumdl-enable no-inline-html -->
 
 [^1]: The above quote is excerpted from Rob Pike's [talk](https://www.youtube.com/watch?v=PAAkCSZUG1c) during Gopherfest, November 18, 2015.

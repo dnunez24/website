@@ -1,6 +1,7 @@
 ---
 import Button from "@components/Button.astro";
 import Container from "@components/Container.astro";
+import SkipLink from "@components/SkipLink.astro";
 import WordMark from "@components/WordMark.astro";
 import { HEADER_NAV_ITEMS, SITE_TAGLINE, SITE_TITLE } from "@constants";
 
@@ -11,8 +12,10 @@ const isCurrent = (href: string) =>
 ---
 
 <header class="border-b border-line">
-	<Container class="flex flex-wrap items-center justify-between f6y-gap-x-4 f6y-gap-y-2 f6y-py-2">
-		<WordMark name={SITE_TITLE} tagline={SITE_TAGLINE} />
+	<Container class="relative flex flex-wrap items-center justify-between f6y-gap-x-4 f6y-gap-y-2 f6y-py-2">
+		<SkipLink />
+		<!-- Fades while the skip link has focus, so a two-line WordMark doesn't show around it. -->
+		<WordMark name={SITE_TITLE} tagline={SITE_TAGLINE} class="peer-focus-visible:opacity-0" />
 		<nav aria-label="Main">
 			<ul class="m-0 flex list-none flex-wrap p-0 bleed-x-2">
 				{
