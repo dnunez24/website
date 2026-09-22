@@ -8,27 +8,29 @@
 	"scripts": {
 		"dev": "astro dev",
 		"build": "astro build",
+		"fonts:build": "node scripts/build-fonts.ts",
+		"fonts:features": "node scripts/build-fonts.ts --features",
 		"preview": "astro preview",
 		"astro": "astro"
 	},
 	"dependencies": {
-		"@astrojs/markdown-satteri": "^0.4.0",
+		"@astrojs/markdown-satteri": "^0.4.1",
 		"@astrojs/mdx": "^7.0.8",
 		"@astrojs/react": "^6.0.5",
 		"@astrojs/rss": "^4.0.19",
-		"@astrojs/sitemap": "^3.7.3",
+		"@astrojs/sitemap": "^3.7.4",
 		"@base-ui/react": "^1.8.0",
 		"@fontsource-variable/afacad-flux": "^5.3.0",
 		"@fontsource/ibm-plex-mono": "^5.3.0",
 		"@tailwindcss/vite": "^4.3.3",
-		"@types/react": "^19.2.18",
-		"@types/react-dom": "^19.2.7",
-		"astro": "^7.2.9",
+		"@types/react": "^19.3.0",
+		"@types/react-dom": "^19.3.0",
+		"astro": "^7.3.2",
 		"fluidity-tailwind": "^0.1.1",
-		"react": "^19.2.8",
-		"react-dom": "^19.2.8",
+		"react": "^19.3.0",
+		"react-dom": "^19.3.0",
 		"satteri-callouts": "^1.0.1",
-		"sharp": "^0.35.0",
+		"sharp": "^0.35.4",
 		"tailwindcss": "^4.3.3"
 	},
 	"allowScripts": {
@@ -37,6 +39,8 @@
 	"devDependencies": {
 		"@astrojs/ts-plugin": "^1.10.11",
 		"@biomejs/biome": "2.5.12",
-		"@google/design.md": "^0.4.0"
+		"@google/design.md": "^0.4.0",
+		"@types/node": "^22.20.3",
+		"subset-font": "^2.7.0"
 	}
 }

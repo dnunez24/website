@@ -7,6 +7,7 @@ import tailwindcss from "@tailwindcss/vite";
 import type { AstroIntegration, ShikiConfig } from "astro";
 import { defineConfig, fontProviders } from "astro/config";
 import satteriCallouts from "satteri-callouts";
+import { SUBSETS } from "./scripts/fonts.config.ts";
 
 function excludeDevPages(): AstroIntegration {
 	const ansiBlue = "\x1b[34m";
@@ -40,17 +41,33 @@ export default defineConfig({
 			theme: syntaxTheme as NonNullable<ShikiConfig["theme"]>,
 		},
 		processor: satteri({
+			features: {
+				smartPunctuation: true,
+			},
 			hastPlugins: [satteriCallouts()],
 		}),
 	},
 
 	fonts: [
 		{
-			provider: fontProviders.fontsource(),
+			// Self-hosted rather than provider-served: the Fontsource and Google
+			// builds are subset with harfbuzz's default layout-feature list, which
+			// strips `case`, `zero` and `ss01`–`ss04`. Regenerate the file with
+			// `pnpm fonts:build` after editing `scripts/fonts.config.ts`.
+			provider: fontProviders.local(),
 			name: "Afacad Flux",
 			cssVariable: "--font-family-sans",
 			fallbacks: ["ui-sans-serif", "system-ui", "sans-serif"],
-			weights: [300, 400, 500, 600],
+			options: {
+				variants: [
+					{
+						src: ["./src/assets/fonts/afacad-flux-latin-wght-normal.woff2"],
+						weight: "100 1000",
+						style: "normal",
+						unicodeRange: SUBSETS.latin,
+					},
+				],
+			},
 		},
 		{
 			provider: fontProviders.fontsource(),
