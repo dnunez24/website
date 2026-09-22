@@ -1,13 +1,12 @@
 import { satteri } from "@astrojs/markdown-satteri";
 import mdx from "@astrojs/mdx";
-import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
-import syntaxTheme from "@styles/shiki-theme.json";
 import tailwindcss from "@tailwindcss/vite";
-import type { AstroIntegration, ShikiConfig } from "astro";
+import type { AstroIntegration } from "astro";
 import { defineConfig, fontProviders } from "astro/config";
 import satteriCallouts from "satteri-callouts";
 import { SUBSETS } from "./scripts/fonts.config.ts";
+import { syntaxTheme, syntaxTransformers } from "./src/lib/syntax.ts";
 
 function excludeDevPages(): AstroIntegration {
 	const ansiBlue = "\x1b[34m";
@@ -34,11 +33,12 @@ function excludeDevPages(): AstroIntegration {
 export default defineConfig({
 	site: "https://example.com",
 
-	integrations: [mdx(), sitemap(), react(), excludeDevPages()],
+	integrations: [mdx(), sitemap(), excludeDevPages()],
 
 	markdown: {
 		shikiConfig: {
-			theme: syntaxTheme as NonNullable<ShikiConfig["theme"]>,
+			theme: syntaxTheme,
+			transformers: syntaxTransformers,
 		},
 		processor: satteri({
 			features: {
@@ -52,11 +52,12 @@ export default defineConfig({
 		{
 			// Self-hosted rather than provider-served: the Fontsource and Google
 			// builds are subset with harfbuzz's default layout-feature list, which
-			// strips `case`, `zero` and `ss01`–`ss04`. Regenerate the file with
-			// `pnpm fonts:build` after editing `scripts/fonts.config.ts`.
+			// strips `case`, `zero` and `ss01`–`ss04`, and they drop Afacad Flux's
+			// slant axis. Regenerate the files with `pnpm fonts:build` after
+			// editing `scripts/fonts.config.ts`.
 			provider: fontProviders.local(),
 			name: "Afacad Flux",
-			cssVariable: "--font-family-sans",
+			cssVariable: "--font-afacad-flux",
 			fallbacks: ["ui-sans-serif", "system-ui", "sans-serif"],
 			options: {
 				variants: [
@@ -70,11 +71,28 @@ export default defineConfig({
 			},
 		},
 		{
-			provider: fontProviders.fontsource(),
+			provider: fontProviders.local(),
 			name: "JetBrains Mono",
-			cssVariable: "--font-family-mono",
-			fallbacks: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
-			weights: [300, 400, 500, 600],
+			cssVariable: "--font-jetbrains-mono",
+			fallbacks: ["ui-monospace", "SF Mono", "Menlo", "monospace"],
+			options: {
+				variants: [
+					{
+						src: ["./src/assets/fonts/jetbrains-mono-latin-wght-normal.woff2"],
+						weight: "100 800",
+						style: "normal",
+						unicodeRange: SUBSETS.latin,
+					},
+					{
+						src: [
+							"./src/assets/fonts/jetbrains-mono-italic-latin-wght-italic.woff2",
+						],
+						weight: "100 800",
+						style: "italic",
+						unicodeRange: SUBSETS.latin,
+					},
+				],
+			},
 		},
 	],
 

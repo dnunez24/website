@@ -3,7 +3,7 @@ import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 
 const writing = defineCollection({
-	// Load Markdown and MDX files in the `src/content/blog/` directory.
+	// Markdown and MDX files in `src/content/writing/`.
 	loader: glob({ base: "./src/content/writing", pattern: "**/*.{md,mdx}" }),
 	// Type-check frontmatter using a schema
 	schema: () =>
@@ -13,6 +13,7 @@ const writing = defineCollection({
 			// Transform string to Date object
 			publishedDate: z.coerce.date(),
 			updatedDate: z.coerce.date().optional(),
+			topics: z.array(z.string()).optional(),
 		}),
 });
 

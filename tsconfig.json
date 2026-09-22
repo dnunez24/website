@@ -4,13 +4,12 @@
 	"exclude": ["dist"],
 	"compilerOptions": {
 		"strictNullChecks": true,
-		"jsx": "react-jsx",
-		"jsxImportSource": "react",
 		"paths": {
 			"@assets/*": ["./src/assets/*"],
 			"@components/*": ["./src/components/*"],
 			"@constants": ["./src/consts.ts"],
 			"@layouts/*": ["./src/layouts/*"],
+			"@lib/*": ["./src/lib/*"],
 			"@styles/*": ["./src/styles/*"]
 		},
 		"plugins": [

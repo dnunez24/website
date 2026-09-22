@@ -108,6 +108,9 @@ export interface FontBuild {
 	variants: FontVariant[];
 }
 
+/** Without `calt`, so code shows its real characters instead of ligatures. */
+const MONO_FEATURES = ["ccmp", "kern", "locl", "mark", "mkmk", "zero"];
+
 export const FONTS: FontBuild[] = [
 	{
 		family: "Afacad Flux",
@@ -142,10 +145,33 @@ export const FONTS: FontBuild[] = [
 				label: "wght",
 				weight: "100 1000",
 				style: "normal",
-				// The slant axis is never used, and dropping it halves the file.
-				// Remove this to get oblique instead of synthesised italics.
-				axes: { slnt: 0 },
+				// Italics come from the slant axis at -12; nothing leans left, so
+				// the positive half of the axis is dropped.
+				axes: { slnt: { min: -12, max: 0, default: 0 } },
 			},
 		],
+	},
+	{
+		family: "JetBrains Mono",
+		stem: "jetbrains-mono",
+		source:
+			"https://raw.githubusercontent.com/google/fonts/main/ofl/jetbrainsmono/JetBrainsMono%5Bwght%5D.ttf",
+		license:
+			"https://raw.githubusercontent.com/google/fonts/main/ofl/jetbrainsmono/OFL.txt",
+		subsets: ["latin"],
+		features: MONO_FEATURES,
+		variants: [{ label: "wght", weight: "100 800", style: "normal" }],
+	},
+	{
+		family: "JetBrains Mono",
+		stem: "jetbrains-mono-italic",
+		source:
+			"https://raw.githubusercontent.com/google/fonts/main/ofl/jetbrainsmono/JetBrainsMono-Italic%5Bwght%5D.ttf",
+		// Same upstream OFL as the "jetbrains-mono" build above, already
+		// committed as jetbrains-mono-OFL.txt — omit here so a rebuild
+		// doesn't write an untracked duplicate under a different filename.
+		subsets: ["latin"],
+		features: MONO_FEATURES,
+		variants: [{ label: "wght", weight: "100 800", style: "italic" }],
 	},
 ];

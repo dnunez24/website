@@ -1,23 +1,30 @@
 ---
-import NavLink from "@components/NavLink.astro";
-import { SITE_TITLE } from "../consts";
+import Button from "@components/Button.astro";
+import Container from "@components/Container.astro";
+import WordMark from "@components/WordMark.astro";
+import { HEADER_NAV_ITEMS, SITE_TAGLINE, SITE_TITLE } from "@constants";
 
-const isActiveRoute = (name: string) => {
-	const pathname = Astro.url.pathname.replace(import.meta.env.BASE_URL, "");
-	console.log(pathname);
-	return pathname === name;
-};
+const pathname = Astro.url.pathname;
+const isCurrent = (href: string) =>
+	pathname === href ||
+	pathname.startsWith(href.endsWith("/") ? href : `${href}/`);
 ---
 
-<header class="py-16 px-4 border-border-subtle border-be">
-  <nav class="flex items-center justify-between max-w-5xl w-full m-auto f6y-exp-px-4/12">
-    <div class="">
-      <h2 class="f6y-text-xl/2xl font-semibold tracking-tighter hover:text-accent motion-safe:transition-colors ease-out duration-slow "><a href="/">{SITE_TITLE}</a></h2>
-      <div class="text-tertiary text-mono uppercase f6y-text-xs/sm">Engineering leadership & creative exploration</div>
-    </div>
-		<div class="flex">
-			<NavLink href="/writing" aria-current={isActiveRoute("writing")}>Writing</NavLink>
-			<NavLink href="/about" aria-current={isActiveRoute("about")}>About</NavLink>
-		</div>
-	</nav>
+<header class="border-b border-line">
+	<Container class="flex flex-wrap items-center justify-between f6y-gap-x-4 f6y-gap-y-2 f6y-py-2">
+		<WordMark name={SITE_TITLE} tagline={SITE_TAGLINE} />
+		<nav aria-label="Main">
+			<ul class="m-0 flex list-none flex-wrap p-0 bleed-x-2">
+				{
+					HEADER_NAV_ITEMS.map((item) => (
+						<li>
+							<Button variant="ghost" href={item.href} current={isCurrent(item.href)}>
+								{item.label}
+							</Button>
+						</li>
+					))
+				}
+			</ul>
+		</nav>
+	</Container>
 </header>

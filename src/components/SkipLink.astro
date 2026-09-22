@@ -1,0 +1,14 @@
+---
+interface Props {
+	target?: string;
+}
+
+const { target = "main" } = Astro.props;
+---
+
+<a
+	href={`#${target}`}
+	class="absolute top-1 z-10 -translate-y-16 rounded-sm bg-brand f6y-start-4 f6y-px-2 py-1 font-mono text-label text-on-brand no-underline focus-visible:translate-y-0"
+>
+	Skip to content
+</a>

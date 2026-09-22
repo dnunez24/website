@@ -1,29 +1,197 @@
-:root {
-	--fluid-min-viewport: calc(360 / 16 * 1rem);
-	--fluid-max-viewport: calc(1024 / 16 * 1rem);
-	--rhythm-unit: calc(var(--text-base) * var(--leading-base));
-}
-
+/* biome-ignore-all lint/style/noDescendingSpecificity: nested element rules are grouped by element, not specificity. */
+/*
+ * Markdown output can't carry utility classes, so `.prose` styles its
+ * descendants here. Block spacing is one prose line; two lines before a
+ * heading, half a line after.
+ */
 @layer components {
 	.prose {
-		blockquote {
-			color: var(--color-verdigris-800);
-			background-color: color-mix(
-				in oklch var(--color-verdigris-800),
-				10%,
-				transparent
-			);
-			padding-block: --spacing(2);
-			margin-block: --spacing(4);
-			margin-inline-start: --spacing(8);
-			padding-inline-start: --spacing(2);
+		@apply max-w-measure text-prose text-ink;
+		hanging-punctuation: first;
+
+		& > * {
+			@apply my-0;
+		}
+		& > * + * {
+			@apply mt-line;
+		}
+		& > :is(h2, h3, h4, h5, h6) {
+			@apply mt-line-double;
+		}
+		& > :is(h2, h3, h4, h5, h6) + * {
+			@apply mt-line-half;
 		}
 
-		[data-footnote-ref] {
-			color: var(--color-accent-secondary);
-			font-size: var(--font-size-sm);
-			font-weight: var(--font-weight-medium);
-			text-decoration: none;
+		& p {
+			@apply text-pretty;
+		}
+		& :is(h1, h2, h3, h4, h5, h6) {
+			@apply text-balance text-ink-heading;
+		}
+		& h1 {
+			@apply text-h1;
+		}
+		& h2 {
+			@apply text-h2;
+		}
+		& h3 {
+			@apply text-h3;
+		}
+		& h4 {
+			@apply text-h4;
+		}
+		& h5 {
+			@apply text-h5;
+		}
+		& h6 {
+			@apply font-mono text-h6 text-ink-muted uppercase;
+		}
+		& strong {
+			@apply font-semibold;
+		}
+		/* Not specified by the design system; the selection ground keeps it in the palette. */
+		& mark {
+			@apply bg-selection text-ink;
+		}
+
+		& a:not([data-button]) {
+			@apply rounded-sm text-link underline decoration-current decoration-2 underline-offset-2 transition-colors;
+
+			&:is(:hover, :focus-visible) {
+				@apply text-link-hover decoration-transparent;
+			}
+		}
+		& a[href^="http"]:not([data-button]) {
+			@apply link-external;
+		}
+
+		& :is(ul, ol) {
+			padding-inline-start: 1.5em;
+		}
+		& ul {
+			list-style-type: "\2013\00a0\00a0";
+		}
+		& ol {
+			@apply list-decimal;
+		}
+		& li + li,
+		& li > :is(ul, ol) {
+			@apply mt-line-quarter;
+		}
+		& li::marker {
+			@apply text-ink-muted;
+		}
+		& ol > li::marker {
+			@apply font-mono;
+			font-size: 0.8em;
+		}
+
+		& blockquote {
+			@apply f6y-px-8 text-quote-ink slant;
+
+			& > * + * {
+				@apply mt-line-half;
+			}
+			& p {
+				@apply m-0 text-h3 font-normal text-balance;
+			}
+			& footer {
+				@apply mt-line-half block font-sans text-body text-quote-cite;
+			}
+		}
+
+		& hr {
+			@apply my-line-double h-0 border-0 border-t border-line;
+		}
+
+		/* Table: no frame. A strong hairline under the header, light hairlines between rows. */
+		& table {
+			@apply w-full border-collapse text-small tabular-nums;
+		}
+		& th {
+			@apply border-b border-line-strong f6y-pb-2 text-left align-bottom font-mono text-label font-medium text-ink-muted;
+		}
+		& :is(th, td) {
+			@apply f6y-px-2;
+		}
+		& td {
+			@apply f6y-py-2 align-top;
+		}
+		& tbody tr + tr td {
+			@apply border-t border-line;
+		}
+		& :is(th, td):first-child {
+			@apply ps-0;
+		}
+		& :is(th, td):last-child {
+			@apply pe-0;
+		}
+		& :is(th, td)[align="right"] {
+			@apply text-right;
+		}
+		& caption {
+			@apply caption-bottom pt-1 text-left font-mono text-label text-ink-muted;
+		}
+
+		& :is(img, video) {
+			@apply block h-auto max-w-full rounded-none bg-media-ground;
+		}
+		& figure {
+			@apply mx-0;
+		}
+		& figcaption {
+			@apply mt-1 text-small text-ink-muted;
+		}
+
+		& :not(pre) > code {
+			@apply rounded-sm bg-code-ground font-mono text-ink;
+			font-size: 0.875em;
+			padding: 0.1em 0.3em;
+		}
+		& pre {
+			@apply f6y-p-4 mx-0 overflow-x-auto rounded-md bg-codeblock-ground font-mono text-code scheme-dark text-syntax-plain;
+			tab-size: 2;
+
+			& code {
+				font: inherit;
+			}
+			&::selection,
+			& ::selection {
+				@apply bg-codeblock-selection text-syntax-plain;
+			}
+		}
+
+		/* Footnote references and the footnotes section. */
+		& sup:has(> a[data-footnote-ref]) {
+			font-size: 0.7em;
+			line-height: 0;
+			vertical-align: super;
+		}
+		& a[data-footnote-ref] {
+			@apply px-0.5 font-mono no-underline;
+			&::before {
+				content: "[";
+			}
+			&::after {
+				content: "]";
+			}
+		}
+		& .footnotes {
+			@apply f6y-pt-4 mt-line-double border-t border-line text-small text-ink-muted;
+
+			& h2 {
+				@apply f6y-mb-2 mt-0 font-mono text-label font-medium tracking-caps text-ink-muted uppercase;
+			}
+			& ol {
+				@apply m-0;
+				padding-inline-start: 2em;
+			}
+			& li + li {
+				@apply mt-1;
+			}
+			& a[data-footnote-backref] {
+				@apply ms-1 no-underline;
+			}
 		}
 	}
 }

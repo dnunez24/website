@@ -1,0 +1,20 @@
+---
+interface Props {
+	name: string;
+	href?: string;
+	count?: number;
+}
+
+const { name, href, count } = Astro.props;
+const Tag = href === undefined ? "span" : "a";
+---
+
+<Tag
+	href={href}
+	class:list={[
+		"inline-block rounded-sm bg-topic-ground f6y-px-2 py-1 font-mono text-label text-topic no-underline transition-colors",
+		{ "hover:bg-topic-ground-hover": href !== undefined },
+	]}
+><span aria-hidden="true" class="opacity-70">#</span>{name}{
+		count !== undefined && <span class="ms-1 text-ink-muted">{count}</span>
+	}</Tag>

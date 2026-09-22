@@ -1,7 +1,67 @@
 ---
-import { Button } from "@base-ui/react/button";
+import type { HTMLAttributes } from "astro/types";
+
+type Variant = "filled" | "outline" | "ghost";
+
+type Props = {
+	variant?: Variant;
+	/** Marks the current page: `aria-current="page"`, bold label, brand rule. Ghost only. */
+	current?: boolean;
+	class?: string;
+} & (
+	| ({ href: string } & Omit<HTMLAttributes<"a">, "class">)
+	| ({ href?: undefined } & Omit<HTMLAttributes<"button">, "class">)
+);
+
+const {
+	variant = "filled",
+	current = false,
+	href,
+	class: className,
+	...attrs
+} = Astro.props;
+
+// Each variant owns every property it sets, so no two classes on one element compete.
+const variants: Record<Variant, string> = {
+	filled:
+		"border-brand bg-brand f6y-px-4 font-medium text-on-brand hover:border-brand-hover hover:bg-brand-hover",
+	outline:
+		"border-brand f6y-px-4 font-medium text-brand hover:bg-brand-tint hover:text-brand-hover",
+	ghost: "relative border-transparent f6y-px-2 hover:bg-surface-hover",
+};
+const ghostState = current
+	? "font-bold text-ink-heading after:absolute after:bottom-1 after:h-0.5 after:bg-brand after:f6y-inset-x-2"
+	: "font-normal text-ink";
+
+const classes = [
+	"inline-flex cursor-pointer items-center justify-center gap-1 rounded-sm border f6y-py-2 font-mono text-label no-underline transition-colors active:duration-64",
+	variants[variant],
+	variant === "ghost" && ghostState,
+	className,
+];
+const ariaCurrent = current ? "page" : undefined;
 ---
 
-<Button className="m-8 flex items-center content-center f6y-log-min-h-12/9 f6y-exp-py-3/2 f6y-exp-px-5/3 rounded-sm bg-surface-inverse font-mono font-medium tracking-wider leading-none f6y-exp-text-base/sm text-concrete-100 uppercase hover:bg-concrete-800 transition-active active:scale-[0.97] active:bg-concrete-700" type="button">
-  <slot />
-</Button>
+{
+	href === undefined ? (
+		<button
+			type="button"
+			aria-current={ariaCurrent}
+			data-button
+			class:list={classes}
+			{...(attrs as Omit<HTMLAttributes<"button">, "class">)}
+		>
+			<slot />
+		</button>
+	) : (
+		<a
+			href={href}
+			aria-current={ariaCurrent}
+			data-button
+			class:list={classes}
+			{...(attrs as Omit<HTMLAttributes<"a">, "class">)}
+		>
+			<slot />
+		</a>
+	)
+}

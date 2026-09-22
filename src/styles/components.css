@@ -1,0 +1,56 @@
+/* biome-ignore-all lint/complexity/noImportantStyles: Mermaid inlines id-scoped <style> rules that only !important overrides. */
+/*
+ * Component rules that depend on markup the component doesn't own:
+ * Shiki's <pre> and Mermaid's <svg>.
+ */
+@layer components {
+	/* The <pre> scrolls inside a clipped frame, so the frame carries its focus ring. */
+	[data-codeblock] pre:focus-visible {
+		outline: none;
+	}
+	[data-codeblock]:has(pre:focus-visible) {
+		@apply outline-4 outline-offset-2 outline-focus;
+	}
+
+	/*
+	 * Mermaid embeds <style> rules scoped to the svg's id, so these need
+	 * !important. The font size stays at the 13px Mermaid measured with, so
+	 * labels keep fitting their boxes.
+	 */
+	[data-diagram] svg {
+		@apply mx-auto block h-auto max-w-full;
+		font-family: var(--font-mono) !important;
+		fill: var(--color-ink) !important;
+
+		& .node :is(rect, circle, ellipse, polygon, path) {
+			fill: var(--color-surface) !important;
+			stroke: var(--color-brand) !important;
+			stroke-width: 1px !important;
+		}
+		& .node.alt :is(rect, circle, ellipse, polygon, path) {
+			fill: var(--color-topic-ground) !important;
+			stroke: var(--color-fungus-700) !important;
+		}
+		& :is(.edgePaths .path, .flowchart-link) {
+			stroke: var(--color-concrete-600) !important;
+			fill: none !important;
+		}
+		& :is(.marker, .arrowMarkerPath) {
+			fill: var(--color-concrete-600) !important;
+			stroke: var(--color-concrete-600) !important;
+		}
+		& .label :is(text, tspan) {
+			fill: var(--color-ink) !important;
+		}
+		& .edgeLabel :is(text, tspan) {
+			fill: var(--color-ink-muted) !important;
+		}
+		& .edgeLabel rect {
+			fill: var(--color-surface-inset) !important;
+		}
+		& .cluster rect {
+			fill: var(--color-surface-inset) !important;
+			stroke: var(--color-line) !important;
+		}
+	}
+}

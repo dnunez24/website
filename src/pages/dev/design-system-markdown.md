@@ -3,7 +3,7 @@ title: Markdown design system demo
 description: Demonstrates design system components applied to markdown pages for the blog.
 publishedDate: 2026-09-09
 layout: "@layouts/Article.astro"
-prose: true
+topics: [design, markdown]
 ---
 
 Here is a sample of some basic Markdown syntax that can be used when writing Markdown content.

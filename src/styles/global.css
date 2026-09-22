@@ -1,15 +1,7 @@
 @import "tailwindcss";
 @import "fluidity-tailwind";
-@import "./primitives.css";
-@import "./layout.css";
-@import "./colors.css";
-@import "./typography.css";
-@import "./spacing.css";
-@import "./motion.css";
+@import "./theme.css";
+@import "./base.css";
+@import "./utilities.css";
 @import "./prose.css";
-@import "./typeset.css";
-
-:root {
-	--f6y-lower: 20rem;
-	--f6y-upper: var(--breakpoint-lg, 64rem);
-}
+@import "./components.css";

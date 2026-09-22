@@ -1,0 +1,14 @@
+---
+interface Props {
+	name: string;
+	tagline?: string;
+	href?: string;
+}
+
+const { name, tagline, href = "/" } = Astro.props;
+---
+
+<a href={href} class="group inline-flex flex-col rounded-sm text-ink-heading no-underline">
+	<span class="text-h4 tracking-tight transition-colors group-hover:text-brand-hover">{name}</span>
+	{tagline && <span class="font-mono text-label text-ink-muted">{tagline}</span>}
+</a>

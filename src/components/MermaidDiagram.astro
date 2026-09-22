@@ -1,3 +1,21 @@
 ---
-// TODO: implement Mermaid rendering. Needs to support fenced code block rendering from Markdown with toggle to switch between source and rendered.
+interface Props {
+	/** Accessible description of what the diagram shows. */
+	label: string;
+}
+
+const { label } = Astro.props;
 ---
+
+<!--
+  Styles a Mermaid SVG rendered at build time; the rendering step is not wired
+  yet. Pass the SVG as the default slot.
+-->
+<figure
+	data-diagram
+	role="img"
+	aria-label={label}
+	class="mx-0 overflow-x-auto rounded-md border border-line bg-surface-inset f6y-p-4"
+>
+	<slot />
+</figure>
