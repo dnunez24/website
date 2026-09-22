@@ -132,6 +132,96 @@
 			}
 		}
 
+		/*
+		 * Callout: GitHub alert syntax, from satteri-callouts and the
+		 * callout-titles plugin (src/lib/markdown/callouts.ts). Each type takes a
+		 * light tint of its own hue; the type name in the title carries the meaning.
+		 */
+		& [data-callout] {
+			--callout-ink: var(--color-callout-note);
+			--callout-ground: var(--color-callout-note-ground);
+			@apply rounded-md;
+			background: var(--callout-ground);
+
+			/* Inline code's own ground matches the tints, so it takes the page ground. */
+			& :not(pre) > code {
+				@apply bg-surface;
+			}
+			/* The brand hue reads as a stray color on the tints: links take the text color, and the underline alone marks them. */
+			& a:not([data-button]),
+			& a:not([data-button]):is(:hover, :focus-visible) {
+				@apply text-ink;
+			}
+		}
+		& [data-callout="tip"] {
+			--callout-ink: var(--color-callout-tip);
+			--callout-ground: var(--color-callout-tip-ground);
+		}
+		& [data-callout="important"] {
+			--callout-ink: var(--color-callout-important);
+			--callout-ground: var(--color-callout-important-ground);
+		}
+		& [data-callout="warning"] {
+			--callout-ink: var(--color-callout-warning);
+			--callout-ground: var(--color-callout-warning-ground);
+		}
+		& [data-callout="caution"] {
+			--callout-ink: var(--color-callout-caution);
+			--callout-ground: var(--color-callout-caution-ground);
+		}
+		& .callout-title {
+			@apply flex items-baseline f6y-gap-2 f6y-px-4 f6y-pt-2 pb-1;
+		}
+		& .callout-type {
+			@apply font-mono text-label font-medium tracking-caps uppercase;
+			color: var(--callout-ink);
+		}
+		& .callout-title-text {
+			@apply font-semibold text-ink-heading;
+		}
+		& .callout-content {
+			@apply f6y-px-4 f6y-pb-2;
+
+			& > * {
+				@apply my-0;
+			}
+			& > * + * {
+				@apply mt-line;
+			}
+		}
+
+		/* Collapsible: the whole title row is the summary, so the target spans the frame. */
+		& summary.callout-title {
+			@apply cursor-pointer list-none;
+
+			&::-webkit-details-marker {
+				display: none;
+			}
+			/* The frame carries the focus ring, as CodeBlock's does. */
+			&:focus-visible {
+				outline: none;
+			}
+			&:hover .callout-fold-icon {
+				@apply text-ink;
+			}
+		}
+		& details.callout:not([open]) > summary.callout-title {
+			@apply f6y-pb-2;
+		}
+		& details.callout:has(> summary:focus-visible) {
+			@apply outline-4 outline-offset-2 outline-focus;
+		}
+		& .callout-fold-icon {
+			@apply ms-auto font-mono text-label text-ink-muted transition-colors;
+
+			&::before {
+				content: "+";
+			}
+		}
+		& details[open] > summary .callout-fold-icon::before {
+			content: "\2212";
+		}
+
 		& hr {
 			@apply my-line-double h-0 border-0 border-t border-line;
 		}

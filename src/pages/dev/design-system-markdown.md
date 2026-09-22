@@ -312,8 +312,27 @@ You can also ~~strike through~~ text to indicate a correction.
 
 ## Callouts
 
-> [!note] This is a _non-collapsible_ callout
-> Some content is displayed directly!
+> [!NOTE]
+> Checkout ran as its own micro-frontend from 2017.
 
-> [!WARNING]- This is a **collapsible** callout
-> Some content shown after opening!
+> [!TIP]
+> Load-test with production traffic shapes, not averages.
+
+> [!IMPORTANT]
+> Every request carries an idempotency key.
+
+> [!WARNING]
+> Queue depth grows faster than it drains during a drop.
+
+> [!CAUTION]
+> Set `retries: 0` for payments, and read the [runbook](https://example.com/runbook) first.
+
+> [!WARNING] Before you _migrate_
+> Back up the ledger before you run the migration.
+> It takes about an hour.
+
+> [!NOTE]- The full configuration
+> The full configuration lives in the repository README.
+
+> [!TIP]+ Where to start
+> Start with the slowest dependency and work outward.

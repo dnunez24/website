@@ -4,8 +4,8 @@ import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import type { AstroIntegration } from "astro";
 import { defineConfig, fontProviders } from "astro/config";
-import satteriCallouts from "satteri-callouts";
 import { SUBSETS } from "./scripts/fonts.config.ts";
+import { callouts } from "./src/lib/markdown/callouts.ts";
 import { mermaidDiagrams } from "./src/lib/markdown/mermaid.ts";
 import { quoteAttribution } from "./src/lib/markdown/quote-attribution.ts";
 import { isDevRoute, isPublicPage } from "./src/lib/routes.ts";
@@ -52,7 +52,7 @@ export default defineConfig({
 			features: {
 				smartPunctuation: true,
 			},
-			hastPlugins: [satteriCallouts(), quoteAttribution(), mermaidDiagrams()],
+			hastPlugins: [...callouts(), quoteAttribution(), mermaidDiagrams()],
 		}),
 	},
 
