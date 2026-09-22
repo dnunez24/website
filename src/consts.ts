@@ -10,5 +10,6 @@ export const HEADER_NAV_ITEMS = [
 export const FOOTER_NAV_ITEMS = [
 	{ label: "Topics", href: "/topics" },
 	{ label: "LinkedIn", href: "https://www.linkedin.com/in/dave-nunez" },
-	{ label: "GitHub", href: "https://www.github.com/dnunez24" },
+	{ label: "GitHub", href: "https://github.com/dnunez24" },
+	{ label: "RSS", href: "/rss.xml" },
 ];
