@@ -143,22 +143,41 @@ describe("FormattedDate", () => {
 });
 
 describe("Topic", () => {
-	it("hides the # from assistive technology and shows the count", async () => {
+	it("hides the # from assistive technology", async () => {
 		const doc = parse(
 			await render(Topic, {
-				props: { name: "systems", href: "/topics/systems", count: 9 },
+				props: { name: "systems", href: "/topics/systems" },
 			}),
 		);
 		const link = doc.querySelector("a");
 		expect(link?.getAttribute("href")).toBe("/topics/systems");
 		expect(link?.querySelector('[aria-hidden="true"]')?.textContent).toBe("#");
-		expect(link?.textContent).toBe("#systems9");
+		expect(link?.textContent).toBe("#systems");
+	});
+
+	it("shows only the count's number and reads it as articles", async () => {
+		const link = async (count: number) =>
+			parse(
+				await render(Topic, {
+					props: { name: "systems", href: "/topics/systems", count },
+				}),
+			).querySelector("a");
+		const nine = await link(9);
+		expect(nine?.textContent).toBe("#systems, 9 articles");
+		expect(
+			[...(nine?.querySelectorAll(".sr-only") ?? [])].map(
+				(hidden) => hidden.textContent,
+			),
+		).toEqual([", ", " articles"]);
+		expect((await link(1))?.textContent).toBe("#systems, 1 article");
 	});
 
 	it("renders a non-link topic without a hover state", async () => {
-		const doc = parse(await render(Topic, { props: { name: "craft" } }));
+		const doc = parse(
+			await render(Topic, { props: { name: "craft", count: 6 } }),
+		);
 		expect(doc.querySelector("a")).toBeNull();
-		expect(doc.querySelector("span")?.className).not.toContain("hover:");
+		expect(doc.body.innerHTML).not.toContain("hover:");
 	});
 });
 
@@ -214,6 +233,31 @@ describe("Pagination", () => {
 		);
 		expect(doc.querySelector('a[rel="next"]')?.getAttribute("href")).toBe(
 			"/writing/6/",
+		);
+	});
+
+	it("labels the direction links Newer and Older and hides their glyphs", async () => {
+		const doc = parse(
+			await render(Pagination, { props: { current: 5, total: 12, href } }),
+		);
+		const prev = doc.querySelector('a[rel="prev"]');
+		const next = doc.querySelector('a[rel="next"]');
+		expect(prev?.textContent?.trim()).toBe("< Newer");
+		expect(prev?.querySelector('[aria-hidden="true"]')?.textContent).toBe("<");
+		expect(next?.textContent?.trim()).toBe("Older >");
+		expect(next?.querySelector('[aria-hidden="true"]')?.textContent).toBe(">");
+	});
+
+	it("keeps the markup in visual order, with a status for narrow screens", async () => {
+		const doc = parse(
+			await render(Pagination, { props: { current: 5, total: 12, href } }),
+		);
+		const order = [
+			...doc.querySelectorAll('a[rel="prev"], ol, p, a[rel="next"]'),
+		].map((element) => element.getAttribute("rel") ?? element.localName);
+		expect(order).toEqual(["prev", "ol", "p", "next"]);
+		expect(doc.querySelector("nav p")?.textContent?.trim()).toBe(
+			"Page 5 of 12",
 		);
 	});
 

@@ -121,6 +121,9 @@
 	--color-topic: var(--color-fungus-800);
 	--color-topic-ground: var(--color-fungus-200);
 	--color-topic-ground-hover: var(--color-fungus-300);
+	--color-topic-count-ground: var(--color-fungus-300);
+	--color-topic-count-ground-hover: var(--color-fungus-400);
+	--color-topic-count-hover: var(--color-fungus-950);
 	--color-focus: var(--color-fungus-600);
 	--color-quote-ink: var(--color-earth-800);
 	--color-quote-cite: var(--color-earth-600);
@@ -202,6 +205,9 @@
 	--grid-template-columns-log: 12ch minmax(0, 1fr);
 	--grid-template-columns-pagination: 1fr auto 1fr;
 
+	/* One label line: a Topic's count chip is at least as wide as it is tall. */
+	--min-width-label-line: var(--text-label--line-height);
+
 	--radius-none: 0;
 	--radius-sm: 2px;
 	--radius-md: 4px;
@@ -211,7 +217,7 @@
 	--container-measure: 40rem;
 	--container-portrait: 12rem;
 
-	/* The one layout breakpoint: Pagination puts page numbers on the direction row. */
+	/* The one layout breakpoint: Pagination swaps its "Page 6 of 12" status for page numbers. */
 	--breakpoint-measure: 40rem;
 
 	--ease-standard: cubic-bezier(0.25, 0, 0, 1);
