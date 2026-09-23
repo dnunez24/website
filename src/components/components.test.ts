@@ -699,6 +699,17 @@ describe("WordMark", () => {
 		expect(doc.querySelectorAll("span")).toHaveLength(2);
 		expect(link?.textContent).toContain("Software leader");
 	});
+
+	it("shows the tagline only from the measure breakpoint up", async () => {
+		const doc = parse(
+			await render(WordMark, {
+				props: { name: "Dave Nuñez", tagline: "Leader / Builder / Integrator" },
+			}),
+		);
+		const tagline = doc.querySelectorAll("span")[1]?.classList;
+		expect(tagline).toContain("hidden");
+		expect(tagline).toContain("measure:block");
+	});
 });
 
 describe("TopicList", () => {
