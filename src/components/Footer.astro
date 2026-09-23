@@ -20,7 +20,7 @@ const pathname = Astro.url.pathname;
 				{
 					FOOTER_NAV_ITEMS.map((item) => (
 						<li>
-							<Button variant="ghost" href={item.href} current={isCurrentSection(pathname, item.href)}>
+							<Button variant="ghost" href={item.href} rel={"rel" in item ? item.rel : undefined} current={isCurrentSection(pathname, item.href)}>
 								{item.label}
 							</Button>
 						</li>

@@ -1,19 +1,11 @@
 ---
-import FallbackImage from "@assets/blog-placeholder-1.jpg";
 import "@styles/global.css";
 import { Font } from "astro:assets";
+import PageMeta from "@components/PageMeta.astro";
 import { SITE_TITLE } from "@constants";
-import type { ImageMetadata } from "astro";
+import type { ComponentProps } from "astro/types";
 
-interface Props {
-	title: string;
-	description: string;
-	image?: ImageMetadata | undefined;
-}
-
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
-
-const { title, description, image = FallbackImage } = Astro.props;
+type Props = ComponentProps<typeof PageMeta>;
 ---
 
 <!-- Global Metadata -->
@@ -35,19 +27,4 @@ const { title, description, image = FallbackImage } = Astro.props;
      only sets code comments, below the fold, so it waits. -->
 <Font cssVariable="--font-jetbrains-mono" preload={[{ style: "normal" }]} />
 
-<!-- Canonical URL -->
-<link rel="canonical" href={canonicalURL} />
-
-<!-- Primary Meta Tags -->
-<title>{title}</title>
-<meta name="description" content={description} />
-
-<!-- Open Graph / Facebook -->
-<meta property="og:type" content="website" />
-<meta property="og:url" content={Astro.url} />
-<meta property="og:title" content={title} />
-<meta property="og:description" content={description} />
-<meta property="og:image" content={new URL(image.src, Astro.url)} />
-
-<!-- Twitter -->
-<meta name="twitter:card" content="summary_large_image" />
+<PageMeta {...Astro.props} />

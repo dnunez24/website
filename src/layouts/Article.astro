@@ -1,9 +1,11 @@
 ---
 import type { CollectionEntry } from "astro:content";
 import FormattedDate from "@components/FormattedDate.astro";
+import JsonLd from "@components/JsonLd.astro";
 import Prose from "@components/Prose.astro";
 import TopicList from "@components/TopicList.astro";
 import Base from "@layouts/Base.astro";
+import { articleGraph } from "@lib/seo";
 import { topicHref } from "@lib/writing";
 import type { MarkdownLayoutProps } from "astro";
 
@@ -18,18 +20,25 @@ const {
 	updatedDate,
 	topics = [],
 } = "frontmatter" in props ? props.frontmatter : props;
+// Markdown pages pass raw frontmatter, where a date can still be a string.
+const article = {
+	publishedDate: new Date(publishedDate),
+	updatedDate: updatedDate === undefined ? undefined : new Date(updatedDate),
+	topics,
+};
 ---
 
-<Base title={title} description={description}>
+<Base title={title} description={description} article={article}>
+	<JsonLd slot="head" data={articleGraph(Astro.site ?? Astro.url, Astro.url.pathname, { title, description, ...article })} />
 	<article>
 		<header class="f6y-mb-8">
 			<h1 class="f6y-mt-2 f6y-mb-4 text-h1 text-balance text-ink-heading">{title}</h1>
 			<div class="flex flex-wrap items-center f6y-gap-x-4 gap-y-1">
-				<FormattedDate date={publishedDate} />
+				<FormattedDate date={article.publishedDate} />
 				{
-					updatedDate && (
+					article.updatedDate && (
 						<span class="font-mono text-label text-ink-muted">
-							Updated <FormattedDate date={updatedDate} />
+							Updated <FormattedDate date={article.updatedDate} />
 						</span>
 					)
 				}

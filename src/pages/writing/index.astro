@@ -1,7 +1,9 @@
 ---
 import ArticleList from "@components/ArticleList.astro";
+import JsonLd from "@components/JsonLd.astro";
 import PageTitle from "@components/PageTitle.astro";
 import Base from "@layouts/Base.astro";
+import { collectionGraph } from "@lib/seo";
 import { articleHref, getArticles } from "@lib/writing";
 
 const articles = (await getArticles()).map((article) => ({
@@ -10,9 +12,12 @@ const articles = (await getArticles()).map((article) => ({
 	date: article.data.publishedDate,
 	summary: article.data.description,
 }));
+const title = "Writing";
+const description = "Everything I have written, newest first.";
 ---
 
-<Base title="Writing" description="Everything I have written, newest first.">
+<Base title={title} description={description}>
+	<JsonLd slot="head" data={collectionGraph(Astro.site ?? Astro.url, Astro.url.pathname, title, description)} />
 	<PageTitle>Writing</PageTitle>
 	<ArticleList articles={articles} />
 </Base>

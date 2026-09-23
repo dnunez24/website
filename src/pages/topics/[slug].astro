@@ -1,8 +1,10 @@
 ---
 import ArticleList from "@components/ArticleList.astro";
 import Button from "@components/Button.astro";
+import JsonLd from "@components/JsonLd.astro";
 import PageTitle from "@components/PageTitle.astro";
 import Base from "@layouts/Base.astro";
+import { collectionGraph } from "@lib/seo";
 import { articleHref, getArticles, getTopics } from "@lib/writing";
 import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
 
@@ -26,9 +28,12 @@ export const getStaticPaths = (async () => {
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
 const { name, articles } = Astro.props;
+const title = `#${name}`;
+const description = `Articles about ${name}, newest first.`;
 ---
 
-<Base title={`#${name}`} description={`Articles about ${name}, newest first.`}>
+<Base title={title} description={description}>
+	<JsonLd slot="head" data={collectionGraph(Astro.site ?? Astro.url, Astro.url.pathname, title, description)} />
 	<PageTitle label="Topic"><span aria-hidden="true">#</span>{name}</PageTitle>
 	<ArticleList articles={articles} />
 	<p class="f6y-mt-4"><Button variant="outline" href="/topics/">All topics</Button></p>
