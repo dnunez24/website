@@ -16,6 +16,8 @@ name: Deploy
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main, prod]
 
 permissions:
   contents: read
@@ -290,3 +292,219 @@ jobs:
             exit 1
           fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
+
+  staging-build:
+    # push to main only. A push can carry multiple commits (e.g. a squash
+    # merge), but this workflow only ever sees the one HEAD it triggered on.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      wrangler-version: ${{ steps.wrangler-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          browser: "true"
+      # No PUBLIC_CF_WEB_ANALYTICS_TOKEN here either — same reasoning as
+      # preview-build. Staging isn't the production site.
+      - run: pnpm build
+      - name: Read the pnpm-lock.yaml-pinned wrangler version
+        id: wrangler-version
+        run: echo "version=$(pnpm list wrangler --json | jq -r '.[0].devDependencies.wrangler.version')" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: staging-dist
+          path: dist/
+          retention-days: 1
+
+  staging-deploy:
+    needs: staging-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # One deploy at a time, never cancelled mid-run: a killed `wrangler
+    # deploy` can leave the Worker on a half-published version. Prefixed
+    # (not a bare "staging") so nothing outside this workflow can join the
+    # group by using the same name.
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+    environment:
+      name: Staging
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: wrangler.jsonc
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      # L2, same as preview-deploy: this job's --env="" deploy must never be
+      # able to carry a custom domain or zone route.
+      - name: Refuse a top-level route or routes key
+        run: |
+          set -eu
+          json="$(sed -E 's#//.*$##' wrangler.jsonc)"
+          if echo "$json" | jq -e 'has("route") or has("routes")' >/dev/null; then
+            echo "::error::wrangler.jsonc has a top-level route or routes key. Staging deploys the default target with --env=\"\" and must never carry a custom domain or zone route."
+            exit 1
+          fi
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: staging-dist
+          path: dist/
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Install wrangler (pinned, scripts off, outside the checkout)
+        env:
+          WRANGLER_VERSION: ${{ needs.staging-build.outputs.wrangler-version }}
+        run: |
+          set -eu
+          mkdir -p "$RUNNER_TEMP/wrangler-install"
+          cd "$RUNNER_TEMP/wrangler-install"
+          npm init -y >/dev/null
+          npm install --ignore-scripts --no-save "wrangler@$WRANGLER_VERSION"
+      - name: Deploy to staging
+        id: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # See preview-deploy: explicit so a .env/.env.local can't redirect
+          # wrangler's API calls.
+          CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-output.ndjson
+          WRANGLER_BIN: ${{ runner.temp }}/wrangler-install/node_modules/.bin/wrangler
+        run: |
+          set -eu
+
+          # --env="" targets the top-level config and silences Wrangler's
+          # "multiple environments configured" warning, same as preview. This
+          # is a plain `deploy` (not `versions upload`): it publishes
+          # straight to 100% traffic on the default target, no alias, no
+          # separate promotion step. This is also the first thing that ever
+          # turns wrangler.jsonc's workers_dev/preview_urls into a live
+          # public *.workers.dev URL — Cloudflare Access must already be on
+          # before this ever runs (see wrangler.jsonc's comment and the PR
+          # body's merge preconditions).
+          "$WRANGLER_BIN" deploy --env=""
+
+          # Same idea as preview-deploy's URL extraction, different record
+          # shape: a plain `deploy` writes {"type":"deploy", ...,
+          # "targets": [...]}, an array of every route the Worker is now
+          # live on (confirmed against the installed wrangler@4.136.3
+          # source). For this target that's just the workers.dev subdomain,
+          # which is the one entry already carrying an "https://" prefix —
+          # wrangler adds that prefix only for *.workers.dev entries, so
+          # filtering on it also skips any non-URL text a custom-domain
+          # route would add (moot here; staging has none, enforced above).
+          # `--dry-run` omits `targets` entirely (nothing was actually
+          # published), so this selector is unverified until a real deploy
+          # runs — see the live-checks list in the PR body.
+          url=$(jq -r 'select(.type == "deploy") | .targets[]? | select(startswith("https://"))' "$WRANGLER_OUTPUT_FILE_PATH" | tail -n1)
+          if [ -z "$url" ]; then
+            echo "::error::wrangler deploy did not report a workers.dev URL in WRANGLER_OUTPUT_FILE_PATH"
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+  production-build:
+    # push to prod only, and never on the push that creates the branch: R1
+    # creates prod from main before this PR merges, but if the stack ever
+    # merges before that happens, the branch-creation push must not be the
+    # thing that fires the first production deploy — only a real release PR
+    # merge should.
+    if: >-
+      github.event_name == 'push' && github.ref == 'refs/heads/prod' &&
+      !github.event.created
+    runs-on: ubuntu-latest
+    outputs:
+      wrangler-version: ${{ steps.wrangler-version.outputs.version }}
+    steps:
+      # First step, before checkout, so a missing token fails fast instead
+      # of paying for a full checkout, setup and build first.
+      - name: Require the analytics token
+        env:
+          PUBLIC_CF_WEB_ANALYTICS_TOKEN: ${{ vars.PUBLIC_CF_WEB_ANALYTICS_TOKEN }}
+        run: |
+          if [ -z "$PUBLIC_CF_WEB_ANALYTICS_TOKEN" ]; then
+            echo "::error::PUBLIC_CF_WEB_ANALYTICS_TOKEN repository variable is empty or unset. Astro treats an empty value as undefined and ships production without the analytics beacon. Set the variable (Settings > Secrets and variables > Actions > Variables) before deploying."
+            exit 1
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          browser: "true"
+      - run: pnpm build
+        env:
+          PUBLIC_CF_WEB_ANALYTICS_TOKEN: ${{ vars.PUBLIC_CF_WEB_ANALYTICS_TOKEN }}
+      - name: Read the pnpm-lock.yaml-pinned wrangler version
+        id: wrangler-version
+        run: echo "version=$(pnpm list wrangler --json | jq -r '.[0].devDependencies.wrangler.version')" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: production-dist
+          path: dist/
+          retention-days: 1
+
+  production-deploy:
+    needs: production-build
+    if: >-
+      github.event_name == 'push' && github.ref == 'refs/heads/prod' &&
+      !github.event.created
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    environment:
+      name: Production
+      url: https://davidanunez.com/
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: wrangler.jsonc
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      # No route/routes guard here, unlike preview-deploy/staging-deploy:
+      # env.production legitimately has the davidanunez.com custom-domain
+      # route, and that's the only thing this job is allowed to touch.
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: production-dist
+          path: dist/
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Install wrangler (pinned, scripts off, outside the checkout)
+        env:
+          WRANGLER_VERSION: ${{ needs.production-build.outputs.wrangler-version }}
+        run: |
+          set -eu
+          mkdir -p "$RUNNER_TEMP/wrangler-install"
+          cd "$RUNNER_TEMP/wrangler-install"
+          npm init -y >/dev/null
+          npm install --ignore-scripts --no-save "wrangler@$WRANGLER_VERSION"
+      # Never CLOUDFLARE_ENV, here or at job/workflow level: it silently
+      # retargets a *plain* `wrangler deploy` at production, e.g. in
+      # staging-deploy above if anyone ever cargo-cults an env var instead
+      # of reading the explicit --env flag each deploy step already passes.
+      - name: Deploy to production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
+          WRANGLER_BIN: ${{ runner.temp }}/wrangler-install/node_modules/.bin/wrangler
+        run: |
+          set -eu
+
+          # Outside a TTY (always true on a runner), Wrangler replaces any
+          # existing DNS records for wrangler.jsonc's custom domain without
+          # prompting. This is the R1 cutover the first time it runs for
+          # real; the Production environment's required-reviewer and
+          # deployment-branch-policy rules (set by scripts/apply-rulesets.sh)
+          # are what make that first run a deliberate approval rather than
+          # an accident of merge order.
+          # https://developers.cloudflare.com/workers/wrangler/commands/#deploy
+          "$WRANGLER_BIN" deploy --env production

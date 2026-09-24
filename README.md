@@ -60,6 +60,18 @@ All commands are run from the root of the project, from a terminal:
 | `pnpm astro -- --help`  | Get help using the Astro CLI                                                                  |
 | `pnpm deploy-tool:lock` | Regenerate `.github/deploy/pnpm-lock.yaml` after bumping wrangler in `.github/deploy/package.json` |
 
+## Deploys
+
+`.github/workflows/deploy.yml` deploys to three Cloudflare Workers environments. Preview and staging run the `website` Worker; production runs a separate `website-production` Worker (wrangler's `env.production`), so Cloudflare Access has to be configured on `website` specifically — turning it on there doesn't touch production.
+
+| Environment | Triggers on                             | Worker               | URL                                            |
+| :---------- | :--------------------------------------- | :-------------------- | :---------------------------------------------- |
+| Preview     | Every same-repo pull request into `main` | `website`             | `pr-<number>-website.<subdomain>.workers.dev`  |
+| Staging     | Push to `main`                           | `website`             | `website.<subdomain>.workers.dev`               |
+| Production  | Push to `prod`                           | `website-production`  | [davidanunez.com](https://davidanunez.com/)     |
+
+Preview and staging share `website`'s `workers.dev` subdomain, which must sit behind Cloudflare Access — "All traffic" on the `website` Worker specifically. ("Previews only" would leave staging's own URL public; the account-wide "require sign-in on every Worker" option would also cover `website-production`, putting the production site behind Access, which is never what's wanted.) Each deploy's URL also shows up on that run's [GitHub environment](https://github.com/dnunez24/website/deployments) and, for previews, on the pull request itself.
+
 ## 👀 Want to learn more?
 
 Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
