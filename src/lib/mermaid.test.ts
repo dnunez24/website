@@ -72,6 +72,17 @@ describe("renderMermaidFigure", { timeout: 60_000 }, () => {
 		).rejects.toThrow(/can't carry its own link/);
 	});
 
+	// Covers RENDERED_SVG_LINK on its own: a sequence diagram's participant
+	// `link` renders an <a> but carries no "clickable" class (unlike every
+	// flowchart click form above), so only the <a> check catches it.
+	it('fails a sequence diagram with a participant link: it renders an <a> with no "clickable" class', async () => {
+		await expect(
+			renderMermaidFigure(
+				"sequenceDiagram\n  accTitle: Handoff\n  accDescr: A note.\n  participant Buyer\n  participant Docs\n  link Buyer: Docs @ https://example.com/docs\n  Buyer->>Docs: Ask",
+			),
+		).rejects.toThrow(/can't carry its own link/);
+	});
+
 	// The old check scanned the source for a line starting with "click", which
 	// also matched prose that has nothing to do with Mermaid's click syntax.
 	// Mermaid renders each of these with no <a> and no "clickable" class, so
