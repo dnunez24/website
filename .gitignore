@@ -4,6 +4,8 @@ dist/
 .astro/
 # wrangler local state
 .wrangler/
+# wrangler local secrets (never committed; wrangler dev reads these)
+.dev.vars*
 
 # dependencies
 node_modules/

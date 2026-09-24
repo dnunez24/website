@@ -18,11 +18,17 @@
 		"html_handling": "auto-trailing-slash"
 	},
 
-	// Public on the default (*.workers.dev) subdomain, so `wrangler versions
-	// upload --preview-alias` (deploy.yml) has somewhere to publish PR preview
-	// aliases. Cloudflare Access now sits in front of this subdomain — Dave
-	// turns it on before this merges — so an unauthenticated request redirects
-	// to SSO rather than reaching the build. Production stays off (below).
+	// Public on the default (*.workers.dev) subdomain. Neither flag is
+	// applied by `wrangler versions upload` (deploy.yml's preview job) —
+	// only a `wrangler deploy` or `wrangler triggers deploy` against this
+	// target turns them on server-side, which first happens on staging's
+	// initial `wrangler deploy --env=""`. Until then, every preview upload
+	// fails with "did not report a preview_alias_url": the Worker has no
+	// subdomain to publish a preview on yet. Cloudflare Access must be set
+	// on the `website` Worker (All traffic, not the account-wide option —
+	// that would also gate production) before that first staging deploy,
+	// so the window where this subdomain is briefly live and unprotected
+	// stays as short as possible. Production stays off (below).
 	"workers_dev": true,
 	"preview_urls": true,
 
