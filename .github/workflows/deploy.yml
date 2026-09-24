@@ -78,6 +78,14 @@ jobs:
             echo "::error::.github/deploy/package.json pins wrangler@$deploy_version but pnpm-lock.yaml resolves wrangler@$project_version. Update .github/deploy/package.json and regenerate .github/deploy/package-lock.json (npm install --ignore-scripts, inside .github/deploy/) to match."
             exit 1
           fi
+      # Node's own built-in test runner, not vitest — this tests deploy
+      # tooling, not the site, and needs no project dependency to do it.
+      # Covers, among other cases, a string value containing ",}" or ",]"
+      # surviving route-guard.mjs's JSONC stripping unchanged: an earlier
+      # version corrected trailing commas with one regex pass over the
+      # whole flattened output, which could reach into a string's own
+      # value and corrupt it.
+      - run: node --test .github/deploy/route-guard.test.mjs
       # No job output carries anything from here to preview-deploy besides
       # this artifact — deliberately. This job runs pnpm install (with
       # allowBuilds scripts), Astro, Vite, Tailwind, sharp, and everything

@@ -20,7 +20,7 @@
 // touched, then JSON.parse()s the result — any failure anywhere in this
 // file throws and exits non-zero, so a config problem fails the job closed
 // instead of silently reading as "no route key found".
-function stripJsonc(text) {
+export function stripJsonc(text) {
 	let out = "";
 	let i = 0;
 	const n = text.length;
@@ -54,41 +54,60 @@ function stripJsonc(text) {
 			i += 2;
 			continue;
 		}
+		if (c === "}" || c === "]") {
+			// Trailing commas: strip one now, from the end of `out` as
+			// built so far, plus any whitespace before it, rather than
+			// with a second pass over the whole flattened text afterward.
+			// This branch only ever runs on a "}"/"]" the main loop reads
+			// directly from `text` — never on one copied verbatim inside a
+			// string above — so `out`'s current tail can't be the interior
+			// of a string; a trailing-comma pass over the whole flattened
+			// `out` afterward could still land on a "," a string's own
+			// *value* happens to contain (for example the value "a,}b"),
+			// which an earlier version of this function did, silently
+			// corrupting it.
+			out = out.replace(/,\s*$/, "");
+			out += c;
+			i++;
+			continue;
+		}
 		out += c;
 		i++;
 	}
-	// Trailing commas: a "," is only ever a JSON separator outside strings
-	// at this point (strings were copied verbatim above), so it's safe to
-	// remove one that's immediately followed by a closing bracket.
-	out = out.replace(/,(\s*[}\]])/g, "$1");
 	return JSON.parse(out);
 }
 
-const fs = await import("node:fs");
-const path = process.argv[2];
-const expectedName = process.argv[3];
-const text = fs.readFileSync(path, "utf8");
+// Only run the CLI when this file is executed directly (`node
+// route-guard.mjs ...`), not when route-guard.test.mjs imports stripJsonc —
+// an import must not have the side effect of reading argv and possibly
+// calling process.exit().
+if (import.meta.url === `file://${process.argv[1]}`) {
+	const fs = await import("node:fs");
+	const path = process.argv[2];
+	const expectedName = process.argv[3];
+	const text = fs.readFileSync(path, "utf8");
 
-let config;
-try {
-	config = stripJsonc(text);
-} catch (err) {
-	console.error(`::error::Could not parse ${path} as JSONC: ${err.message}`);
-	process.exit(1);
+	let config;
+	try {
+		config = stripJsonc(text);
+	} catch (err) {
+		console.error(`::error::Could not parse ${path} as JSONC: ${err.message}`);
+		process.exit(1);
+	}
+
+	if (Object.hasOwn(config, "route") || Object.hasOwn(config, "routes")) {
+		console.error(
+			`::error::${path} has a top-level route or routes key. This deploy target must never carry a custom domain or zone route.`,
+		);
+		process.exit(1);
+	}
+
+	if (expectedName !== undefined && config.name !== expectedName) {
+		console.error(
+			`::error::${path}'s top-level name is ${JSON.stringify(config.name)}, expected ${JSON.stringify(expectedName)}.`,
+		);
+		process.exit(1);
+	}
+
+	console.log("ok");
 }
-
-if (Object.hasOwn(config, "route") || Object.hasOwn(config, "routes")) {
-	console.error(
-		`::error::${path} has a top-level route or routes key. This deploy target must never carry a custom domain or zone route.`,
-	);
-	process.exit(1);
-}
-
-if (expectedName !== undefined && config.name !== expectedName) {
-	console.error(
-		`::error::${path}'s top-level name is ${JSON.stringify(config.name)}, expected ${JSON.stringify(expectedName)}.`,
-	);
-	process.exit(1);
-}
-
-console.log("ok");
