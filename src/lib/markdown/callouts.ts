@@ -23,13 +23,24 @@ const span = (className: string, text: string): Element => ({
 });
 
 /**
- * Puts the type name in every callout title. satteri-callouts lets a custom
- * title replace it, which would leave the tint as the type's only cue. A
- * custom title follows the name after a hidden colon, so screen readers say
- * "Warning: Before you migrate". The fold icon's SVG goes: CSS draws `+`/`−`.
+ * Puts the type name in every callout title, and gives a non-folding
+ * callout a group role labelled by that title. satteri-callouts lets a
+ * custom title replace the type name, which would leave the tint as the
+ * type's only cue. A custom title follows the name after a hidden colon, so
+ * screen readers say "Warning: Before you migrate". The fold icon's SVG
+ * goes: CSS draws `+`/`−`.
+ *
+ * Returned as a plugin factory (a function of `ctx`, not a plugin
+ * definition itself) so satteri calls it fresh once per document: the
+ * title-id counter lives in the factory's own closure and starts over at 1
+ * on every page, instead of climbing across a whole build. `astro.config.ts`
+ * calls `callouts()` once and reuses its result for every file the build
+ * processes, so a counter in `calloutTitles()`'s own closure would keep
+ * counting across pages instead of resetting on each one.
  */
-const calloutTitles = () =>
-	defineHastPlugin({
+const calloutTitles = () => () => {
+	let calloutCount = 0;
+	return defineHastPlugin({
 		name: "callout-titles",
 		element: {
 			filter: ["div", "details"],
@@ -63,8 +74,25 @@ const calloutTitles = () =>
 				const fold = title.children.find((child) =>
 					hasClass(child, "callout-fold-icon"),
 				);
+
+				// A folding callout is a <details>: its <summary> already announces
+				// the title and whether it's open, so it needs no group role or id.
+				// A non-folding callout is a plain container: give its title row an
+				// id and point the container's role="group" at it, so NVDA reports
+				// the group, its name and its end.
+				const nonFolding = callout.tagName === "div";
+				const titleId = nonFolding ? `dn-callout-${++calloutCount}` : undefined;
+				if (nonFolding) {
+					ctx.setProperty(callout, "role", "group");
+					ctx.setProperty(callout, "ariaLabelledBy", titleId);
+				}
+
 				ctx.replaceNode(title, {
 					...title,
+					properties:
+						titleId === undefined
+							? title.properties
+							: { ...title.properties, id: titleId },
 					children: [
 						span("callout-type", name),
 						...(custom === undefined ? [] : [span("sr-only", ": "), custom]),
@@ -74,6 +102,7 @@ const calloutTitles = () =>
 			},
 		},
 	});
+};
 
 /**
  * GitHub alert syntax (`> [!NOTE]`) as the design system's Callout. Titles
