@@ -55,6 +55,14 @@ describe("renderMermaidFigure", { timeout: 60_000 }, () => {
 			renderMermaidFigure("flowchart LR\n  accTitle: Broken\n  A -->"),
 		).rejects.toThrow(/couldn't render/);
 	});
+
+	it("fails a diagram with a click link: the figure is one image, not a link", async () => {
+		await expect(
+			renderMermaidFigure(
+				'flowchart LR\n  accTitle: Linked\n  accDescr: A node links out.\n  A[Product page] --> B[Docs]\n  click B href "https://example.com/docs"',
+			),
+		).rejects.toThrow(/can't carry its own link/);
+	});
 });
 
 describe("mermaid fences in Markdown", { timeout: 60_000 }, () => {

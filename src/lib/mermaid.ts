@@ -64,6 +64,15 @@ const escapeAttribute = (value: string) =>
 		.replaceAll('"', "&quot;")
 		.replaceAll("<", "&lt;");
 
+// A diagram takes no links (Mermaid's `click ... href`/`click ... "url"`):
+// inside role="img" a link is out of screen readers' reach, and its keyboard
+// stop lands in the aria-hidden SVG. Checked two ways, since either is
+// reliable on its own: the rendered SVG (whatever markup Mermaid actually
+// emitted) and the source (catches a `click` directive even if some future
+// Mermaid version renders it without an <a>).
+const RENDERED_SVG_LINK = /<a[\s/>]/;
+const CLICK_DIRECTIVE = /^\s*click\s+\S/m;
+
 /**
  * Pins the SVG to its rendered size and hides it from assistive technology.
  * Mermaid emits `width="100%"` with a `max-width`, which scales a wide
@@ -113,6 +122,11 @@ export async function renderMermaidFigure(source: string): Promise<string> {
 	}
 
 	const { svg, width, height, title, description } = result.value;
+	if (RENDERED_SVG_LINK.test(svg) || CLICK_DIRECTIVE.test(source)) {
+		throw new Error(
+			`A Mermaid diagram is one image; it can't carry its own link (\`click\`). Link from the caption or the text around the diagram instead:\n${source}`,
+		);
+	}
 	const label = [title, description].filter(Boolean).join(": ");
 	if (label === "") {
 		throw new Error(
