@@ -16,6 +16,7 @@
 		"fonts:features": "node scripts/build-fonts.ts --features",
 		"lint": "biome check .",
 		"preview": "astro preview",
+		"preview:edge": "wrangler dev",
 		"test": "vitest run"
 	},
 	"dependencies": {
@@ -48,6 +49,7 @@
 		"schema-dts": "^2.0.0",
 		"subset-font": "^2.9.0",
 		"typescript": "^6.0.3",
-		"vitest": "^5.0.1"
+		"vitest": "^5.0.1",
+		"wrangler": "^4.136.3"
 	}
 }
