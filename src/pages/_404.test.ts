@@ -36,7 +36,7 @@ describe("404 page", () => {
 	it("shows the apology sentence", async () => {
 		const doc = await renderNotFound();
 		expect(doc.querySelector("main p")?.textContent).toBe(
-			"I couldn't find that page. It may have moved, or the link may be wrong.",
+			"I couldn’t find that page. It may have moved, or the link may be wrong.",
 		);
 	});
 
@@ -63,9 +63,12 @@ describe("404 page", () => {
 		);
 		expect(
 			doc.querySelector('meta[name="description"]')?.getAttribute("content"),
-		).toBe("I couldn't find that page.");
+		).toBe("I couldn’t find that page.");
 		expect(
 			doc.querySelector('meta[name="robots"]')?.getAttribute("content"),
 		).toBe("noindex");
+		// noindex also drops the canonical link: every missing path serves this
+		// page, so it has no URL of its own to be canonical for.
+		expect(doc.querySelector('link[rel="canonical"]')).toBeNull();
 	});
 });

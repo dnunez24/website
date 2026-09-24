@@ -312,11 +312,11 @@ describe("PageMeta", () => {
 		expect(doc.querySelector('meta[name="robots"]')).toBeNull();
 	});
 
-	it("adds a noindex robots meta tag when noindex is set", async () => {
-		const { doc } = await meta(
+	it("adds noindex and drops the canonical link and og:url when noindex is set", async () => {
+		const { doc, content } = await meta(
 			{
 				title: "Page not found",
-				description: "I couldn't find that page.",
+				description: "I couldn’t find that page.",
 				noindex: true,
 			},
 			"https://davidanunez.com/404",
@@ -324,6 +324,10 @@ describe("PageMeta", () => {
 		expect(
 			doc.querySelector('meta[name="robots"]')?.getAttribute("content"),
 		).toBe("noindex");
+		// Every missing path serves this page, so it has no URL of its own for
+		// a canonical link or og:url to point to.
+		expect(doc.querySelector('link[rel="canonical"]')).toBeNull();
+		expect(content("og:url")).toEqual([]);
 	});
 
 	it("shares an article's own card", async () => {
