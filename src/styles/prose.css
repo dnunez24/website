@@ -287,29 +287,18 @@
 		 * cell loses the top of its ring; keep links out of header cells.
 		 */
 		& [data-table-scroll] {
-			@apply overflow-x-auto rounded-md;
+			@apply overflow-x-auto rounded-sm;
 			padding-inline: calc(4px + 2px);
 			margin-inline: calc(-1 * (4px + 2px));
 			padding-block-end: calc(4px + 2px);
 			margin-block-end: calc(-1 * (4px + 2px));
 
-			/* With no next sibling, the negative margin above has nothing to
-			   collapse against: the container's own bottom border/padding
-			   blocks it from escaping, so it's simply discarded and the padding
-			   alone grows the container by 6px (measured, not assumed — see
-			   the commit that added this rule). Drop both for that position:
-			   a table that ends a callout, a quote, a list item or the
-			   article gives up its own last-row ring room rather than push
-			   main's spacing around it. */
-			&:last-child {
-				padding-block-end: 0;
-				margin-block-end: 0;
-			}
-
 			/* The wrapper's own ring (focused to scroll it) draws inside its
-			   padding, 2px from the table, like every other ring: offset by
-			   the stroke width alone, so the remaining gap to the table is the
-			   padding minus the stroke (6px − 4px = 2px). */
+			   padding: offset by the stroke width alone, so the remaining gap
+			   to the table is the padding minus the stroke (6px − 4px = 2px).
+			   That holds on the inline sides and the bottom, where there's
+			   padding to sit in. There's none at the top (see above), so the
+			   ring overlaps the header row's top edge by the same 4px there. */
 			&:focus-visible {
 				outline-offset: calc(-1 * 4px);
 			}
