@@ -452,10 +452,9 @@ describe("CloudflareAnalytics", () => {
 	it("renders nothing without a token", async () => {
 		const doc = parse(await render(CloudflareAnalytics, { props: {} }));
 		expect(doc.querySelector("script")).toBeNull();
-		expect(doc.querySelector("link")).toBeNull();
 	});
 
-	it("renders one beacon script and a preconnect link with a token", async () => {
+	it("renders exactly one beacon script and no preconnect with a token", async () => {
 		const doc = parse(
 			await render(CloudflareAnalytics, { props: { token: TOKEN } }),
 		);
@@ -468,10 +467,10 @@ describe("CloudflareAnalytics", () => {
 		expect(
 			JSON.parse(scripts[0]?.getAttribute("data-cf-beacon") ?? ""),
 		).toEqual({ token: TOKEN });
-		const preconnect = doc.querySelector('link[rel="preconnect"]');
-		expect(preconnect?.getAttribute("href")).toBe(
-			"https://static.cloudflareinsights.com",
-		);
+		// No preconnect: a module script fetches cross-origin without
+		// credentials, so an uncredentialed preconnect would open a second,
+		// unused connection — and the script is the very next element anyway.
+		expect(doc.querySelector("link")).toBeNull();
 	});
 });
 

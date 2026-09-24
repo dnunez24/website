@@ -108,13 +108,14 @@ export default defineConfig({
 
 	env: {
 		schema: {
-			// Set only by the production deploy job (see D3's GitHub Actions
-			// variable); unset in local dev, CI and previews, so those builds
-			// ship without the beacon. Cloudflare site tokens are 32 lowercase
-			// hex characters — `length` catches a truncated/padded typo here,
-			// and src/lib/cloudflare-analytics.ts checks the character set.
+			// Set only by the production deploy job; unset locally, in CI and in
+			// previews, so those builds ship without the beacon. Read at build
+			// time in frontmatter only (BaseHead.astro), never by client code,
+			// so "server" keeps it out of the client bundle. `length` catches a
+			// truncated or padded token; src/lib/cloudflare-analytics.ts checks
+			// the character set.
 			PUBLIC_CF_WEB_ANALYTICS_TOKEN: envField.string({
-				context: "client",
+				context: "server",
 				access: "public",
 				optional: true,
 				length: 32,

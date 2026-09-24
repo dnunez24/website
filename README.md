@@ -98,7 +98,8 @@ Accepted, on the strength of two mitigations already in place, plus a dashboard 
 
 ## Environment variables
 
-`PUBLIC_CF_WEB_ANALYTICS_TOKEN` — Cloudflare Web Analytics site token. Only the production deploy sets it; other builds ship without the beacon.
+`PUBLIC_CF_WEB_ANALYTICS_TOKEN` is the Cloudflare Web Analytics site token.
+Only the production deploy sets it; other builds ship without the beacon.
 
 ## 👀 Want to learn more?
 
