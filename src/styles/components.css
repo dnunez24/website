@@ -38,16 +38,17 @@
 	}
 
 	/*
-	 * BlockQuote: its slot can hold arbitrary links (an MDX author's own
-	 * markup), which Astro's scoped styles don't reach. Mirrors prose.css's
-	 * blockquote link rule for quotes rendered outside `.prose`.
+	 * BlockQuote: scopes the same --color-link/-hover variables prose.css's
+	 * blockquote rule does, for quotes rendered outside `.prose`. A selector
+	 * here (e.g. `[data-quote] a`) can't reach the Link component or a plain
+	 * `<a>` styled by a utility class applied directly in markup: Tailwind
+	 * puts those in the utilities layer, which always beats a components-
+	 * layer selector regardless of specificity. The custom property's
+	 * resolved value isn't layer-bound, so it reaches them.
 	 */
-	[data-quote] a:not([data-button]) {
-		@apply text-quote-link;
-
-		&:is(:hover, :focus-visible) {
-			@apply text-quote-link-hover;
-		}
+	[data-quote] {
+		--color-link: var(--color-quote-link);
+		--color-link-hover: var(--color-quote-link-hover);
 	}
 
 	/*

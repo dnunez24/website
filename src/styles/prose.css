@@ -119,6 +119,19 @@
 
 		& blockquote {
 			@apply f6y-px-8 text-quote-ink slant;
+			/*
+			 * Scopes the base link rule's `--color-link`/`-hover` instead of adding
+			 * a selector to beat it. `text-link` is a utility class, which Tailwind
+			 * always puts in the utilities layer even when a component (BlockQuote,
+			 * Link) applies it directly to an element - that layer outranks any
+			 * selector we write here in @layer components, regardless of
+			 * specificity. A custom property's resolved value isn't layer-bound, so
+			 * this reaches the base rule, footnote references and the Link
+			 * component alike, in Markdown and in BlockQuote.astro alike (see
+			 * components.css's matching rule for the non-prose case).
+			 */
+			--color-link: var(--color-quote-link);
+			--color-link-hover: var(--color-quote-link-hover);
 
 			& > * + * {
 				@apply mt-line-half;
@@ -129,20 +142,6 @@
 			}
 			& footer {
 				@apply mt-line-half block font-sans text-body text-quote-cite;
-			}
-			/*
-			 * The brand hue reads as a stray color against the Earth ink, same as
-			 * the Callout rule below. Only `color` changes here: the underline and
-			 * its `decoration-current` color still come from the base link rule
-			 * above, so a footnote reference in a citation stays unlined (that
-			 * rule, not this one, sets text-decoration).
-			 */
-			& a:not([data-button]) {
-				@apply text-quote-link;
-
-				&:is(:hover, :focus-visible) {
-					@apply text-quote-link-hover;
-				}
 			}
 		}
 
@@ -167,13 +166,16 @@
 				@apply text-ink;
 			}
 			/*
-			 * quote-cite falls to 4.1:1 or less on these five 200-step tints; a
-			 * nested quote's citation borrows quote-ink instead, which clears
-			 * 5.5:1 on all of them.
+			 * quote-cite falls to 4.1:1 or less on these five 200-step tints;
+			 * quote-ink clears 5.5:1 on all of them. A variable, not a `blockquote
+			 * footer` selector, so it also reaches BlockQuote.astro's footer, whose
+			 * own `text-quote-cite` utility class lives in the utilities layer and
+			 * would otherwise win over any selector this rule could write (see the
+			 * blockquote rule above for the same reasoning applied to links). This
+			 * rule wins the cascade for links (`color-ink`) because it's more
+			 * specific than the base link rule at equal layer; that's unchanged.
 			 */
-			& blockquote footer {
-				@apply text-quote-ink;
-			}
+			--color-quote-cite: var(--color-quote-ink);
 		}
 		& [data-callout="tip"] {
 			--callout-ink: var(--color-callout-tip);
