@@ -468,8 +468,9 @@ describe("CloudflareAnalytics", () => {
 			JSON.parse(scripts[0]?.getAttribute("data-cf-beacon") ?? ""),
 		).toEqual({ token: TOKEN });
 		// No preconnect: a module script fetches cross-origin without
-		// credentials, so an uncredentialed preconnect would open a second,
-		// unused connection — and the script is the very next element anyway.
+		// credentials, so a preconnect without `crossorigin` would open a
+		// credentialed connection it can't reuse, and the script is the very
+		// next element anyway.
 		expect(doc.querySelector("link")).toBeNull();
 	});
 });
