@@ -65,9 +65,12 @@ const escapeAttribute = (value: string) =>
 		.replaceAll("<", "&lt;");
 
 /**
- * Pins the SVG to its rendered size. Mermaid emits `width="100%"` with a
- * `max-width`, which scales a wide diagram down until its labels are
- * unreadable; the frame scrolls instead.
+ * Pins the SVG to its rendered size and hides it from assistive technology.
+ * Mermaid emits `width="100%"` with a `max-width`, which scales a wide
+ * diagram down until its labels are unreadable; the frame scrolls instead.
+ * Without `aria-hidden`, Chromium still exposes an image's SVG children:
+ * Mermaid's own title and description a second time, its `aria-roledescription`
+ * and every label in pieces. The figure's `aria-label` already carries them.
  */
 function atRenderedSize(svg: string, width: number, height: number): string {
 	return svg.replace(/^<svg\b[^>]*>/, (tag) =>
@@ -76,7 +79,7 @@ function atRenderedSize(svg: string, width: number, height: number): string {
 			.replace(/\sstyle="max-width:[^"]*"/, "")
 			.replace(
 				"<svg",
-				`<svg width="${Math.ceil(width)}" height="${Math.ceil(height)}"`,
+				`<svg aria-hidden="true" width="${Math.ceil(width)}" height="${Math.ceil(height)}"`,
 			),
 	);
 }

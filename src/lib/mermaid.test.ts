@@ -28,6 +28,10 @@ describe("renderMermaidFigure", { timeout: 60_000 }, () => {
 		expect(Number(svg?.getAttribute("width"))).toBeGreaterThan(100);
 		expect(Number(svg?.getAttribute("height"))).toBeGreaterThan(0);
 		expect(svg?.getAttribute("style") ?? "").not.toContain("max-width");
+		// The figure's aria-label already carries accTitle/accDescr; without
+		// this, Chromium exposes the SVG's own title, description and labels
+		// a second time.
+		expect(svg?.getAttribute("aria-hidden")).toBe("true");
 	});
 
 	it("gives different diagrams different ids", async () => {
