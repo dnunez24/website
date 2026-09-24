@@ -321,7 +321,7 @@ jobs:
           deploy_version="$(node -p "require('./.github/deploy/package.json').devDependencies.wrangler")"
           project_version="$(pnpm list wrangler --json | jq -r '.[0].devDependencies.wrangler.version')"
           if [ "$deploy_version" != "$project_version" ]; then
-            echo "::error::.github/deploy/package.json pins wrangler@$deploy_version but pnpm-lock.yaml resolves wrangler@$project_version. Update .github/deploy/package.json and regenerate .github/deploy/package-lock.json (npm install --ignore-scripts, inside .github/deploy/) to match."
+            echo "::error::.github/deploy/package.json pins wrangler@$deploy_version but pnpm-lock.yaml resolves wrangler@$project_version. Update .github/deploy/package.json and run 'pnpm run deploy-tool:lock' to regenerate .github/deploy/pnpm-lock.yaml to match."
             exit 1
           fi
       # See preview-build's matching step.
@@ -349,10 +349,12 @@ jobs:
       name: Staging
       url: ${{ steps.deploy.outputs.url }}
     steps:
+      # See preview-deploy's matching step: same three paths, same reasons.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: |
             wrangler.jsonc
+            /package.json
             .github/deploy
           sparse-checkout-cone-mode: false
           persist-credentials: false
@@ -393,6 +395,10 @@ jobs:
             echo "::error::Unexpected dotenv-like file(s) before wrangler runs: ${stray[*]}"
             exit 1
           fi
+      # See preview-deploy's matching step: reads the version to install
+      # from the root package.json's packageManager field.
+      - if: steps.staleness.outputs.stale != 'true'
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
       - if: steps.staleness.outputs.stale != 'true'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -404,16 +410,15 @@ jobs:
         name: Install wrangler and its locked dependency tree, scripts off
         run: |
           set -eu
-          npm ci --prefix .github/deploy --ignore-scripts --no-audit --no-fund
+          pnpm --dir .github/deploy install --frozen-lockfile --ignore-scripts --ignore-workspace --registry=https://registry.npmjs.org/
       - if: steps.staleness.outputs.stale != 'true'
         name: Confirm the resolved Worker name
         env:
-          WRANGLER_BIN: ${{ github.workspace }}/.github/deploy/node_modules/.bin/wrangler
           WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-name-check.ndjson
           CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
         run: |
           set -eu
-          "$WRANGLER_BIN" deploy --env="" --dry-run >/dev/null
+          pnpm --dir .github/deploy exec wrangler deploy --env="" --dry-run >/dev/null
           name=$(jq -r 'select(.type == "deploy") | .worker_name // empty' "$WRANGLER_OUTPUT_FILE_PATH" | tail -n1)
           if [ "$name" != "website" ]; then
             echo "::error::Resolved Worker name is '$name', expected 'website'. Refusing to deploy."
@@ -429,7 +434,6 @@ jobs:
           # wrangler's API calls.
           CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
           WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-output.ndjson
-          WRANGLER_BIN: ${{ github.workspace }}/.github/deploy/node_modules/.bin/wrangler
         run: |
           set -eu
 
@@ -442,7 +446,7 @@ jobs:
           # public *.workers.dev URL — Cloudflare Access must already be on
           # before this ever runs (see wrangler.jsonc's comment and the PR
           # body's merge preconditions).
-          "$WRANGLER_BIN" deploy --env=""
+          pnpm --dir .github/deploy exec wrangler deploy --env=""
 
           # Same idea as preview-deploy's URL extraction, different record
           # shape: a plain `deploy` writes {"type":"deploy", ...,
@@ -503,7 +507,7 @@ jobs:
           deploy_version="$(node -p "require('./.github/deploy/package.json').devDependencies.wrangler")"
           project_version="$(pnpm list wrangler --json | jq -r '.[0].devDependencies.wrangler.version')"
           if [ "$deploy_version" != "$project_version" ]; then
-            echo "::error::.github/deploy/package.json pins wrangler@$deploy_version but pnpm-lock.yaml resolves wrangler@$project_version. Update .github/deploy/package.json and regenerate .github/deploy/package-lock.json (npm install --ignore-scripts, inside .github/deploy/) to match."
+            echo "::error::.github/deploy/package.json pins wrangler@$deploy_version but pnpm-lock.yaml resolves wrangler@$project_version. Update .github/deploy/package.json and run 'pnpm run deploy-tool:lock' to regenerate .github/deploy/pnpm-lock.yaml to match."
             exit 1
           fi
       # See preview-build's matching step.
@@ -532,10 +536,12 @@ jobs:
       name: Production
       url: https://davidanunez.com/
     steps:
+      # See preview-deploy's matching step: same three paths, same reasons.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: |
             wrangler.jsonc
+            /package.json
             .github/deploy
           sparse-checkout-cone-mode: false
           persist-credentials: false
@@ -581,6 +587,10 @@ jobs:
             echo "::error::Unexpected dotenv-like file(s) before wrangler runs: ${stray[*]}"
             exit 1
           fi
+      # See preview-deploy's matching step: reads the version to install
+      # from the root package.json's packageManager field.
+      - if: steps.staleness.outputs.stale != 'true'
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
       - if: steps.staleness.outputs.stale != 'true'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -589,7 +599,7 @@ jobs:
         name: Install wrangler and its locked dependency tree, scripts off
         run: |
           set -eu
-          npm ci --prefix .github/deploy --ignore-scripts --no-audit --no-fund
+          pnpm --dir .github/deploy install --frozen-lockfile --ignore-scripts --ignore-workspace --registry=https://registry.npmjs.org/
       # website's resolved name is "website"; a top-level rename to
       # "website-production" with no other change would otherwise make
       # staging-deploy's --env="" push production out from under this job's
@@ -600,12 +610,11 @@ jobs:
       - if: steps.staleness.outputs.stale != 'true'
         name: Confirm the resolved Worker name
         env:
-          WRANGLER_BIN: ${{ github.workspace }}/.github/deploy/node_modules/.bin/wrangler
           WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-name-check.ndjson
           CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
         run: |
           set -eu
-          "$WRANGLER_BIN" deploy --env production --dry-run >/dev/null
+          pnpm --dir .github/deploy exec wrangler deploy --env production --dry-run >/dev/null
           name=$(jq -r 'select(.type == "deploy") | .worker_name // empty' "$WRANGLER_OUTPUT_FILE_PATH" | tail -n1)
           if [ "$name" != "website-production" ]; then
             echo "::error::Resolved Worker name is '$name', expected 'website-production'. Refusing to deploy."
@@ -621,7 +630,6 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
-          WRANGLER_BIN: ${{ github.workspace }}/.github/deploy/node_modules/.bin/wrangler
         run: |
           set -eu
 
@@ -633,4 +641,4 @@ jobs:
           # are what make that first run a deliberate approval rather than
           # an accident of merge order.
           # https://developers.cloudflare.com/workers/wrangler/commands/#deploy
-          "$WRANGLER_BIN" deploy --env production
+          pnpm --dir .github/deploy exec wrangler deploy --env production
