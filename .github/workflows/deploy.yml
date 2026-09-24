@@ -4,15 +4,16 @@ name: Deploy
 # secrets, so third-party audit tools (Lighthouse, axe, etc.) in ci.yml's jobs
 # never run in a job that has them.
 #
-# Splits a build job (no secrets, caches allowed) from a deploy job (the only
-# place the token lives). The deploy job doesn't share a VM with
-# Astro/Vite/Tailwind/Mermaid/Chromium, project dependencies, install
+# Every environment splits a build job (no secrets, caches allowed) from a
+# deploy job (the only place the token lives). The deploy job doesn't share a
+# VM with Astro/Vite/Tailwind/Mermaid/Chromium, project dependencies, install
 # scripts, or any cache ci.yml writes to. It checks out only wrangler.jsonc,
 # the root package.json (packageManager, for pinning pnpm itself — nothing
 # else in it), and .github/deploy/ (a dedicated, integrity-pinned package.json
 # + pnpm-lock.yaml for wrangler and its full dependency tree — never the
-# project's own pnpm-lock.yaml; see preview-deploy's install step for why),
-# installs with lifecycle scripts off, and takes dist/ as an artifact.
+# project's own pnpm-lock.yaml; see each deploy job's install step for why),
+# installs with lifecycle scripts off, and takes dist/ as an artifact. See
+# each deploy job's comments for more.
 on:
   pull_request:
     branches: [main]
@@ -298,6 +299,11 @@ jobs:
     # merge), but this workflow only ever sees the one HEAD it triggered on.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # Fixed name (there's only ever one branch this triggers from): cancel
+    # an older in-progress build the moment a newer push starts one.
+    concurrency:
+      group: staging-build
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -308,6 +314,16 @@ jobs:
       # No PUBLIC_CF_WEB_ANALYTICS_TOKEN here either — same reasoning as
       # preview-build. Staging isn't the production site.
       - run: pnpm build
+      # See preview-build's matching step.
+      - name: Confirm .github/deploy/'s wrangler pin matches the project's
+        run: |
+          set -eu
+          deploy_version="$(node -p "require('./.github/deploy/package.json').devDependencies.wrangler")"
+          project_version="$(pnpm list wrangler --json | jq -r '.[0].devDependencies.wrangler.version')"
+          if [ "$deploy_version" != "$project_version" ]; then
+            echo "::error::.github/deploy/package.json pins wrangler@$deploy_version but pnpm-lock.yaml resolves wrangler@$project_version. Update .github/deploy/package.json and regenerate .github/deploy/package-lock.json (npm install --ignore-scripts, inside .github/deploy/) to match."
+            exit 1
+          fi
       # No job output carries anything from here to staging-deploy besides
       # this artifact — see preview-build's comment for why.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -335,25 +351,37 @@ jobs:
         with:
           sparse-checkout: |
             wrangler.jsonc
-            pnpm-lock.yaml
+            .github/deploy
           sparse-checkout-cone-mode: false
           persist-credentials: false
-      # L2, same as preview-deploy: this job's --env="" deploy must never be
-      # able to carry a custom domain or zone route.
-      - name: Refuse a top-level route or routes key
+      # See preview-deploy's matching step: if main has moved on since this
+      # run's push, a newer run covers it — don't deploy an old commit.
+      - name: Refuse to deploy a superseded commit
+        id: staleness
+        env:
+          GH_TOKEN: ${{ github.token }}
+          THIS_SHA: ${{ github.sha }}
         run: |
           set -eu
-          json="$(sed -E 's#//.*$##' wrangler.jsonc)"
-          if echo "$json" | jq -e 'has("route") or has("routes")' >/dev/null; then
-            echo "::error::wrangler.jsonc has a top-level route or routes key. Staging deploys the default target with --env=\"\" and must never carry a custom domain or zone route."
-            exit 1
+          current_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/refs/heads/main" --jq .object.sha)"
+          if [ "$current_sha" != "$THIS_SHA" ]; then
+            echo "::notice::main is now at $current_sha, not this run's $THIS_SHA. A newer run covers it; skipping this deploy."
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "stale=false" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      # L2, same as preview-deploy: this job's --env="" deploy must never be
+      # able to carry a custom domain or zone route.
+      - if: steps.staleness.outputs.stale != 'true'
+        run: node .github/deploy/route-guard.mjs wrangler.jsonc website
+      - if: steps.staleness.outputs.stale != 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: staging-dist
           path: dist/
       # See preview-deploy's matching step for why.
-      - name: Refuse a stray dotenv-like file at the job root
+      - if: steps.staleness.outputs.stale != 'true'
+        name: Refuse a stray dotenv-like file at the job root
         run: |
           set -eu
           shopt -s nullglob
@@ -363,25 +391,34 @@ jobs:
             echo "::error::Unexpected dotenv-like file(s) before wrangler runs: ${stray[*]}"
             exit 1
           fi
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - if: steps.staleness.outputs.stale != 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
-      # See preview-deploy's matching step: the version comes from this
-      # job's own checkout, never from staging-build's output, for the same
-      # reason.
-      - name: Install wrangler (version from this checkout, verified, scripts off, outside the checkout)
+      # See preview-deploy's matching step: wrangler and its full dependency
+      # tree, integrity-pinned by .github/deploy/'s own lockfile, never the
+      # project's.
+      - if: steps.staleness.outputs.stale != 'true'
+        name: Install wrangler and its locked dependency tree, scripts off
         run: |
           set -eu
-          version="$(grep -A2 -m1 '^      wrangler:$' pnpm-lock.yaml | grep '^        version: ' | sed -E 's/^ {8}version: ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
-          if ! printf '%s' "$version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::Could not extract a valid wrangler version (x.y.z) from pnpm-lock.yaml; got: ${version:-<empty>}"
+          npm ci --prefix .github/deploy --ignore-scripts --no-audit --no-fund
+      - if: steps.staleness.outputs.stale != 'true'
+        name: Confirm the resolved Worker name
+        env:
+          WRANGLER_BIN: ${{ github.workspace }}/.github/deploy/node_modules/.bin/wrangler
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-name-check.ndjson
+          CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
+        run: |
+          set -eu
+          "$WRANGLER_BIN" deploy --env="" --dry-run >/dev/null
+          name=$(jq -r 'select(.type == "deploy") | .worker_name // empty' "$WRANGLER_OUTPUT_FILE_PATH" | tail -n1)
+          if [ "$name" != "website" ]; then
+            echo "::error::Resolved Worker name is '$name', expected 'website'. Refusing to deploy."
             exit 1
           fi
-          rm -f .npmrc
-          mkdir -p "$RUNNER_TEMP/wrangler"
-          npm install --prefix "$RUNNER_TEMP/wrangler" --ignore-scripts --no-audit --no-fund \
-            --registry=https://registry.npmjs.org/ "wrangler@$version"
-      - name: Deploy to staging
+      - if: steps.staleness.outputs.stale != 'true'
+        name: Deploy to staging
         id: deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -390,7 +427,7 @@ jobs:
           # wrangler's API calls.
           CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
           WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-output.ndjson
-          WRANGLER_BIN: ${{ runner.temp }}/wrangler/node_modules/.bin/wrangler
+          WRANGLER_BIN: ${{ github.workspace }}/.github/deploy/node_modules/.bin/wrangler
         run: |
           set -eu
 
@@ -434,6 +471,9 @@ jobs:
       github.event_name == 'push' && github.ref == 'refs/heads/prod' &&
       !github.event.created
     runs-on: ubuntu-latest
+    concurrency:
+      group: production-build
+      cancel-in-progress: true
     steps:
       # First step, before checkout, so a missing token fails fast instead
       # of paying for a full checkout, setup and build first.
@@ -454,13 +494,26 @@ jobs:
       - run: pnpm build
         env:
           PUBLIC_CF_WEB_ANALYTICS_TOKEN: ${{ vars.PUBLIC_CF_WEB_ANALYTICS_TOKEN }}
+      # See preview-build's matching step.
+      - name: Confirm .github/deploy/'s wrangler pin matches the project's
+        run: |
+          set -eu
+          deploy_version="$(node -p "require('./.github/deploy/package.json').devDependencies.wrangler")"
+          project_version="$(pnpm list wrangler --json | jq -r '.[0].devDependencies.wrangler.version')"
+          if [ "$deploy_version" != "$project_version" ]; then
+            echo "::error::.github/deploy/package.json pins wrangler@$deploy_version but pnpm-lock.yaml resolves wrangler@$project_version. Update .github/deploy/package.json and regenerate .github/deploy/package-lock.json (npm install --ignore-scripts, inside .github/deploy/) to match."
+            exit 1
+          fi
       # No job output carries anything from here to production-deploy
       # besides this artifact — see preview-build's comment for why.
+      # retention-days: 7, not 1 — the Production environment's required
+      # reviewer (set by scripts/apply-rulesets.sh --apply) can leave this
+      # job waiting for approval well past a 1-day retention window.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: production-dist
           path: dist/
-          retention-days: 1
+          retention-days: 7
 
   production-deploy:
     needs: production-build
@@ -479,18 +532,42 @@ jobs:
         with:
           sparse-checkout: |
             wrangler.jsonc
-            pnpm-lock.yaml
+            .github/deploy
           sparse-checkout-cone-mode: false
           persist-credentials: false
+      # See preview-deploy's matching step. The Production environment's
+      # required-reviewer approval (set by apply-rulesets.sh --apply) can
+      # itself take long enough that prod moves on before this run's
+      # approval finally lands — check the tip again right before deploying,
+      # not just at trigger time.
+      - name: Refuse to deploy a superseded commit
+        id: staleness
+        env:
+          GH_TOKEN: ${{ github.token }}
+          THIS_SHA: ${{ github.sha }}
+        run: |
+          set -eu
+          current_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/refs/heads/prod" --jq .object.sha)"
+          if [ "$current_sha" != "$THIS_SHA" ]; then
+            echo "::notice::prod is now at $current_sha, not this run's $THIS_SHA. A newer run covers it; skipping this deploy."
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "stale=false" >> "$GITHUB_OUTPUT"
+          fi
       # No route/routes guard here, unlike preview-deploy/staging-deploy:
       # env.production legitimately has the davidanunez.com custom-domain
       # route, and that's the only thing this job is allowed to touch.
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      - if: steps.staleness.outputs.stale != 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: production-dist
           path: dist/
-      # See preview-deploy's matching step for why.
-      - name: Refuse a stray dotenv-like file at the job root
+        # If this fails because the artifact expired (the reviewer took
+        # longer than the 7-day retention window), re-run the whole
+        # workflow rather than just this job, so production-build makes a
+        # fresh one.
+      - if: steps.staleness.outputs.stale != 'true'
+        name: Refuse a stray dotenv-like file at the job root
         run: |
           set -eu
           shopt -s nullglob
@@ -500,34 +577,47 @@ jobs:
             echo "::error::Unexpected dotenv-like file(s) before wrangler runs: ${stray[*]}"
             exit 1
           fi
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - if: steps.staleness.outputs.stale != 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
-      # See preview-deploy's matching step: the version comes from this
-      # job's own checkout, never from production-build's output, for the
-      # same reason.
-      - name: Install wrangler (version from this checkout, verified, scripts off, outside the checkout)
+      - if: steps.staleness.outputs.stale != 'true'
+        name: Install wrangler and its locked dependency tree, scripts off
         run: |
           set -eu
-          version="$(grep -A2 -m1 '^      wrangler:$' pnpm-lock.yaml | grep '^        version: ' | sed -E 's/^ {8}version: ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
-          if ! printf '%s' "$version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::Could not extract a valid wrangler version (x.y.z) from pnpm-lock.yaml; got: ${version:-<empty>}"
+          npm ci --prefix .github/deploy --ignore-scripts --no-audit --no-fund
+      # website's resolved name is "website"; a top-level rename to
+      # "website-production" with no other change would otherwise make
+      # staging-deploy's --env="" push production out from under this job's
+      # reviewer gate. Confirm the *production* target itself resolves to
+      # the Worker this job is meant to touch, using wrangler's own
+      # --dry-run resolution (env-name derivation included) rather than
+      # re-deriving "website-production" by hand here.
+      - if: steps.staleness.outputs.stale != 'true'
+        name: Confirm the resolved Worker name
+        env:
+          WRANGLER_BIN: ${{ github.workspace }}/.github/deploy/node_modules/.bin/wrangler
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-name-check.ndjson
+          CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
+        run: |
+          set -eu
+          "$WRANGLER_BIN" deploy --env production --dry-run >/dev/null
+          name=$(jq -r 'select(.type == "deploy") | .worker_name // empty' "$WRANGLER_OUTPUT_FILE_PATH" | tail -n1)
+          if [ "$name" != "website-production" ]; then
+            echo "::error::Resolved Worker name is '$name', expected 'website-production'. Refusing to deploy."
             exit 1
           fi
-          rm -f .npmrc
-          mkdir -p "$RUNNER_TEMP/wrangler"
-          npm install --prefix "$RUNNER_TEMP/wrangler" --ignore-scripts --no-audit --no-fund \
-            --registry=https://registry.npmjs.org/ "wrangler@$version"
       # Never CLOUDFLARE_ENV, here or at job/workflow level: it silently
       # retargets a *plain* `wrangler deploy` at production, e.g. in
       # staging-deploy above if anyone ever cargo-cults an env var instead
       # of reading the explicit --env flag each deploy step already passes.
-      - name: Deploy to production
+      - if: steps.staleness.outputs.stale != 'true'
+        name: Deploy to production
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
-          WRANGLER_BIN: ${{ runner.temp }}/wrangler/node_modules/.bin/wrangler
+          WRANGLER_BIN: ${{ github.workspace }}/.github/deploy/node_modules/.bin/wrangler
         run: |
           set -eu
 
