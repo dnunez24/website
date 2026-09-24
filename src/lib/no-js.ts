@@ -19,8 +19,26 @@ const URL_ATTRIBUTES = new Set(["href", "src", "action", "formaction"]);
 const isElement = (node: P5.Node): node is P5.Element => "tagName" in node;
 const isTemplate = (node: P5.Node): node is P5.Template => "content" in node;
 
-const isJavascriptUrl = (value: string): boolean =>
-	value.trim().toLowerCase().startsWith("javascript:");
+/**
+ * A `startsWith("javascript:")` check misses what browsers still run: a tab
+ * or newline inside the scheme (`java\tscript:`), or a leading control
+ * character (e.g. `&#1;javascript:`, which parse5 decodes to a real control
+ * character before this ever sees it) — the URL spec strips both before
+ * parsing the scheme, so browsers execute them anyway. `new URL()`
+ * implements that same stripping, so delegating to it (rather than
+ * re-implementing the spec's trimming rules by hand) catches the same
+ * variants a browser would. A value that fails to parse at all is flagged
+ * too, rather than silently let through.
+ */
+function isJavascriptUrl(value: string): boolean {
+	try {
+		return (
+			new URL(value, "https://davidanunez.com/").protocol === "javascript:"
+		);
+	} catch {
+		return true;
+	}
+}
 
 /**
  * Every `<script>` except JSON-LD and the sanctioned beacon; every inline

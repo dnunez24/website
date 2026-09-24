@@ -137,6 +137,58 @@ describe("checkPageForScripts", () => {
 		expect(issues).toEqual([]);
 	});
 
+	it("fails a javascript: URL with a tab inside the scheme", () => {
+		// Browsers strip tabs and newlines before parsing the scheme, so
+		// "java\tscript:" still runs as javascript: — a naive
+		// startsWith("javascript:") check would miss it.
+		const issues = checkPageForScripts(
+			page('<a href="java&#9;script:alert(1)">Go</a>'),
+			"/fixture/",
+		);
+		expect(issues).toEqual([
+			expect.objectContaining({
+				message: expect.stringContaining('href="javascript:…"'),
+			}),
+		]);
+	});
+
+	it("fails a javascript: URL with a newline inside the scheme", () => {
+		const issues = checkPageForScripts(
+			page('<a href="java&#10;script:alert(1)">Go</a>'),
+			"/fixture/",
+		);
+		expect(issues).toEqual([
+			expect.objectContaining({
+				message: expect.stringContaining('href="javascript:…"'),
+			}),
+		]);
+	});
+
+	it("fails a javascript: URL with a leading control character", () => {
+		// &#1; decodes (by the time parse5 hands us the attribute value) to a
+		// real U+0001 control character, which the URL spec also strips.
+		const issues = checkPageForScripts(
+			page('<a href="&#1;javascript:alert(1)">Go</a>'),
+			"/fixture/",
+		);
+		expect(issues).toEqual([
+			expect.objectContaining({
+				message: expect.stringContaining('href="javascript:…"'),
+			}),
+		]);
+	});
+
+	it.each([
+		["a mailto: link", '<a href="mailto:dave@example.com">Email</a>'],
+		["a tel: link", '<a href="tel:+15555550100">Call</a>'],
+		["a same-page fragment", '<a href="#main">Skip to content</a>'],
+		["a full https URL", '<a href="https://example.com/">External</a>'],
+		["an href-less anchor", "<a>Not a link</a>"],
+		["a form with a relative action", '<form action="/search/"></form>'],
+	])("doesn't false-positive on %s", (_label, markup) => {
+		expect(checkPageForScripts(page(markup), "/fixture/")).toEqual([]);
+	});
+
 	it("fails an iframe with srcdoc", () => {
 		const issues = checkPageForScripts(
 			page('<iframe srcdoc="<p>hi</p>"></iframe>'),
