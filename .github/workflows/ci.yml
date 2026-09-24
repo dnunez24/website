@@ -21,4 +21,36 @@ jobs:
       - run: pnpm lint
       - run: pnpm check
       - run: pnpm test
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
       - run: pnpm build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  structured-data:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Validates already-built HTML; doesn't render Mermaid, so no Chromium.
+      - uses: ./.github/actions/setup
+        with:
+          browser: "false"
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      # Keep the key's version in sync with SCHEMA_ORG_VERSION in
+      # scripts/validate-structured-data.ts.
+      - uses: actions/cache@v6
+        with:
+          path: node_modules/.cache/schema-org
+          key: schema-org-vocab-30.1
+      - run: pnpm validate:structured-data

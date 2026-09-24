@@ -17,7 +17,8 @@
 		"lint": "biome check .",
 		"lint:design": "design.md lint DESIGN.md",
 		"preview": "astro preview",
-		"test": "vitest run"
+		"test": "vitest run",
+		"validate:structured-data": "node scripts/validate-structured-data.ts"
 	},
 	"dependencies": {
 		"@astrojs/markdown-satteri": "^0.4.2",
@@ -40,10 +41,12 @@
 		"esbuild": true
 	},
 	"devDependencies": {
+		"@adobe/structured-data-validator": "^1.7.0",
 		"@astrojs/check": "^0.9.10",
 		"@astrojs/ts-plugin": "^1.10.12",
 		"@biomejs/biome": "2.5.12",
 		"@google/design.md": "^0.4.0",
+		"@marbec/web-auto-extractor": "^2.2.1",
 		"@types/node": "^26.6.2",
 		"happy-dom": "^20.14.5",
 		"schema-dts": "^2.0.0",

@@ -48,16 +48,17 @@ Any static assets, like images, can be placed in the `public/` directory.
 
 All commands are run from the root of the project, from a terminal:
 
-| Command                     | Action                                                                                        |
-| :-------------------------- | :-------------------------------------------------------------------------------------------- |
-| `pnpm install`              | Installs dependencies                                                                         |
-| `pnpm diagrams:browser`     | Installs the headless Chromium that renders Mermaid diagrams at build; run once after install |
-| `pnpm dev`                  | Starts local dev server at `localhost:4321`                                                   |
-| `pnpm build`                | Build your production site to `./dist/`                                                       |
-| `DN_DEV_PAGES=1 pnpm build` | Build with the `/dev/*` design-system specimens included, for accessibility testing           |
-| `pnpm preview`              | Preview your build locally, before deploying                                                  |
-| `pnpm astro ...`            | Run CLI commands like `astro add`, `astro check`                                              |
-| `pnpm astro -- --help`      | Get help using the Astro CLI                                                                  |
+| Command                         | Action                                                                                        |
+| :------------------------------ | :-------------------------------------------------------------------------------------------- |
+| `pnpm install`                  | Installs dependencies                                                                         |
+| `pnpm diagrams:browser`         | Installs the headless Chromium that renders Mermaid diagrams at build; run once after install |
+| `pnpm dev`                      | Starts local dev server at `localhost:4321`                                                   |
+| `pnpm build`                    | Build your production site to `./dist/`                                                       |
+| `DN_DEV_PAGES=1 pnpm build`     | Build with the `/dev/*` design-system specimens included, for accessibility testing           |
+| `pnpm validate:structured-data` | Validates the built pages' JSON-LD against schema.org; run after `pnpm build`                 |
+| `pnpm preview`                  | Preview your build locally, before deploying                                                  |
+| `pnpm astro ...`                | Run CLI commands like `astro add`, `astro check`                                              |
+| `pnpm astro -- --help`          | Get help using the Astro CLI                                                                  |
 
 ## 👀 Want to learn more?
 
