@@ -1,0 +1,29 @@
+name: Setup
+description: Install pnpm, Node.js and dependencies, and optionally install Playwright Chromium.
+
+inputs:
+  browser:
+    description: Install the Playwright Chromium browser used to render Mermaid diagrams.
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    # Installs the version pinned by packageManager in package.json, same as local.
+    - uses: pnpm/action-setup@v6
+    - uses: actions/setup-node@v7
+      with:
+        node-version: 24
+        cache: pnpm
+    - run: pnpm install --frozen-lockfile
+      shell: bash
+    # Mermaid diagrams render in headless Chromium, in tests and in the build.
+    - if: inputs.browser == 'true'
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+    - if: inputs.browser == 'true'
+      run: pnpm diagrams:browser --with-deps
+      shell: bash
