@@ -298,8 +298,6 @@ jobs:
     # merge), but this workflow only ever sees the one HEAD it triggered on.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    outputs:
-      wrangler-version: ${{ steps.wrangler-version.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -310,9 +308,8 @@ jobs:
       # No PUBLIC_CF_WEB_ANALYTICS_TOKEN here either — same reasoning as
       # preview-build. Staging isn't the production site.
       - run: pnpm build
-      - name: Read the pnpm-lock.yaml-pinned wrangler version
-        id: wrangler-version
-        run: echo "version=$(pnpm list wrangler --json | jq -r '.[0].devDependencies.wrangler.version')" >> "$GITHUB_OUTPUT"
+      # No job output carries anything from here to staging-deploy besides
+      # this artifact — see preview-build's comment for why.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: staging-dist
@@ -336,7 +333,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          sparse-checkout: wrangler.jsonc
+          sparse-checkout: |
+            wrangler.jsonc
+            pnpm-lock.yaml
           sparse-checkout-cone-mode: false
           persist-credentials: false
       # L2, same as preview-deploy: this job's --env="" deploy must never be
@@ -353,18 +352,35 @@ jobs:
         with:
           name: staging-dist
           path: dist/
+      # See preview-deploy's matching step for why.
+      - name: Refuse a stray dotenv-like file at the job root
+        run: |
+          set -eu
+          shopt -s nullglob
+          stray=(.env* .dev.vars*)
+          shopt -u nullglob
+          if [ "${#stray[@]}" -gt 0 ]; then
+            echo "::error::Unexpected dotenv-like file(s) before wrangler runs: ${stray[*]}"
+            exit 1
+          fi
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
-      - name: Install wrangler (pinned, scripts off, outside the checkout)
-        env:
-          WRANGLER_VERSION: ${{ needs.staging-build.outputs.wrangler-version }}
+      # See preview-deploy's matching step: the version comes from this
+      # job's own checkout, never from staging-build's output, for the same
+      # reason.
+      - name: Install wrangler (version from this checkout, verified, scripts off, outside the checkout)
         run: |
           set -eu
-          mkdir -p "$RUNNER_TEMP/wrangler-install"
-          cd "$RUNNER_TEMP/wrangler-install"
-          npm init -y >/dev/null
-          npm install --ignore-scripts --no-save "wrangler@$WRANGLER_VERSION"
+          version="$(grep -A2 -m1 '^      wrangler:$' pnpm-lock.yaml | grep '^        version: ' | sed -E 's/^ {8}version: ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
+          if ! printf '%s' "$version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Could not extract a valid wrangler version (x.y.z) from pnpm-lock.yaml; got: ${version:-<empty>}"
+            exit 1
+          fi
+          rm -f .npmrc
+          mkdir -p "$RUNNER_TEMP/wrangler"
+          npm install --prefix "$RUNNER_TEMP/wrangler" --ignore-scripts --no-audit --no-fund \
+            --registry=https://registry.npmjs.org/ "wrangler@$version"
       - name: Deploy to staging
         id: deploy
         env:
@@ -374,7 +390,7 @@ jobs:
           # wrangler's API calls.
           CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
           WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-output.ndjson
-          WRANGLER_BIN: ${{ runner.temp }}/wrangler-install/node_modules/.bin/wrangler
+          WRANGLER_BIN: ${{ runner.temp }}/wrangler/node_modules/.bin/wrangler
         run: |
           set -eu
 
@@ -418,8 +434,6 @@ jobs:
       github.event_name == 'push' && github.ref == 'refs/heads/prod' &&
       !github.event.created
     runs-on: ubuntu-latest
-    outputs:
-      wrangler-version: ${{ steps.wrangler-version.outputs.version }}
     steps:
       # First step, before checkout, so a missing token fails fast instead
       # of paying for a full checkout, setup and build first.
@@ -440,9 +454,8 @@ jobs:
       - run: pnpm build
         env:
           PUBLIC_CF_WEB_ANALYTICS_TOKEN: ${{ vars.PUBLIC_CF_WEB_ANALYTICS_TOKEN }}
-      - name: Read the pnpm-lock.yaml-pinned wrangler version
-        id: wrangler-version
-        run: echo "version=$(pnpm list wrangler --json | jq -r '.[0].devDependencies.wrangler.version')" >> "$GITHUB_OUTPUT"
+      # No job output carries anything from here to production-deploy
+      # besides this artifact — see preview-build's comment for why.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: production-dist
@@ -464,7 +477,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          sparse-checkout: wrangler.jsonc
+          sparse-checkout: |
+            wrangler.jsonc
+            pnpm-lock.yaml
           sparse-checkout-cone-mode: false
           persist-credentials: false
       # No route/routes guard here, unlike preview-deploy/staging-deploy:
@@ -474,18 +489,35 @@ jobs:
         with:
           name: production-dist
           path: dist/
+      # See preview-deploy's matching step for why.
+      - name: Refuse a stray dotenv-like file at the job root
+        run: |
+          set -eu
+          shopt -s nullglob
+          stray=(.env* .dev.vars*)
+          shopt -u nullglob
+          if [ "${#stray[@]}" -gt 0 ]; then
+            echo "::error::Unexpected dotenv-like file(s) before wrangler runs: ${stray[*]}"
+            exit 1
+          fi
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
-      - name: Install wrangler (pinned, scripts off, outside the checkout)
-        env:
-          WRANGLER_VERSION: ${{ needs.production-build.outputs.wrangler-version }}
+      # See preview-deploy's matching step: the version comes from this
+      # job's own checkout, never from production-build's output, for the
+      # same reason.
+      - name: Install wrangler (version from this checkout, verified, scripts off, outside the checkout)
         run: |
           set -eu
-          mkdir -p "$RUNNER_TEMP/wrangler-install"
-          cd "$RUNNER_TEMP/wrangler-install"
-          npm init -y >/dev/null
-          npm install --ignore-scripts --no-save "wrangler@$WRANGLER_VERSION"
+          version="$(grep -A2 -m1 '^      wrangler:$' pnpm-lock.yaml | grep '^        version: ' | sed -E 's/^ {8}version: ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
+          if ! printf '%s' "$version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Could not extract a valid wrangler version (x.y.z) from pnpm-lock.yaml; got: ${version:-<empty>}"
+            exit 1
+          fi
+          rm -f .npmrc
+          mkdir -p "$RUNNER_TEMP/wrangler"
+          npm install --prefix "$RUNNER_TEMP/wrangler" --ignore-scripts --no-audit --no-fund \
+            --registry=https://registry.npmjs.org/ "wrangler@$version"
       # Never CLOUDFLARE_ENV, here or at job/workflow level: it silently
       # retargets a *plain* `wrangler deploy` at production, e.g. in
       # staging-deploy above if anyone ever cargo-cults an env var instead
@@ -495,7 +527,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
-          WRANGLER_BIN: ${{ runner.temp }}/wrangler-install/node_modules/.bin/wrangler
+          WRANGLER_BIN: ${{ runner.temp }}/wrangler/node_modules/.bin/wrangler
         run: |
           set -eu
 
