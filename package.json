@@ -14,7 +14,8 @@
 		"diagrams:browser": "playwright install --only-shell chromium",
 		"fonts:build": "node scripts/build-fonts.ts",
 		"fonts:features": "node scripts/build-fonts.ts --features",
-		"lint": "biome check .",
+		"lint": "biome check . && pnpm lint:design",
+		"lint:design": "design.md lint DESIGN.md",
 		"preview": "astro preview",
 		"test": "vitest run"
 	},
