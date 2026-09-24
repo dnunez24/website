@@ -50,3 +50,24 @@ jobs:
       # The schema.org vocabulary is vendored (scripts/vendor/), not
       # downloaded, so there's nothing here to cache.
       - run: pnpm validate:structured-data
+
+  a11y:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Runs axe in real Chromium against the built pages, so (unlike
+      # structured-data) this job needs the browser the setup action installs
+      # by default.
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - run: pnpm test:a11y
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: a11y-report
+          path: reports/a11y/
+          retention-days: 14

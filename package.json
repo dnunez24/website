@@ -18,6 +18,7 @@
 		"lint:design": "design.md lint DESIGN.md",
 		"preview": "astro preview",
 		"test": "vitest run",
+		"test:a11y": "node scripts/check-a11y.ts",
 		"validate:structured-data": "node scripts/validate-structured-data.ts"
 	},
 	"dependencies": {
@@ -44,10 +45,12 @@
 		"@adobe/structured-data-validator": "^1.7.0",
 		"@astrojs/check": "^0.9.10",
 		"@astrojs/ts-plugin": "^1.10.12",
+		"@axe-core/playwright": "^4.13.0",
 		"@biomejs/biome": "2.5.12",
 		"@google/design.md": "^0.4.0",
 		"@marbec/web-auto-extractor": "^2.2.1",
 		"@types/node": "^26.6.2",
+		"axe-core": "^4.13.0",
 		"happy-dom": "^20.14.5",
 		"schema-dts": "^2.0.0",
 		"subset-font": "^2.9.0",
