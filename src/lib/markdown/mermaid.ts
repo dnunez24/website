@@ -15,8 +15,10 @@ import { dropsDevPages, isDevPageFile } from "../routes";
  *
  * @param root The project root, passed through to `isDevPageFile` — see
  *   there for why it can't just read `process.cwd()`.
+ * @param keepDevPages True for a `DN_DEV_PAGES=1` build, which keeps the
+ *   dev pages and so still renders their diagrams.
  */
-export const mermaidDiagrams = (root: URL) =>
+export const mermaidDiagrams = (root: URL, keepDevPages = false) =>
 	defineHastPlugin({
 		name: "mermaid-diagrams",
 		element: {
@@ -29,7 +31,8 @@ export const mermaidDiagrams = (root: URL) =>
 				// Sätteri keeps the fence's language in `data`, as Astro's highlighter reads it.
 				const lang = (code.data as { lang?: string } | undefined)?.lang;
 				if (lang !== "mermaid") return;
-				if (dropsDevPages() && isDevPageFile(ctx.fileURL, root)) return;
+				if (dropsDevPages(keepDevPages) && isDevPageFile(ctx.fileURL, root))
+					return;
 
 				try {
 					return {

@@ -1,6 +1,5 @@
 ---
 import { Image } from "astro:assets";
-import photo from "@assets/blog-placeholder-2.jpg";
 import portrait from "@assets/blog-placeholder-about.jpg";
 import ArticleList from "@components/ArticleList.astro";
 import BlockQuote from "@components/BlockQuote.astro";
@@ -22,6 +21,16 @@ import Topic from "@components/Topic.astro";
 import TopicList from "@components/TopicList.astro";
 import WordMark from "@components/WordMark.astro";
 import Base from "@layouts/Base.astro";
+
+// Dynamic and gated: a static import here would ship as an unreferenced
+// asset even when this page's HTML doesn't build, because Astro's SSR
+// build transforms every page module before exclude-dev-pages drops the
+// route in astro.config.ts. import.meta.env.DEV / DN_DEV_PAGES lets Vite
+// drop this from that build's module graph entirely instead.
+const photo =
+	import.meta.env.DEV || import.meta.env.DN_DEV_PAGES === "1"
+		? (await import("@assets/blog-placeholder-2.jpg")).default
+		: undefined;
 
 // Literal class names, so Tailwind generates every swatch.
 const palette = [
@@ -431,14 +440,20 @@ const longCaption =
 
 	<section aria-labelledby="figure" class="f6y-mb-16">
 		<SectionTitle id="figure">Figure</SectionTitle>
-		<Figure caption="Officia in sint minim deserunt eu quis laborum occaecat.">
-			<Image src={photo} alt="A placeholder landscape." widths={[640, 1280]} sizes="40rem" />
-		</Figure>
-		<div class="f6y-mt-8">
-			<Figure caption="A wide figure bleeds into the gutter." wide>
-				<Image src={photo} alt="The same landscape, wide." widths={[640, 1280]} sizes="42rem" />
-			</Figure>
-		</div>
+		{
+			photo && (
+				<>
+					<Figure caption="Officia in sint minim deserunt eu quis laborum occaecat.">
+						<Image src={photo} alt="A placeholder landscape." widths={[640, 1280]} sizes="40rem" />
+					</Figure>
+					<div class="f6y-mt-8">
+						<Figure caption="A wide figure bleeds into the gutter." wide>
+							<Image src={photo} alt="The same landscape, wide." widths={[640, 1280]} sizes="42rem" />
+						</Figure>
+					</div>
+				</>
+			)
+		}
 	</section>
 
 	<section aria-labelledby="diagram" class="f6y-mb-16">

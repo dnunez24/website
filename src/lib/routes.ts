@@ -43,12 +43,14 @@ export const isPublicPage = (page: string): boolean =>
 	!isDevRoute(new URL(page).pathname);
 
 /**
- * True for a production build, which drops `/dev/*` pages entirely.
+ * True for a production build, which drops `/dev/*` pages entirely, unless
+ * `keepDevPages` (`DN_DEV_PAGES=1`, read once in astro.config.ts) keeps them.
  * `excludeDevPages` (astro.config.ts) and the Mermaid Markdown plugin
  * (markdown/mermaid.ts) both read this, so the two can't drift apart on
  * what counts as "a build that drops dev pages".
  */
-export const dropsDevPages = (): boolean => import.meta.env.PROD;
+export const dropsDevPages = (keepDevPages = false): boolean =>
+	import.meta.env.PROD && !keepDevPages;
 
 const PAGES_DIR = "src/pages/";
 
