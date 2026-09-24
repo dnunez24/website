@@ -2,11 +2,20 @@
 import ArticleList from "@components/ArticleList.astro";
 import JsonLd from "@components/JsonLd.astro";
 import PageTitle from "@components/PageTitle.astro";
+import Pagination from "@components/Pagination.astro";
 import Base from "@layouts/Base.astro";
 import { collectionGraph } from "@lib/seo";
-import { articleHref, getArticles } from "@lib/writing";
+import {
+	articleHref,
+	getArticles,
+	paginateArticles,
+	WRITING_PAGE_SIZE,
+	writingPageHref,
+} from "@lib/writing";
 
-const articles = (await getArticles()).map((article) => ({
+// Page 1 always exists, even with zero articles.
+const [page] = paginateArticles(await getArticles(), WRITING_PAGE_SIZE);
+const articles = page.articles.map((article) => ({
 	title: article.data.title,
 	href: articleHref(article.id),
 	date: article.data.publishedDate,
@@ -20,4 +29,11 @@ const description = "Everything I have written, newest first.";
 	<JsonLd slot="head" data={collectionGraph(Astro.site ?? Astro.url, Astro.url.pathname, title, description)} />
 	<PageTitle>Writing</PageTitle>
 	<ArticleList articles={articles} />
+	{
+		page.total > 1 && (
+			<div class="f6y-mt-4">
+				<Pagination current={page.pageNumber} total={page.total} href={writingPageHref} />
+			</div>
+		)
+	}
 </Base>
