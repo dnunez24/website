@@ -38,6 +38,19 @@
 	}
 
 	/*
+	 * BlockQuote: its slot can hold arbitrary links (an MDX author's own
+	 * markup), which Astro's scoped styles don't reach. Mirrors prose.css's
+	 * blockquote link rule for quotes rendered outside `.prose`.
+	 */
+	[data-quote] a:not([data-button]) {
+		@apply text-quote-link;
+
+		&:is(:hover, :focus-visible) {
+			@apply text-quote-link-hover;
+		}
+	}
+
+	/*
 	 * MermaidDiagram: the figure src/lib/mermaid.ts renders, in Markdown and in
 	 * the component. The SVG keeps its rendered size so labels stay 13px; a
 	 * diagram wider than the column scrolls inside the frame, which is focusable

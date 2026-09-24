@@ -70,17 +70,22 @@ The blockquote element represents content that is quoted from another source, op
 
 ### Blockquote with attribution
 
+End the quote with a paragraph that starts with an em dash; it renders as the quote's `footer`.
+Wrap a work title in `<cite>`, never a person's name.
+
 #### Syntax
 
 ```markdown
-> "Don't communicate by sharing memory, share memory by communicating."
-> <cite>Rob Pike[^1]</cite>
+> Don't communicate by sharing memory, share memory by communicating.
+>
+> — Rob Pike, <cite>Go Proverbs</cite>[^1]
 ```
 
 #### Output
 
-> "Don't communicate by sharing memory, share memory by communicating."
-> <cite>Rob Pike[^1]</cite>
+> Don't communicate by sharing memory, share memory by communicating.
+>
+> — Rob Pike, <cite>Go Proverbs</cite>[^1]
 
 [^1]: The above quote is excerpted from Rob Pike's [talk](https://www.youtube.com/watch?v=PAAkCSZUG1c) during Gopherfest, November 18, 2015.
 

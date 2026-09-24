@@ -61,14 +61,14 @@ The block quote element represents content that's quoted from another source, op
 
 ```markdown
 > Tiam, ad mint andaepu dandae nostion secatur sequo quae.
-> **Note** that you can use _Markdown syntax_ within a blockquote.
+> **Note** that you can use _Markdown syntax_, including a [link](/writing/), within a blockquote.
 ```
 
 #### Output
 
 <!-- vale off -->
 > Tiam, ad mint andaepu dandae nostion secatur sequo quae.
-> **Note** that you can use _Markdown syntax_ within a block quote.
+> **Note** that you can use _Markdown syntax_, including a [link](/writing/), within a block quote.
 <!-- vale on -->
 
 ### Block quote with attribution
@@ -93,6 +93,10 @@ Wrap a work title in `<cite>`, never a person's name.
 <!-- rumdl-enable no-inline-html -->
 
 [^1]: The above quote is excerpted from Rob Pike's [talk](https://www.youtube.com/watch?v=PAAkCSZUG1c) during Gopherfest, November 18, 2015.
+
+Footnote references also appear in running text, not only in citations.[^2] The raised mark should clear the surrounding ascenders without floating above them.
+
+[^2]: Demonstrates the footnote reference position outside a citation.
 
 ## Tables
 
@@ -336,3 +340,10 @@ You can also ~~strike through~~ text to indicate a correction.
 
 > [!TIP]+ Where to start
 > Start with the slowest dependency and work outward.
+
+> [!NOTE]
+> A quotation can appear inside a callout, and keeps its own citation style.
+>
+> > Less, but better.
+> >
+> > — Dieter Rams, <cite>Ten principles for good design</cite>
