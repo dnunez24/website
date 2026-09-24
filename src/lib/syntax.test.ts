@@ -61,14 +61,14 @@ describe("code fences in Markdown", () => {
 		const doc = await render(
 			'```ts title="src/lib/writing.ts"\nconst a = 1;\n```\n',
 		);
-		const figure = doc.querySelector("figure[data-codeblock]");
-		expect(figure?.querySelector("[data-codeblock-file]")?.textContent).toBe(
+		const frame = doc.querySelector("[data-codeblock]");
+		expect(frame?.querySelector("[data-codeblock-file]")?.textContent).toBe(
 			"src/lib/writing.ts",
 		);
-		expect(figure?.querySelector("[data-codeblock-lang]")?.textContent).toBe(
+		expect(frame?.querySelector("[data-codeblock-lang]")?.textContent).toBe(
 			"ts",
 		);
-		const pre = figure?.querySelector("pre");
+		const pre = frame?.querySelector("pre");
 		expect(pre?.getAttribute("data-language")).toBe("ts");
 		expect(pre?.getAttribute("role")).toBe("group");
 		expect(pre?.getAttribute("aria-label")).toBe(
@@ -88,10 +88,28 @@ describe("code fences in Markdown", () => {
 		);
 	});
 
-	it("adds a caption below the code when the fence has one", async () => {
+	it("hides the header from assistive technology: the pre's own label already names it", async () => {
+		const doc = await render(
+			'```ts title="src/lib/writing.ts"\nconst a = 1;\n```\n',
+		);
+		expect(
+			doc.querySelector("[data-codeblock-header]")?.getAttribute("aria-hidden"),
+		).toBe("true");
+	});
+
+	it("frames a block without a caption as a div, not a figure", async () => {
+		const doc = await render(
+			'```ts title="src/lib/writing.ts"\nconst a = 1;\n```\n',
+		);
+		expect(doc.querySelector("figure[data-codeblock]")).toBeNull();
+		expect(doc.querySelector("div[data-codeblock]")).not.toBeNull();
+	});
+
+	it("adds a caption below the code when the fence has one, and keeps the figure", async () => {
 		const doc = await render(
 			'```sh caption="Run it from the repo root."\npnpm build\n```\n',
 		);
+		expect(doc.querySelector("div[data-codeblock]")).toBeNull();
 		const caption = doc.querySelector("figure[data-codeblock] > figcaption");
 		expect(caption?.textContent).toBe("Run it from the repo root.");
 		expect(caption?.previousElementSibling?.tagName).toBe("PRE");

@@ -66,15 +66,21 @@ const codeFrame: Transformer = {
 		pre.properties.role = "group";
 		pre.properties.ariaLabel = `Code: ${title ? `${title}, ` : ""}${lang}`;
 
-		const header = element("div", { dataCodeblockHeader: "" });
+		// aria-hidden: the pre's own label (above) already names the file and language.
+		const header = element("div", {
+			dataCodeblockHeader: "",
+			ariaHidden: "true",
+		});
 		if (title) {
 			header.children.push(element("span", { dataCodeblockFile: "" }, title));
 		}
 		header.children.push(element("span", { dataCodeblockLang: "" }, lang));
-		const figure = element("figure", { dataCodeblock: "" });
-		figure.children.push(header, pre);
-		if (caption) figure.children.push(element("figcaption", {}, caption));
-		root.children = [figure];
+		// Without a caption, a figure would announce an unnamed figure; a plain
+		// div frame stays silent and leaves the naming to the pre's own label.
+		const frame = element(caption ? "figure" : "div", { dataCodeblock: "" });
+		frame.children.push(header, pre);
+		if (caption) frame.children.push(element("figcaption", {}, caption));
+		root.children = [frame];
 	},
 };
 
