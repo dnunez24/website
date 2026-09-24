@@ -9,15 +9,22 @@
  * Tailwind's generated class name or specificity.
  *
  * Every other forced-colors fix lives beside the rule it overrides (see
- * utilities.css's `link-external` and `transition-colors-no-outline`,
- * prose.css's task checkbox and base.css's transparent frame outline,
- * components.css's Mermaid frame), each already in the right layer for its
- * own case. This file exists only for the one override that has no
- * hand-written rule of its own to sit beside.
+ * utilities.css's `link-external`, prose.css's task checkbox and base.css's
+ * transparent frame outline, components.css's Mermaid frame), each already
+ * in the right layer for its own case. This file exists only for the one
+ * override that has no hand-written rule of its own to sit beside.
+ *
+ * (utilities.css's `transition-colors-no-outline` is a separate fix, for the
+ * focus-ring fade-in, not forced colors.)
  */
 @media (forced-colors: active) {
-	/* Ghost buttons are links, so LinkText is the label's forced color, and the rule keeps matching it. */
-	[data-button]:is([aria-current="page"], [aria-current="true"])::after {
+	/*
+	 * Ghost buttons are links, so LinkText is the label's forced color, and
+	 * the rule keeps matching it. Scoped to `a`: `current` only ever renders
+	 * as a link today, but Button's Props allow a `<button aria-current>`
+	 * too, and that label is forced to ButtonText, not LinkText.
+	 */
+	a[data-button]:is([aria-current="page"], [aria-current="true"])::after {
 		background-color: LinkText;
 	}
 }

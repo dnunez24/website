@@ -40,11 +40,17 @@ describe("prose.css and components.css (compiled)", () => {
 		const css = await compileGlobalCss();
 		const ref = ruleBody(css, /&\s*a\[data-footnote-ref\]\s*\{/);
 		const before = ruleBody(ref, /&::before\s*\{/);
-		expect(before).toMatch(/content:\s*"\[";/);
-		expect(before).toMatch(/content:\s*"\["\s*\/\s*"";/);
 		const after = ruleBody(ref, /&::after\s*\{/);
-		expect(after).toMatch(/content:\s*"\]";/);
-		expect(after).toMatch(/content:\s*"\]"\s*\/\s*"";/);
+		// One assertion per side, order-sensitive: a browser that doesn't
+		// understand the alternative-text syntax discards that whole
+		// declaration and keeps whichever `content` came first, so the plain
+		// string must be the one written first, not merely present somewhere.
+		expect(before).toMatch(
+			/content:\s*"\[";\s*(\/\*[\s\S]*?\*\/\s*)?content:\s*"\["\s*\/\s*"";/,
+		);
+		expect(after).toMatch(
+			/content:\s*"\]";\s*(\/\*[\s\S]*?\*\/\s*)?content:\s*"\]"\s*\/\s*"";/,
+		);
 	});
 
 	it("doesn't transform the hidden footnotes heading to uppercase, so its accessible name stays sentence case", async () => {

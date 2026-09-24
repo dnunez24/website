@@ -106,7 +106,11 @@
 			&:checked {
 				@apply border-brand bg-brand;
 
-				/* The fill is a background and the border is a color; both give way to Canvas without this. */
+				/*
+				 * The fill is a background, so it gives way to Canvas without this.
+				 * The border already forces to CanvasText on its own; restated here
+				 * to match bundle.css and keep both declarations together.
+				 */
 				@media (forced-colors: active) {
 					background-color: SelectedItem;
 					border-color: CanvasText;
@@ -244,6 +248,17 @@
 		}
 		& details.callout:has(> summary:focus-visible) {
 			@apply outline-4 outline-offset-2 outline-focus;
+
+			/*
+			 * :has() puts the ring on a wrapper that isn't itself focused, so
+			 * forced colors treats it as a plain border and forces CanvasText,
+			 * not the Highlight it gives an actually-focused element's own
+			 * ring. Matches Mermaid's ring (components.css) and the elements
+			 * that are focused directly.
+			 */
+			@media (forced-colors: active) {
+				outline-color: Highlight;
+			}
 		}
 		& .callout-fold-icon {
 			@apply ms-auto font-mono text-label text-ink-muted transition-colors-no-outline;

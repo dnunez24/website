@@ -113,6 +113,19 @@ describe("class conformance", () => {
 		expect(violations).toEqual([]);
 	});
 
+	it("never transitions outline-color, so focus rings don't fade in", () => {
+		// Walks every class the site actually uses (not just prose.css's two
+		// consumers), so reverting a component like Button or Link back to
+		// Tailwind's `transition-colors` fails here even though nothing else
+		// in that component's own file checks for it.
+		const fading = [...classesWithFiles()].filter(({ name }) =>
+			/transition-property:[^;]*\b(outline-color|all)\b/.test(
+				system.candidatesToCss([name])[0] ?? "",
+			),
+		);
+		expect(fading).toEqual([]);
+	});
+
 	it("keeps the design system's container, not Tailwind's 65ch prose width", () => {
 		expect(system.candidatesToCss(["max-w-measure"])[0]).toContain(
 			"--container-measure",

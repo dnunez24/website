@@ -45,7 +45,7 @@ describe("forced colors (compiled)", () => {
 		const css = await compileGlobalCss();
 		const rule = ruleBody(
 			css,
-			/@media \(forced-colors: active\)\s*\{\s*\[data-button\]:is\(\[aria-current="page"\],\s*\[aria-current="true"\]\)::after\s*\{/,
+			/@media \(forced-colors: active\)\s*\{\s*a\[data-button\]:is\(\[aria-current="page"\],\s*\[aria-current="true"\]\)::after\s*\{/,
 		);
 		expect(rule).toMatch(/background-color:\s*LinkText/);
 	});
