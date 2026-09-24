@@ -76,7 +76,7 @@ export default defineConfig({
 			provider: fontProviders.local(),
 			name: "Afacad Flux",
 			cssVariable: "--font-afacad-flux",
-			fallbacks: ["ui-sans-serif", "system-ui", "sans-serif"],
+			fallbacks: ["ui-sans-serif", "sans-serif", "system-ui"],
 			options: {
 				variants: [
 					{

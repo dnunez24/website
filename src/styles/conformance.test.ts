@@ -131,4 +131,17 @@ describe("class conformance", () => {
 			"--container-measure",
 		);
 	});
+
+	it("wires the ArticleList date column to the design system token", () => {
+		expect(system.candidatesToCss(["grid-cols-log"])[0]).toContain(
+			"--grid-template-columns-log",
+		);
+	});
+
+	it("lets the ArticleList date column grow past 12ch instead of clipping wider text-spacing dates", async () => {
+		const theme = await readFile(join(ROOT, "src/styles/theme.css"), "utf8");
+		expect(theme).toContain(
+			"--grid-template-columns-log: minmax(12ch, max-content) minmax(0, 1fr);",
+		);
+	});
 });
