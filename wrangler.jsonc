@@ -1,36 +1,21 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	// Fully static site (Astro's default `output: "static"`, no
-	// `@astrojs/cloudflare` adapter): there's no Worker script to run, so
-	// there's no `main` here either. Wrangler serves `assets.directory`
-	// directly and asset requests never invoke a Worker.
+	// Throwaway branch for testing Workers Builds with Worker Previews. Not for
+	// merge. One Worker: `prod` runs `wrangler deploy`, every other branch runs
+	// `wrangler preview`, which never applies routes or custom domains.
 	"name": "website",
 	"compatibility_date": "2026-09-23",
 
 	"assets": {
 		"directory": "./dist",
-		// The nearest `404.html` with a 404 status, once a parallel PR adds
-		// `src/pages/404.astro`.
 		"not_found_handling": "404-page",
-		// Default value, set explicitly: files serve without a trailing slash,
-		// folder `index.html` files serve with one (redirecting the other form),
-		// matching directory-format output and `trailingSlash: "always"`.
 		"html_handling": "auto-trailing-slash"
 	},
 
-	// No public URL: this target (staging) has no Cloudflare Access in front of
-	// it yet. D2 turns these on once PR preview versions are protected by it.
+	"routes": [{ "pattern": "davidanunez.com", "custom_domain": true }],
 	"workers_dev": false,
-	"preview_urls": false,
-
-	// The production target. D3 deploys it on pushes to `prod`; until then,
-	// `wrangler deploy --env production` (or a plain `wrangler deploy` with
-	// `CLOUDFLARE_ENV=production` set) is the only thing that would touch it.
-	"env": {
-		"production": {
-			"routes": [{ "pattern": "davidanunez.com", "custom_domain": true }],
-			"workers_dev": false,
-			"preview_urls": false
-		}
-	}
+	// workers.dev Preview URLs, behind Cloudflare Access.
+	"preview_urls": true,
+	// Required by `wrangler preview`. Empty: a static site has no bindings.
+	"previews": {}
 }
