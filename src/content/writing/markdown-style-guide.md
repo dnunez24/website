@@ -12,9 +12,8 @@ Here is a sample of some basic Markdown syntax that can be used when writing Mar
 ## Headings
 
 The following HTML `<h1>`–`<h6>` elements represent six levels of section headings.
-`<h1>` is the highest section level while `<h6>` is the lowest.
-
-# H1 <!-- rumdl-disable-line single-title -->
+`<h1>` is the highest section level while `<h6>` is the lowest. This article's
+title above is already an `<h1>`, so the demo below starts at `<h2>`.
 
 ## H2
 
@@ -48,7 +47,7 @@ Quiatae cullecum rem ent aut odis in re eossequodi nonsequ idebis ne sapicia is 
 
 ### Output
 
-![blog placeholder](../../assets/blog-placeholder-about.jpg)
+![A tilted, dark rounded rectangle with a smiling face and a teal-blue-violet gradient border, glowing purple against a dark, faintly gridded background](../../assets/blog-placeholder-about.jpg)
 
 ## Blockquotes
 
