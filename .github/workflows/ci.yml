@@ -77,11 +77,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      # Lighthouse runs on the same Chromium the setup action installs by
-      # default (lighthouserc.cjs points chromePath at it) rather than a
-      # second, separately-installed Chrome — verified locally; CI is what
-      # confirms it holds on ubuntu-latest's Linux binary too.
+      # Lighthouse uses ubuntu-latest's preinstalled google-chrome-stable, not
+      # Chromium: the headless shell fails to test back/forward cache and
+      # reads LCP differently, so no browser install is needed here.
       - uses: ./.github/actions/setup
+        with:
+          browser: "false"
+      - run: google-chrome --version
       - uses: actions/download-artifact@v8
         with:
           name: dist
@@ -93,3 +95,7 @@ jobs:
           name: lhci-report
           path: reports/lhci/
           retention-days: 14
+      # Static check for a <script> or inline event handler that slipped
+      # past the resource-summary budget above (which only counts network
+      # requests, not inline script content). Needs only dist/, not Chrome.
+      - run: pnpm test:no-js

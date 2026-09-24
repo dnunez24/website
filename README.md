@@ -57,8 +57,9 @@ All commands are run from the root of the project, from a terminal:
 | `DN_DEV_PAGES=1 pnpm build`     | Build with the `/dev/*` design-system specimens included, for accessibility testing                    |
 | `pnpm validate:structured-data` | Validates the built pages' JSON-LD against schema.org; run after `pnpm build`                          |
 | `pnpm test:a11y`                | Checks the built pages for accessibility violations with axe-core; run after `pnpm build`              |
+| `pnpm test:no-js`               | Fails if any built page ships a script or inline event handler; run after `pnpm build`                 |
 | `pnpm test:perf`                | Checks the built pages against performance/a11y/SEO budgets with Lighthouse CI; run after `pnpm build` |
-| `pnpm serve:dist`               | Serves `./dist/` the way it's deployed (trailing slashes, a real 404); used by `pnpm test:perf`        |
+| `pnpm serve:dist`               | Serves `./dist/` the way it's deployed (trailing slashes, a real 404), at `localhost:4173`             |
 | `pnpm preview`                  | Preview your build locally, before deploying                                                           |
 | `pnpm astro ...`                | Run CLI commands like `astro add`, `astro check`                                                       |
 | `pnpm astro -- --help`          | Get help using the Astro CLI                                                                           |

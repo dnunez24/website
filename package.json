@@ -20,6 +20,7 @@
 		"serve:dist": "node scripts/serve-dist.ts",
 		"test": "vitest run",
 		"test:a11y": "node scripts/check-a11y.ts",
+		"test:no-js": "node scripts/check-no-js.ts",
 		"test:perf": "lhci autorun",
 		"validate:structured-data": "node scripts/validate-structured-data.ts"
 	},
