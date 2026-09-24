@@ -183,12 +183,25 @@ try {
 	);
 }
 
-const files = await findHtmlFiles(DIST_DIR);
-if (files.length === 0) {
+const allFiles = await findHtmlFiles(DIST_DIR);
+if (allFiles.length === 0) {
 	throw new Error(
 		`No HTML files in ${relative(ROOT, DIST_DIR)}. Run \`pnpm build\` first.`,
 	);
 }
+
+// The 404 page is never reached by its own name — the server (like Workers)
+// only serves it as the *body* of an unmatched request, at a 404 status, so
+// it's checked that way too: visited through a path that doesn't exist,
+// once, not as an ordinary 200 page in the main list (which would check the
+// same markup twice and, once dist/404.html is a real page, immediately
+// fail on "/404.html responded 200, expected 404").
+const NOT_FOUND_FILE = join(DIST_DIR, "404.html");
+const hasNotFoundPage = allFiles.includes(NOT_FOUND_FILE);
+const NOT_FOUND_PROBE_PATH = "/__a11y-not-found__/";
+const files = allFiles.filter((file) => file !== NOT_FOUND_FILE);
+const plannedChecks =
+	(files.length + (hasNotFoundPage ? 1 : 0)) * WIDTHS.length;
 
 const server = await startServer();
 const browser = await chromium.launch({ timeout: 60_000 });
@@ -203,10 +216,6 @@ let crawlError: unknown;
 try {
 	for (const file of files) {
 		const path = pagePath(DIST_DIR, file);
-		// The site's own 404 page is visited by its real name and is
-		// deliberately expected to answer 404, not 200.
-		const expectedStatusOption =
-			path === "/404.html" ? { expectedStatus: 404 } : {};
 		for (const width of WIDTHS) {
 			const result = await checkPageAccessibility({
 				page,
@@ -214,7 +223,20 @@ try {
 				label: path,
 				width,
 				height: HEIGHT,
-				...expectedStatusOption,
+			});
+			results.push(result);
+			printResult(result);
+		}
+	}
+	if (hasNotFoundPage) {
+		for (const width of WIDTHS) {
+			const result = await checkPageAccessibility({
+				page,
+				url: server.url + NOT_FOUND_PROBE_PATH,
+				label: "/404.html",
+				width,
+				height: HEIGHT,
+				expectedStatus: 404,
 			});
 			results.push(result);
 			printResult(result);
@@ -243,7 +265,7 @@ await writeFile(
 			generatedAt: new Date().toISOString(),
 			widths: WIDTHS,
 			height: HEIGHT,
-			pagesPlanned: files.length,
+			pagesPlanned: files.length + (hasNotFoundPage ? 1 : 0),
 			checksRecorded: results.length,
 			complete: crawlError === undefined,
 			...(crawlError
@@ -265,7 +287,7 @@ await writeFile(
 
 console.log(
 	`\n${results.length} check${results.length === 1 ? "" : "s"} recorded ` +
-		`(of ${files.length * WIDTHS.length} planned at ${WIDTHS.join("px, ")}px), ` +
+		`(of ${plannedChecks} planned at ${WIDTHS.join("px, ")}px), ` +
 		`${violationCount} violation${violationCount === 1 ? "" : "s"}, ` +
 		`${incompleteCount} needing manual review.`,
 );

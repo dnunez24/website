@@ -44,6 +44,16 @@ const MISSING_STYLESHEET_PAGE = `<!doctype html>
 <body><h1>Fixture</h1></body>
 </html>`;
 
+// Unlike a missing stylesheet (which Chromium aborts as a failed request,
+// since our fixture server's 404 page isn't CSS), a missing image gets a
+// normal response back — just a 404 one — so this exercises the "any
+// subresource response >= 400" check specifically, not requestfailed.
+const MISSING_IMAGE_PAGE = `<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Fixture</title></head>
+<body><h1>Fixture</h1><img src="/does-not-exist.png" alt="Fixture"></body>
+</html>`;
+
 // Two adjacent 10x10px buttons, crowded together with a negative margin:
 // WCAG 2.2's target-size minimum is 24x24 CSS px, undersized targets are
 // exempt if a 24px circle around them wouldn't reach another target, and a
@@ -55,6 +65,19 @@ const TARGET_SIZE_VIOLATION_PAGE = `<!doctype html>
 <body>
 <h1>Fixture</h1>
 <button type="button" aria-label="a" style="width:10px;height:10px;padding:0;border:0;">+</button><button type="button" aria-label="b" style="width:10px;height:10px;padding:0;border:0;margin-left:-5px;">-</button>
+</body>
+</html>`;
+
+// Two adjacent 12x12px buttons, crowded together like the target-size
+// violation fixture, but with tabindex="-1": axe can't be sure a target
+// that's been pulled out of tab order is still a real interactive target,
+// so it lands in "incomplete" rather than a clear violation or pass.
+const TARGET_SIZE_INCOMPLETE_PAGE = `<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Fixture</title></head>
+<body>
+<h1>Fixture</h1>
+<button type="button" tabindex="-1" aria-label="a" style="width:12px;height:12px;padding:0;border:0;">+</button><button type="button" tabindex="-1" aria-label="b" style="width:12px;height:12px;padding:0;border:0;margin-left:-6px;">-</button>
 </body>
 </html>`;
 
@@ -93,7 +116,9 @@ const FIXTURES: Record<string, { status?: number; body: string }> = {
 	},
 	"/script-error/": { body: SCRIPT_ERROR_PAGE },
 	"/missing-stylesheet/": { body: MISSING_STYLESHEET_PAGE },
+	"/missing-image/": { body: MISSING_IMAGE_PAGE },
 	"/target-size/": { body: TARGET_SIZE_VIOLATION_PAGE },
+	"/target-size-incomplete/": { body: TARGET_SIZE_INCOMPLETE_PAGE },
 	"/color-contrast/": { body: COLOR_CONTRAST_VIOLATION_PAGE },
 	"/responsive/": { body: RESPONSIVE_VIOLATION_PAGE },
 };
@@ -134,7 +159,11 @@ describe("checkPageAccessibility", { timeout: 60_000 }, () => {
 		// Playwright refuses on the shorthand's implicit single-page context.
 		context = await browser.newContext();
 		page = await context.newPage();
-	});
+		// Vitest hooks have their own 10s default timeout, not the describe
+		// block's 60s: without this, a slow Chromium cold start fails with
+		// "Hook timed out in 10000ms" even though the tests themselves would
+		// have had time to spare.
+	}, 60_000);
 
 	afterAll(async () => {
 		await browser.close();
@@ -223,12 +252,22 @@ describe("checkPageAccessibility", { timeout: 60_000 }, () => {
 				}),
 			).rejects.toThrow(/failed request/);
 		});
+
+		it("throws on a missing image (a genuine >= 400 subresource response)", async () => {
+			await expect(
+				checkPageAccessibility({
+					page,
+					url: `${baseUrl}/missing-image/`,
+					width: 1024,
+					height: 800,
+				}),
+			).rejects.toThrow(/loaded a subresource/);
+		});
 	});
 
-	// These pin the configuration itself: narrowing the tags, dropping the
-	// "did target-size run" assertion, or skipping setViewportSize would all
-	// leave the earlier tests passing, but these fail through the exact path
-	// scripts/check-a11y.ts uses.
+	// These pin the configuration itself: narrowing the tags or skipping
+	// setViewportSize would leave the earlier tests passing, but would fail
+	// these, since they need WCAG 2.2 and the right viewport to fire at all.
 	describe("real violations through the same configuration the CLI uses", () => {
 		it("flags a target-size violation (WCAG 2.2, disabled by default in axe)", async () => {
 			const result = await checkPageAccessibility({
@@ -237,8 +276,20 @@ describe("checkPageAccessibility", { timeout: 60_000 }, () => {
 				width: 1024,
 				height: 800,
 			});
-			const flagged = [...result.violations, ...result.incomplete];
-			expect(flagged).toContainEqual(
+			expect(result.violations).toContainEqual(
+				expect.objectContaining({ id: "target-size" }),
+			);
+		});
+
+		it("lists an ambiguous target (tabindex=-1) as incomplete, not a violation", async () => {
+			const result = await checkPageAccessibility({
+				page,
+				url: `${baseUrl}/target-size-incomplete/`,
+				width: 1024,
+				height: 800,
+			});
+			expect(result.violations).toEqual([]);
+			expect(result.incomplete).toContainEqual(
 				expect.objectContaining({ id: "target-size" }),
 			);
 		});
