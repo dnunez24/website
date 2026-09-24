@@ -39,6 +39,11 @@ export default defineConfig({
 	// Pages redirects `/about` to `/about/`, so slashless links cost a hop.
 	trailingSlash: "always",
 
+	// An article id starting with "page/" (e.g. content file writing/page/2.md)
+	// would build the same URL as a Writing pagination page. Fail the build
+	// instead of the default "warn", which would silently drop the article.
+	prerenderConflictBehavior: "error",
+
 	integrations: [mdx(), sitemap({ filter: isPublicPage }), excludeDevPages()],
 
 	markdown: {

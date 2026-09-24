@@ -1,8 +1,7 @@
 ---
-import ArticleList from "@components/ArticleList.astro";
 import JsonLd from "@components/JsonLd.astro";
 import PageTitle from "@components/PageTitle.astro";
-import Pagination from "@components/Pagination.astro";
+import WritingList from "@components/WritingList.astro";
 import Base from "@layouts/Base.astro";
 import { collectionGraph } from "@lib/seo";
 import {
@@ -10,7 +9,6 @@ import {
 	getArticles,
 	paginateArticles,
 	WRITING_PAGE_SIZE,
-	writingPageHref,
 } from "@lib/writing";
 import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
 
@@ -42,8 +40,5 @@ const description = `Everything I have written, newest first. Page ${page.pageNu
 <Base title={title} description={description}>
 	<JsonLd slot="head" data={collectionGraph(Astro.site ?? Astro.url, Astro.url.pathname, title, description)} />
 	<PageTitle>Writing</PageTitle>
-	<ArticleList articles={articles} />
-	<div class="f6y-mt-4">
-		<Pagination current={page.pageNumber} total={page.total} href={writingPageHref} />
-	</div>
+	<WritingList articles={articles} current={page.pageNumber} total={page.total} />
 </Base>

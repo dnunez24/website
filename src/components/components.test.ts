@@ -25,6 +25,7 @@ import SkipLink from "./SkipLink.astro";
 import Topic from "./Topic.astro";
 import TopicList from "./TopicList.astro";
 import WordMark from "./WordMark.astro";
+import WritingList from "./WritingList.astro";
 
 let container: AstroContainer;
 
@@ -523,6 +524,35 @@ describe("ArticleList", () => {
 		);
 		expect(items[0]?.querySelector("p")?.textContent).toBe("One.");
 		expect(items[1]?.querySelector("p")).toBeNull();
+	});
+});
+
+describe("WritingList", () => {
+	const article = {
+		title: "First",
+		href: "/writing/first/",
+		date: new Date("2026-01-02"),
+	};
+
+	it("hides Pagination on a single page", async () => {
+		const doc = parse(
+			await render(WritingList, {
+				props: { articles: [article], current: 1, total: 1 },
+			}),
+		);
+		expect(doc.querySelector("ol")).not.toBeNull();
+		expect(doc.querySelector("nav")).toBeNull();
+	});
+
+	it("shows Pagination, right after the list, once there is more than one page", async () => {
+		const doc = parse(
+			await render(WritingList, {
+				props: { articles: [article], current: 1, total: 2 },
+			}),
+		);
+		const [list, nav] = [...doc.body.children];
+		expect(list?.localName).toBe("ol");
+		expect(nav?.localName).toBe("nav");
 	});
 });
 

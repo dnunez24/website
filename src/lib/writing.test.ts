@@ -84,6 +84,8 @@ describe("paginateArticles", () => {
 			"/writing/",
 			"/writing/page/2/",
 		]);
+		// Every article appears exactly once, in order—not repeated across pages.
+		expect(pages.flatMap((page) => page.articles)).toEqual(articles(11));
 	});
 
 	it("splits 21 articles into three pages, never aliasing page 1", () => {
@@ -97,5 +99,6 @@ describe("paginateArticles", () => {
 			"/writing/page/3/",
 		]);
 		expect(pages.some((page) => page.href === "/writing/page/1/")).toBe(false);
+		expect(pages.flatMap((page) => page.articles)).toEqual(articles(21));
 	});
 });
