@@ -8,10 +8,11 @@
  * Requires Node >= 22.18, which runs TypeScript without a build step.
  */
 
-import { access, readdir, readFile } from "node:fs/promises";
-import { join, relative, sep } from "node:path";
+import { access, readFile } from "node:fs/promises";
+import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gunzipSync } from "node:zlib";
+import { findHtmlFiles, pagePath } from "../src/lib/dist-pages.ts";
 import {
 	hasBlockingIssues,
 	type StructuredDataIssue,
@@ -31,23 +32,6 @@ const VOCABULARY_PATH = join(ROOT, "scripts/vendor/schemaorg-30.1.jsonld.gz");
 async function loadSchemaOrgVocabulary(): Promise<unknown> {
 	const gzipped = await readFile(VOCABULARY_PATH);
 	return JSON.parse(gunzipSync(gzipped).toString("utf8"));
-}
-
-/** `dist/about/index.html` -> `/about/`; `dist/index.html` -> `/`; `dist/404.html` -> `/404.html`. */
-function pagePath(file: string): string {
-	const path = relative(DIST_DIR, file).split(sep).join("/");
-	return `/${path.replace(/index\.html$/, "")}`;
-}
-
-async function findHtmlFiles(dir: string): Promise<string[]> {
-	const entries = await readdir(dir, {
-		withFileTypes: true,
-		recursive: true,
-	});
-	return entries
-		.filter((entry) => entry.isFile() && entry.name.endsWith(".html"))
-		.map((entry) => join(entry.parentPath, entry.name))
-		.sort();
 }
 
 // Fail fast and readably if `pnpm build` hasn't run, before loading the
@@ -72,7 +56,9 @@ const schemaOrgJson = await loadSchemaOrgVocabulary();
 const issues: StructuredDataIssue[] = [];
 for (const file of files) {
 	const html = await readFile(file, "utf8");
-	issues.push(...(await validatePage(html, pagePath(file), schemaOrgJson)));
+	issues.push(
+		...(await validatePage(html, pagePath(DIST_DIR, file), schemaOrgJson)),
+	);
 }
 
 const errors = issues.filter((issue) => issue.severity === "ERROR");
