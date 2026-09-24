@@ -2,8 +2,10 @@
 dist/
 # generated types
 .astro/
-# check reports (e.g. reports/a11y/)
+# check reports (e.g. reports/a11y/, reports/lhci/)
 reports/
+# Lighthouse CI's own scratch directory (reports/lhci/ is the real output)
+.lighthouseci/
 
 # dependencies
 node_modules/

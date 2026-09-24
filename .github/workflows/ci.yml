@@ -71,3 +71,25 @@ jobs:
           name: a11y-report
           path: reports/a11y/
           retention-days: 14
+
+  perf:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Lighthouse runs on the same Chromium the setup action installs by
+      # default (lighthouserc.cjs points chromePath at it) rather than a
+      # second, separately-installed Chrome — verified locally; CI is what
+      # confirms it holds on ubuntu-latest's Linux binary too.
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - run: pnpm test:perf
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lhci-report
+          path: reports/lhci/
+          retention-days: 14

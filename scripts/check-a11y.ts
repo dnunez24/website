@@ -7,14 +7,8 @@
  * Requires Node >= 22.18, which runs TypeScript without a build step.
  */
 
-import { createReadStream } from "node:fs";
-import { access, mkdir, stat, writeFile } from "node:fs/promises";
-import {
-	createServer,
-	type IncomingMessage,
-	type ServerResponse,
-} from "node:http";
-import { extname, join, relative, sep } from "node:path";
+import { access, mkdir, writeFile } from "node:fs/promises";
+import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import {
@@ -22,6 +16,7 @@ import {
 	checkPageAccessibility,
 } from "../src/lib/a11y.ts";
 import { findHtmlFiles, pagePath } from "../src/lib/dist-pages.ts";
+import { startDistServer } from "../src/lib/dist-server.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const DIST_DIR = join(ROOT, "dist");
@@ -30,133 +25,6 @@ const REPORT_PATH = join(ROOT, "reports/a11y/report.json");
 // height is fixed; only width varies between a phone and a laptop layout.
 const WIDTHS = [320, 1024];
 const HEIGHT = 800;
-
-const CONTENT_TYPES: Record<string, string> = {
-	".html": "text/html; charset=utf-8",
-	".css": "text/css; charset=utf-8",
-	".js": "text/javascript; charset=utf-8",
-	".mjs": "text/javascript; charset=utf-8",
-	".svg": "image/svg+xml",
-	".png": "image/png",
-	".jpg": "image/jpeg",
-	".jpeg": "image/jpeg",
-	".webp": "image/webp",
-	".woff2": "font/woff2",
-	".ico": "image/x-icon",
-	".txt": "text/plain; charset=utf-8",
-	".xml": "application/xml",
-	".json": "application/json",
-};
-
-type Resolved =
-	| { kind: "file"; path: string }
-	| { kind: "redirect"; to: string }
-	| { kind: "not-found" };
-
-function withinDist(candidate: string): boolean {
-	return candidate === DIST_DIR || (candidate + sep).startsWith(DIST_DIR + sep);
-}
-
-/**
- * Maps a URL path to a file under `dist/`, the way Workers serves static
- * assets: `/x/` resolves to `/x/index.html`, and a directory requested
- * without its trailing slash (`/x`) redirects to `/x/` rather than being
- * read as a file (which throws EISDIR).
- */
-async function resolve(urlPath: string): Promise<Resolved> {
-	if (urlPath.endsWith("/")) {
-		const filePath = join(DIST_DIR, `${urlPath}index.html`);
-		if (!withinDist(filePath)) return { kind: "not-found" };
-		try {
-			if ((await stat(filePath)).isFile()) {
-				return { kind: "file", path: filePath };
-			}
-		} catch {
-			// Not found.
-		}
-		return { kind: "not-found" };
-	}
-
-	const candidate = join(DIST_DIR, urlPath);
-	if (!withinDist(candidate)) return { kind: "not-found" };
-	try {
-		const info = await stat(candidate);
-		if (info.isFile()) return { kind: "file", path: candidate };
-		if (info.isDirectory()) return { kind: "redirect", to: `${urlPath}/` };
-	} catch {
-		// Not found.
-	}
-	return { kind: "not-found" };
-}
-
-async function handleRequest(
-	req: IncomingMessage,
-	res: ServerResponse,
-): Promise<void> {
-	let urlPath: string;
-	try {
-		urlPath = decodeURIComponent(
-			new URL(req.url ?? "/", "http://localhost").pathname,
-		);
-	} catch {
-		// A malformed percent-escape (e.g. a truncated UTF-8 sequence) throws.
-		res.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" });
-		res.end("Bad request: malformed URL");
-		return;
-	}
-
-	const result = await resolve(urlPath);
-	if (result.kind === "file") {
-		res.writeHead(200, {
-			"Content-Type":
-				CONTENT_TYPES[extname(result.path)] ?? "application/octet-stream",
-		});
-		createReadStream(result.path).pipe(res);
-		return;
-	}
-	if (result.kind === "redirect") {
-		res.writeHead(301, { Location: result.to });
-		res.end();
-		return;
-	}
-
-	const notFound = await resolve("/404.html");
-	res.writeHead(404, { "Content-Type": "text/html; charset=utf-8" });
-	if (notFound.kind === "file") {
-		createReadStream(notFound.path).pipe(res);
-	} else {
-		res.end("Not found");
-	}
-}
-
-/** Serves `dist/` on a free port, the way Workers will. */
-function startServer(): Promise<{ url: string; close: () => Promise<void> }> {
-	const server = createServer((req, res) => {
-		// However a request fails — a bad URL, a bad path, a bug in resolve()
-		// — the server must respond, not let an unhandled rejection crash
-		// the whole run.
-		handleRequest(req, res).catch((error: unknown) => {
-			console.error("check-a11y static server error:", error);
-			if (!res.headersSent) {
-				res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
-			}
-			res.end("Internal error");
-		});
-	});
-
-	return new Promise((resolvePromise) => {
-		server.listen(0, "127.0.0.1", () => {
-			const address = server.address();
-			if (address === null || typeof address === "string") {
-				throw new Error("Static server has no port");
-			}
-			resolvePromise({
-				url: `http://127.0.0.1:${address.port}`,
-				close: () => new Promise((res) => server.close(() => res())),
-			});
-		});
-	});
-}
 
 function printResult(result: A11yPageResult): void {
 	for (const violation of result.violations) {
@@ -204,7 +72,7 @@ const files = allFiles.filter((file) => file !== NOT_FOUND_FILE);
 const plannedChecks =
 	(files.length + (hasNotFoundPage ? 1 : 0)) * WIDTHS.length;
 
-const server = await startServer();
+const server = await startDistServer(DIST_DIR);
 const browser = await chromium.launch({ timeout: 60_000 });
 // An explicit context, not the browser.newPage() shorthand: axe-core's own
 // "finish" step opens a second page in the same context, which Playwright

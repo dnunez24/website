@@ -17,8 +17,10 @@
 		"lint": "biome check .",
 		"lint:design": "design.md lint DESIGN.md",
 		"preview": "astro preview",
+		"serve:dist": "node scripts/serve-dist.ts",
 		"test": "vitest run",
 		"test:a11y": "node scripts/check-a11y.ts",
+		"test:perf": "lhci autorun",
 		"validate:structured-data": "node scripts/validate-structured-data.ts"
 	},
 	"dependencies": {
@@ -48,6 +50,7 @@
 		"@axe-core/playwright": "^4.13.0",
 		"@biomejs/biome": "2.5.12",
 		"@google/design.md": "^0.4.0",
+		"@lhci/cli": "^0.15.1",
 		"@marbec/web-auto-extractor": "^2.2.1",
 		"@types/node": "^26.6.2",
 		"axe-core": "~4.13.0",
