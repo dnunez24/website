@@ -10,7 +10,7 @@
 	"assets": {
 		"directory": "./dist",
 		// The nearest `404.html` with a 404 status, once a parallel PR adds
-		// `src/pages/404.astro`. There's no `src/pages/404.astro` on `main` yet.
+		// `src/pages/404.astro`.
 		"not_found_handling": "404-page",
 		// Default value, set explicitly: files serve without a trailing slash,
 		// folder `index.html` files serve with one (redirecting the other form),
@@ -23,8 +23,9 @@
 	"workers_dev": false,
 	"preview_urls": false,
 
-	// The production target. D3 deploys it on pushes to `main`; until then,
-	// `wrangler deploy --env production` is the only thing that would touch it.
+	// The production target. D3 deploys it on pushes to `prod`; until then,
+	// `wrangler deploy --env production` (or a plain `wrangler deploy` with
+	// `CLOUDFLARE_ENV=production` set) is the only thing that would touch it.
 	"env": {
 		"production": {
 			"routes": [{ "pattern": "davidanunez.com", "custom_domain": true }],
