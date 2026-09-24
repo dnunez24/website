@@ -71,7 +71,7 @@ export default defineConfig({
 				variants: [
 					{
 						src: ["./src/assets/fonts/afacad-flux-latin-wght-normal.woff2"],
-						weight: "100 1000",
+						weight: "400 600",
 						style: "normal",
 						unicodeRange: SUBSETS.latin,
 					},
@@ -87,7 +87,7 @@ export default defineConfig({
 				variants: [
 					{
 						src: ["./src/assets/fonts/jetbrains-mono-latin-wght-normal.woff2"],
-						weight: "100 800",
+						weight: "400 700",
 						style: "normal",
 						unicodeRange: SUBSETS.latin,
 					},
@@ -95,7 +95,7 @@ export default defineConfig({
 						src: [
 							"./src/assets/fonts/jetbrains-mono-italic-latin-wght-italic.woff2",
 						],
-						weight: "100 800",
+						weight: "400 700",
 						style: "italic",
 						unicodeRange: SUBSETS.latin,
 					},

@@ -52,7 +52,7 @@ function fonts(): string {
 				"src/assets/fonts/jetbrains-mono-latin-wght-normal.woff2",
 			),
 		).toString("base64");
-		const css = `@font-face { font-family: "JetBrains Mono"; src: url(data:font/woff2;base64,${font}) format("woff2"); font-weight: 100 800; }`;
+		const css = `@font-face { font-family: "JetBrains Mono"; src: url(data:font/woff2;base64,${font}) format("woff2"); font-weight: 400 700; }`;
 		return `data:text/css;base64,${Buffer.from(css).toString("base64")}`;
 	})();
 	return fontStylesheet;

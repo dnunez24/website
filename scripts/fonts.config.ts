@@ -111,6 +111,13 @@ export interface FontBuild {
 /** Without `calt`, so code shows its real characters instead of ligatures. */
 const MONO_FEATURES = ["ccmp", "kern", "locl", "mark", "mkmk", "zero"];
 
+/**
+ * Text is 400, labels 500, syntax keywords 600 and the current page in
+ * navigation 700. Nothing is lighter, and dropping the thin half of the axis
+ * cuts each file by about 30%.
+ */
+const MONO_WEIGHTS: AxisRange = { min: 400, max: 700, default: 400 };
+
 export const FONTS: FontBuild[] = [
 	{
 		family: "Afacad Flux",
@@ -143,11 +150,16 @@ export const FONTS: FontBuild[] = [
 		variants: [
 			{
 				label: "wght",
-				weight: "100 1000",
+				weight: "400 600",
 				style: "normal",
-				// Italics come from the slant axis at -12; nothing leans left, so
-				// the positive half of the axis is dropped.
-				axes: { slnt: { min: -12, max: 0, default: 0 } },
+				axes: {
+					// Text is 400 and headings 500 or 600. Nothing is lighter or
+					// heavier, and dropping the rest of the axis halves the file.
+					wght: { min: 400, max: 600, default: 400 },
+					// Italics come from the slant axis at -12; nothing leans left, so
+					// the positive half of the axis is dropped.
+					slnt: { min: -12, max: 0, default: 0 },
+				},
 			},
 		],
 	},
@@ -160,7 +172,14 @@ export const FONTS: FontBuild[] = [
 			"https://raw.githubusercontent.com/google/fonts/main/ofl/jetbrainsmono/OFL.txt",
 		subsets: ["latin"],
 		features: MONO_FEATURES,
-		variants: [{ label: "wght", weight: "100 800", style: "normal" }],
+		variants: [
+			{
+				label: "wght",
+				weight: "400 700",
+				style: "normal",
+				axes: { wght: MONO_WEIGHTS },
+			},
+		],
 	},
 	{
 		family: "JetBrains Mono",
@@ -172,6 +191,13 @@ export const FONTS: FontBuild[] = [
 		// doesn't write an untracked duplicate under a different filename.
 		subsets: ["latin"],
 		features: MONO_FEATURES,
-		variants: [{ label: "wght", weight: "100 800", style: "italic" }],
+		variants: [
+			{
+				label: "wght",
+				weight: "400 700",
+				style: "italic",
+				axes: { wght: MONO_WEIGHTS },
+			},
+		],
 	},
 ];
