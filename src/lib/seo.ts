@@ -14,7 +14,13 @@ import type {
 	WebSite,
 } from "schema-dts";
 
-/** The share card every page uses: the design system's ShareImage, exported. */
+/** A share card: the image a page shows when it's shared, and its alt text. */
+export interface ShareImage {
+	path: string;
+	alt: string;
+}
+
+/** The default card, for every page but articles. Drawn at build by `src/pages/og/default.png.ts`. */
 export const SHARE_IMAGE = {
 	path: "/og/default.png",
 	type: "image/png",
@@ -22,6 +28,16 @@ export const SHARE_IMAGE = {
 	height: 630,
 	alt: `${SITE_TITLE}: ${SITE_TAGLINE}`,
 } as const;
+
+/** An article's own card. Drawn at build by `src/pages/og/writing/[...slug].png.ts`. */
+export const articleShareImage = (
+	id: string,
+	title: string,
+	subtitle?: string,
+): ShareImage => ({
+	path: `/og/writing/${id}.png`,
+	alt: subtitle ? `${title}: ${subtitle}` : title,
+});
 
 /** "Writing — Dave Nuñez"; the home page's title is the name alone. */
 export const pageTitle = (title: string) =>
@@ -94,6 +110,7 @@ export function collectionGraph(
 
 export interface ArticleData {
 	title: string;
+	subtitle?: string | undefined;
 	description: string;
 	publishedDate: Date;
 	updatedDate?: Date | undefined;
@@ -105,18 +122,20 @@ export function articleGraph(
 	site: URL,
 	path: string,
 	article: ArticleData,
+	image: Pick<ShareImage, "path"> = SHARE_IMAGE,
 ): Graph {
 	const url = absolute(path, site);
 	const posting: BlogPosting = {
 		"@type": "BlogPosting",
 		headline: article.title,
+		...(article.subtitle ? { alternativeHeadline: article.subtitle } : {}),
 		description: article.description,
 		url,
 		mainEntityOfPage: url,
 		datePublished: article.publishedDate.toISOString(),
 		dateModified: (article.updatedDate ?? article.publishedDate).toISOString(),
 		author: { "@type": "Person", name: SITE_TITLE, url: absolute("/", site) },
-		image: absolute(SHARE_IMAGE.path, site),
+		image: absolute(image.path, site),
 		inLanguage: "en",
 		...(article.topics?.length ? { keywords: article.topics } : {}),
 		isPartOf: { "@id": absolute("/#website", site) },

@@ -1,5 +1,6 @@
 ---
 title: 'Markdown Style Guide'
+subtitle: 'A sample of the Markdown syntax the site renders'
 description: 'Here is a sample of some basic Markdown syntax that can be used when writing Markdown content in Astro.'
 publishedDate: 'Jun 19 2024'
 topics: [craft, frontend]

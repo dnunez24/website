@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	articleGraph,
+	articleShareImage,
 	collectionGraph,
 	homeGraph,
 	PROFILES,
@@ -30,6 +31,20 @@ describe("SHARE_IMAGE", () => {
 			height: 630,
 			alt: "Dave Nuñez: Leader / Builder / Integrator",
 		});
+	});
+});
+
+describe("articleShareImage", () => {
+	it("points at the article's own card, with its title and subtitle as alt text", () => {
+		expect(
+			articleShareImage("first-post", "First post", "On beginnings"),
+		).toEqual({
+			path: "/og/writing/first-post.png",
+			alt: "First post: On beginnings",
+		});
+		expect(articleShareImage("first-post", "First post").alt).toBe(
+			"First post",
+		);
 	});
 });
 
@@ -89,6 +104,9 @@ describe("structured data", () => {
 			image: "https://davidanunez.com/og/default.png",
 			keywords: ["leadership"],
 		});
+		expect(byType(graph, "BlogPosting")).not.toHaveProperty(
+			"alternativeHeadline",
+		);
 		const crumbs = byType(graph, "BreadcrumbList")?.itemListElement as {
 			position: number;
 			name: string;
@@ -101,5 +119,23 @@ describe("structured data", () => {
 			[2, "Writing", "https://davidanunez.com/writing/"],
 			[3, "First post", "https://davidanunez.com/writing/first-post/"],
 		]);
+	});
+
+	it("carries an article's own card and its subtitle", () => {
+		const graph = articleGraph(
+			site,
+			"/writing/first-post/",
+			{
+				title: "First post",
+				subtitle: "On beginnings",
+				description: "Lorem ipsum.",
+				publishedDate: new Date("2022-07-08T00:00:00Z"),
+			},
+			articleShareImage("first-post", "First post", "On beginnings"),
+		);
+		expect(byType(graph, "BlogPosting")).toMatchObject({
+			alternativeHeadline: "On beginnings",
+			image: "https://davidanunez.com/og/writing/first-post.png",
+		});
 	});
 });

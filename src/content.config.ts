@@ -9,6 +9,8 @@ const writing = defineCollection({
 	schema: () =>
 		z.object({
 			title: z.string(),
+			// Shown under the title, and on the article's share card.
+			subtitle: z.string().optional(),
 			description: z.string(),
 			// Transform string to Date object
 			publishedDate: z.coerce.date(),

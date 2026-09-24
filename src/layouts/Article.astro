@@ -5,16 +5,20 @@ import JsonLd from "@components/JsonLd.astro";
 import Prose from "@components/Prose.astro";
 import TopicList from "@components/TopicList.astro";
 import Base from "@layouts/Base.astro";
-import { articleGraph } from "@lib/seo";
+import { articleGraph, type ShareImage } from "@lib/seo";
 import { topicHref } from "@lib/writing";
 import type { MarkdownLayoutProps } from "astro";
 
 type ArticleData = CollectionEntry<"writing">["data"];
-type Props = ArticleData | MarkdownLayoutProps<ArticleData>;
+type Props = (ArticleData | MarkdownLayoutProps<ArticleData>) & {
+	/** The article's own share card; without one, the page shares the default. */
+	image?: ShareImage | undefined;
+};
 
 const props = Astro.props;
 const {
 	title,
+	subtitle,
 	description,
 	publishedDate,
 	updatedDate,
@@ -28,12 +32,14 @@ const article = {
 };
 ---
 
-<Base title={title} description={description} article={article}>
-	<JsonLd slot="head" data={articleGraph(Astro.site ?? Astro.url, Astro.url.pathname, { title, description, ...article })} />
+<Base title={title} description={description} article={article} image={props.image}>
+	<JsonLd
+		slot="head"
+		data={articleGraph(Astro.site ?? Astro.url, Astro.url.pathname, { title, subtitle, description, ...article }, props.image)}
+	/>
 	<article>
 		<header class="f6y-mb-8">
-			<h1 class="f6y-mt-2 f6y-mb-4 text-h1 text-balance text-ink-heading">{title}</h1>
-			<div class="flex flex-wrap items-center f6y-gap-x-4 gap-y-1">
+			<div class="flex flex-wrap items-center f6y-gap-x-4 f6y-gap-y-2">
 				<FormattedDate date={article.publishedDate} />
 				{
 					article.updatedDate && (
@@ -44,6 +50,10 @@ const article = {
 				}
 				{topics.length > 0 && <TopicList topics={topics.map((name) => ({ name, href: topicHref(name) }))} />}
 			</div>
+			<hgroup class="f6y-mt-4">
+				<h1 class="text-h1 text-balance text-ink-heading">{title}</h1>
+				{subtitle && <p class="f6y-mt-2 font-mono text-body text-balance text-ink-muted">{subtitle}</p>}
+			</hgroup>
 		</header>
 		<Prose>
 			<slot />
