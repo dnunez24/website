@@ -70,7 +70,7 @@ describe("Button", () => {
 	it("marks the current page on a ghost button", async () => {
 		const doc = parse(
 			await render(Button, {
-				props: { href: "/about", variant: "ghost", current: true },
+				props: { href: "/about", variant: "ghost", current: "page" },
 				slots: { default: "About" },
 			}),
 		);
@@ -79,10 +79,23 @@ describe("Button", () => {
 		expect(link?.className).toContain("font-bold");
 	});
 
+	it("marks the current section true, with the same styling as the current page", async () => {
+		const doc = parse(
+			await render(Button, {
+				props: { href: "/writing/", variant: "ghost", current: "true" },
+				slots: { default: "Writing" },
+			}),
+		);
+		const link = doc.querySelector("a");
+		expect(link?.getAttribute("aria-current")).toBe("true");
+		expect(link?.className).toContain("font-bold");
+		expect(link?.className).toContain("text-brand");
+	});
+
 	it("draws the current page's rule in the label's color and hides it on hover", async () => {
 		const doc = parse(
 			await render(Button, {
-				props: { href: "/about", variant: "ghost", current: true },
+				props: { href: "/about", variant: "ghost", current: "page" },
 				slots: { default: "About" },
 			}),
 		);
@@ -187,10 +200,10 @@ describe("Topic", () => {
 });
 
 describe("Header", () => {
-	it("marks only the current section in the navigation", async () => {
+	it('marks the exact current page "page"', async () => {
 		const doc = parse(
 			await render(Header, {
-				request: new Request("https://example.com/writing/some-article/"),
+				request: new Request("https://example.com/writing/"),
 			}),
 		);
 		const current = [...doc.querySelectorAll('nav a[aria-current="page"]')];
@@ -200,6 +213,19 @@ describe("Header", () => {
 		expect(doc.querySelector("nav")?.getAttribute("aria-label")).toBe(
 			"Primary",
 		);
+	});
+
+	it('marks the section "true" on a page inside it, not "page"', async () => {
+		const doc = parse(
+			await render(Header, {
+				request: new Request("https://example.com/writing/some-article/"),
+			}),
+		);
+		expect(doc.querySelectorAll('nav a[aria-current="page"]')).toHaveLength(0);
+		const section = [...doc.querySelectorAll('nav a[aria-current="true"]')];
+		expect(section.map((link) => link.getAttribute("href"))).toEqual([
+			"/writing/",
+		]);
 	});
 
 	it("opens with the skip link, before the word mark", async () => {
@@ -223,19 +249,19 @@ describe("Header", () => {
 });
 
 describe("Footer", () => {
-	const current = async (url: string) => {
+	const currentState = async (url: string) => {
 		const doc = parse(await render(Footer, { request: new Request(url) }));
-		return [...doc.querySelectorAll('nav a[aria-current="page"]')].map((link) =>
-			link.getAttribute("href"),
-		);
+		return doc
+			.querySelector('nav a[href="/topics/"]')
+			?.getAttribute("aria-current");
 	};
 
-	it("marks Topics current on the Topics page and every topic page", async () => {
-		expect(await current("https://example.com/topics/")).toEqual(["/topics/"]);
-		expect(await current("https://example.com/topics/systems/")).toEqual([
-			"/topics/",
-		]);
-		expect(await current("https://example.com/writing/")).toEqual([]);
+	it('marks Topics "page" on the Topics page and "true" on every topic page', async () => {
+		expect(await currentState("https://example.com/topics/")).toBe("page");
+		expect(await currentState("https://example.com/topics/systems/")).toBe(
+			"true",
+		);
+		expect(await currentState("https://example.com/writing/")).toBeNull();
 	});
 
 	it("marks the LinkedIn and GitHub profiles as the same person", async () => {

@@ -4,7 +4,7 @@ import Container from "@components/Container.astro";
 import SkipLink from "@components/SkipLink.astro";
 import WordMark from "@components/WordMark.astro";
 import { HEADER_NAV_ITEMS, SITE_TAGLINE, SITE_TITLE } from "@constants";
-import { isCurrentSection } from "@lib/routes";
+import { currentNavState } from "@lib/routes";
 
 const pathname = Astro.url.pathname;
 ---
@@ -19,7 +19,7 @@ const pathname = Astro.url.pathname;
 				{
 					HEADER_NAV_ITEMS.map((item) => (
 						<li>
-							<Button variant="ghost" href={item.href} current={isCurrentSection(pathname, item.href)}>
+							<Button variant="ghost" href={item.href} current={currentNavState(pathname, item.href)}>
 								{item.label}
 							</Button>
 						</li>

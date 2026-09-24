@@ -1,10 +1,24 @@
 import { relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
-/** Navigation marks a link current on its own page and on every page under it. */
-export const isCurrentSection = (pathname: string, href: string): boolean =>
-	pathname === href ||
-	pathname.startsWith(href.endsWith("/") ? href : `${href}/`);
+/** The `aria-current` value a nav link should carry, or `undefined` for neither. */
+export type CurrentState = "page" | "true" | undefined;
+
+/**
+ * Navigation marks the link to the exact current page `"page"`, and the
+ * link to the section a page sits in `"true"` (an ancestor match, such as
+ * an article under `/writing/`, a later writing page, or a topic under
+ * `/topics/`). A link that only shares a prefix, or an external URL,
+ * matches neither.
+ */
+export const currentNavState = (
+	pathname: string,
+	href: string,
+): CurrentState => {
+	const section = href.endsWith("/") ? href : `${href}/`;
+	if (pathname === href || pathname === section) return "page";
+	return pathname.startsWith(section) ? "true" : undefined;
+};
 
 /** Specimen pages under `/dev/` are for local development; production builds drop them. */
 export const isDevRoute = (pathname: string): boolean =>
