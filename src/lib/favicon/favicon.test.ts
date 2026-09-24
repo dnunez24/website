@@ -12,10 +12,11 @@ describe("favicon.ico", () => {
 		);
 		const body = new Uint8Array(await response.arrayBuffer());
 		const view = new DataView(body.buffer);
+		expect([body[6], body[7]]).toEqual([32, 32]); // ICONDIRENTRY width/height
 		const bytesInResource = view.getUint32(14, true);
 		const offset = view.getUint32(18, true);
-		// The container's own bytes are covered by ico.test.ts; this just
-		// confirms the offset it names holds a real, correctly sized PNG.
+		// The container's own byte-laying-out logic is covered by ico.test.ts;
+		// this confirms the offset it names holds a real, correctly sized PNG.
 		expect(body.byteLength).toBe(offset + bytesInResource);
 		const meta = await sharp(body.slice(offset)).metadata();
 		expect(meta).toMatchObject({ width: 32, height: 32, format: "png" });
