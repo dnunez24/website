@@ -246,6 +246,13 @@ describe("Header", () => {
 		);
 		expect(doc.querySelectorAll("[aria-current]")).toHaveLength(0);
 	});
+
+	it("marks nothing on the 404 page", async () => {
+		const doc = parse(
+			await render(Header, { request: new Request("https://example.com/404") }),
+		);
+		expect(doc.querySelectorAll("[aria-current]")).toHaveLength(0);
+	});
 });
 
 describe("Footer", () => {
@@ -262,6 +269,13 @@ describe("Footer", () => {
 			"true",
 		);
 		expect(await currentState("https://example.com/writing/")).toBeNull();
+	});
+
+	it("marks nothing on the 404 page", async () => {
+		const doc = parse(
+			await render(Footer, { request: new Request("https://example.com/404") }),
+		);
+		expect(doc.querySelectorAll("[aria-current]")).toHaveLength(0);
 	});
 
 	it("marks the LinkedIn and GitHub profiles as the same person", async () => {

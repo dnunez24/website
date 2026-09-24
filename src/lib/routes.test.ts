@@ -34,6 +34,12 @@ describe("currentNavState", () => {
 		expect(currentNavState("/writing-notes/", "/writing")).toBeUndefined();
 		expect(currentNavState("/", "https://github.com/dnunez24")).toBeUndefined();
 	});
+
+	it("marks nothing on the 404 page: it sits under no section", () => {
+		expect(currentNavState("/404", "/writing/")).toBeUndefined();
+		expect(currentNavState("/404", "/about/")).toBeUndefined();
+		expect(currentNavState("/404", "/topics/")).toBeUndefined();
+	});
 });
 
 describe("isDevRoute", () => {
