@@ -1,0 +1,91 @@
+name: Deploy
+
+# Separate from ci.yml: this is the only workflow that carries the Cloudflare
+# secrets, so third-party audit tools (Lighthouse, axe, etc.) in ci.yml's jobs
+# never run in a job that has them.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # Distinctive id: "build" and "check" already exist in ci.yml, and required
+  # status checks are matched by job id, not workflow name.
+  preview:
+    # Same-repo PRs only — a fork's workflow content never runs with the
+    # Cloudflare secrets. This also covers Dependabot in effect: its PRs
+    # share this repo (head.repo.full_name == github.repository, so this
+    # check alone doesn't skip them), but GitHub withholds every secret
+    # except GITHUB_TOKEN from Dependabot-triggered runs regardless, so the
+    # deploy step below fails on missing credentials instead of deploying.
+    # https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment:
+      name: Preview
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v7
+      # Mermaid diagrams render in headless Chromium at build, same as ci.yml.
+      - uses: ./.github/actions/setup
+        with:
+          browser: "true"
+      # No PUBLIC_CF_WEB_ANALYTICS_TOKEN here, intentionally: previews must
+      # not carry the production analytics beacon. astro:env leaves it
+      # undefined when unset, so the build just ships without it (D3 passes
+      # it only to the production job's build step).
+      - run: pnpm build
+      # No wrangler-action: v4 always runs its own `pnpm add wrangler@4` (a
+      # floating major, not our pnpm-lock.yaml-pinned 4.136.3) instead of the
+      # copy `./.github/actions/setup` already installed, and it has no
+      # output for a Workers preview-alias URL — only `deployment-url` and
+      # the Pages-only `pages-deployment-alias-url`. Neither matches what
+      # this step needs, so `pnpm exec wrangler` directly is simpler and
+      # exercises the exact wrangler version CI otherwise runs.
+      # https://github.com/cloudflare/wrangler-action#readme
+      - name: Deploy preview
+        id: deploy
+        env:
+          # Scoped to this step only: it's the one step in the workflow that
+          # needs them.
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-output.ndjson
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -eu
+
+          # --env="" targets the top-level (default/staging) config and
+          # silences Wrangler's "multiple environments configured, but none
+          # specified" warning — env.production exists in wrangler.jsonc, so
+          # this otherwise logs on every PR. Verified with
+          # `wrangler versions upload --dry-run`: no warning, exit 0.
+          # https://developers.cloudflare.com/workers/wrangler/commands/#versions-upload
+          #
+          # Alias rules (developers.cloudflare.com/workers/configuration/previews):
+          # lowercase letters/numbers/dashes, must start with a letter, and
+          # "<alias>-<worker-name>" together must be <= 63 chars (DNS label
+          # limit). "pr-<number>" is always a handful of characters, well
+          # under the limit combined with the "website" worker name.
+          pnpm exec wrangler versions upload --env="" --preview-alias "pr-$PR_NUMBER"
+
+          # wrangler-action's outputs don't cover this case (see above), so
+          # read the alias URL from Wrangler's own ND-JSON output file.
+          # Confirmed the field name against the installed wrangler@4.136.3
+          # source (node_modules/wrangler/wrangler-dist/cli.js): a
+          # `{"type":"version-upload", ..., "preview_alias_url": "..."}`
+          # record. `--dry-run` omits both URL fields (no upload happens, so
+          # there's no version to preview) — this line runs unverified until
+          # a real Cloudflare account exists; see the live-checks list below.
+          url=$(jq -r 'select(.type == "version-upload") | .preview_alias_url // empty' "$WRANGLER_OUTPUT_FILE_PATH" | tail -n1)
+          if [ -z "$url" ]; then
+            echo "::error::wrangler versions upload did not report a preview_alias_url in WRANGLER_OUTPUT_FILE_PATH"
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"

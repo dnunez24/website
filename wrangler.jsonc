@@ -18,10 +18,13 @@
 		"html_handling": "auto-trailing-slash"
 	},
 
-	// No public URL: this target (staging) has no Cloudflare Access in front of
-	// it yet. D2 turns these on once PR preview versions are protected by it.
-	"workers_dev": false,
-	"preview_urls": false,
+	// Public on the default (*.workers.dev) subdomain, so `wrangler versions
+	// upload --preview-alias` (deploy.yml) has somewhere to publish PR preview
+	// aliases. Cloudflare Access now sits in front of this subdomain — Dave
+	// turns it on before this merges — so an unauthenticated request redirects
+	// to SSO rather than reaching the build. Production stays off (below).
+	"workers_dev": true,
+	"preview_urls": true,
 
 	// The production target. D3 deploys it on pushes to `prod`; until then,
 	// `wrangler deploy --env production` (or a plain `wrangler deploy` with
