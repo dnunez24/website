@@ -1,11 +1,16 @@
 ---
 import "@styles/global.css";
 import { Font } from "astro:assets";
+import { PUBLIC_CF_WEB_ANALYTICS_TOKEN } from "astro:env/client";
+import CloudflareAnalytics from "@components/CloudflareAnalytics.astro";
 import PageMeta from "@components/PageMeta.astro";
 import { SITE_TITLE } from "@constants";
+import { parseBeaconToken } from "@lib/cloudflare-analytics";
 import type { ComponentProps } from "astro/types";
 
 type Props = ComponentProps<typeof PageMeta>;
+
+const beaconToken = parseBeaconToken(PUBLIC_CF_WEB_ANALYTICS_TOKEN);
 ---
 
 <!-- Global Metadata -->
@@ -34,3 +39,5 @@ type Props = ComponentProps<typeof PageMeta>;
 <Font cssVariable="--font-jetbrains-mono" preload={[{ style: "normal" }]} />
 
 <PageMeta {...Astro.props} />
+<!-- The one exception to no client JS (design system v93): Cloudflare Web Analytics' beacon. -->
+<CloudflareAnalytics token={beaconToken} />

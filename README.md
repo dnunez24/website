@@ -96,6 +96,10 @@ Accepted, on the strength of two mitigations already in place, plus a dashboard 
 - What it buys: the preview token could drop zone-level permissions like Workers Routes edit, since previews never touch routes, and it could be rotated or revoked without touching production deploys.
 - What it doesn't buy: creating a Preview still needs Workers Scripts edit — the same permission that lets `wrangler deploy` replace production code. Cloudflare documents no preview-only permission today. Not applied here.
 
+## Environment variables
+
+`PUBLIC_CF_WEB_ANALYTICS_TOKEN` — Cloudflare Web Analytics site token. Only the production deploy sets it; other builds ship without the beacon.
+
 ## 👀 Want to learn more?
 
 Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).

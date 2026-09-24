@@ -5,6 +5,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import ArticleList from "./ArticleList.astro";
 import BlockQuote from "./BlockQuote.astro";
 import Button from "./Button.astro";
+import CloudflareAnalytics from "./CloudflareAnalytics.astro";
 import CodeBlock from "./CodeBlock.astro";
 import Container from "./Container.astro";
 import Copyright from "./Copyright.astro";
@@ -442,6 +443,35 @@ describe("JsonLd", () => {
 		expect(html).not.toContain("</script><b>");
 		const json = html.replace(/^.*?>/s, "").replace(/<\/script>\s*$/, "");
 		expect(JSON.parse(json)["@graph"][0].name).toBe("</script><b>");
+	});
+});
+
+describe("CloudflareAnalytics", () => {
+	const TOKEN = "0123456789abcdef0123456789abcdef";
+
+	it("renders nothing without a token", async () => {
+		const doc = parse(await render(CloudflareAnalytics, { props: {} }));
+		expect(doc.querySelector("script")).toBeNull();
+		expect(doc.querySelector("link")).toBeNull();
+	});
+
+	it("renders one beacon script and a preconnect link with a token", async () => {
+		const doc = parse(
+			await render(CloudflareAnalytics, { props: { token: TOKEN } }),
+		);
+		const scripts = doc.querySelectorAll("script");
+		expect(scripts).toHaveLength(1);
+		expect(scripts[0]?.getAttribute("type")).toBe("module");
+		expect(scripts[0]?.getAttribute("src")).toBe(
+			"https://static.cloudflareinsights.com/beacon.min.js",
+		);
+		expect(
+			JSON.parse(scripts[0]?.getAttribute("data-cf-beacon") ?? ""),
+		).toEqual({ token: TOKEN });
+		const preconnect = doc.querySelector('link[rel="preconnect"]');
+		expect(preconnect?.getAttribute("href")).toBe(
+			"https://static.cloudflareinsights.com",
+		);
 	});
 });
 

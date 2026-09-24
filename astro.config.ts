@@ -3,7 +3,7 @@ import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import type { AstroIntegration } from "astro";
-import { defineConfig, fontProviders } from "astro/config";
+import { defineConfig, envField, fontProviders } from "astro/config";
 import { loadEnv, type Plugin } from "vite";
 import { SUBSETS } from "./scripts/fonts.config.ts";
 import { callouts } from "./src/lib/markdown/callouts.ts";
@@ -105,6 +105,22 @@ export default defineConfig({
 	},
 
 	integrations: [mdx(), sitemap({ filter: isPublicPage }), excludeDevPages()],
+
+	env: {
+		schema: {
+			// Set only by the production deploy job (see D3's GitHub Actions
+			// variable); unset in local dev, CI and previews, so those builds
+			// ship without the beacon. Cloudflare site tokens are 32 lowercase
+			// hex characters — `length` catches a truncated/padded typo here,
+			// and src/lib/cloudflare-analytics.ts checks the character set.
+			PUBLIC_CF_WEB_ANALYTICS_TOKEN: envField.string({
+				context: "client",
+				access: "public",
+				optional: true,
+				length: 32,
+			}),
+		},
+	},
 
 	markdown: {
 		// Mermaid fences render as diagrams (mermaidDiagrams), not as highlighted code.
