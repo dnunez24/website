@@ -88,6 +88,12 @@ jobs:
         with:
           name: dist
           path: dist/
+      # Static check for a <script> or inline event handler that the
+      # resource-summary budget below can't see (it only counts network
+      # requests, not inline script content). Runs first, and on its own
+      # exit code: a step after a failed pnpm test:perf is skipped by
+      # default, which would silently stop this from ever running.
+      - run: pnpm test:no-js
       - run: pnpm test:perf
       - if: always()
         uses: actions/upload-artifact@v7
@@ -95,7 +101,3 @@ jobs:
           name: lhci-report
           path: reports/lhci/
           retention-days: 14
-      # Static check for a <script> or inline event handler that slipped
-      # past the resource-summary budget above (which only counts network
-      # requests, not inline script content). Needs only dist/, not Chrome.
-      - run: pnpm test:no-js

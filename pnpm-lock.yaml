@@ -270,6 +270,9 @@ importers:
       happy-dom:
         specifier: ^20.14.5
         version: 20.14.5
+      parse5:
+        specifier: 7.3.0
+        version: 7.3.0
       schema-dts:
         specifier: ^2.0.0
         version: 2.0.0(typescript@6.0.3)

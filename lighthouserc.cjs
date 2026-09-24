@@ -10,7 +10,8 @@ module.exports = {
 			url: [
 				`${BASE_URL}/`,
 				`${BASE_URL}/writing/`,
-				// Exercises Mermaid, code blocks and block quotes in one page.
+				// Exercises code blocks and block quotes in one page. No
+				// production page has a Mermaid diagram today.
 				`${BASE_URL}/writing/markdown-style-guide/`,
 				`${BASE_URL}/about/`,
 				`${BASE_URL}/topics/`,

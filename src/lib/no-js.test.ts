@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { renderMermaidFigure } from "./mermaid";
 import { checkPageForScripts } from "./no-js";
 
 const page = (body: string) =>
@@ -85,5 +86,99 @@ describe("checkPageForScripts", () => {
 		expect(issues).toEqual([
 			expect.objectContaining({ page: "/writing/first-post/" }),
 		]);
+	});
+
+	it("fails a script inside an SVG", () => {
+		const issues = checkPageForScripts(
+			page("<svg><script>alert(1)</script></svg>"),
+			"/fixture/",
+		);
+		expect(issues).toEqual([
+			expect.objectContaining({
+				message: expect.stringContaining("inline <script>"),
+			}),
+		]);
+	});
+
+	it.each(["href", "src", "action", "formaction"])(
+		"fails a javascript: URL in %s",
+		(attribute) => {
+			const issues = checkPageForScripts(
+				page(`<a ${attribute}="javascript:alert(1)">Go</a>`),
+				"/fixture/",
+			);
+			expect(issues).toEqual([
+				expect.objectContaining({
+					message: expect.stringContaining(`${attribute}="javascript:…"`),
+				}),
+			]);
+		},
+	);
+
+	it("fails a javascript: URL in SVG's xlink:href", () => {
+		const issues = checkPageForScripts(
+			page(
+				'<svg><a xlink:href="javascript:alert(1)"><circle r="1"/></a></svg>',
+			),
+			"/fixture/",
+		);
+		expect(issues).toEqual([
+			expect.objectContaining({
+				message: expect.stringContaining('xlink:href="javascript:…"'),
+			}),
+		]);
+	});
+
+	it("passes a normal, non-javascript: href", () => {
+		const issues = checkPageForScripts(
+			page('<a href="/about/">About</a>'),
+			"/fixture/",
+		);
+		expect(issues).toEqual([]);
+	});
+
+	it("fails an iframe with srcdoc", () => {
+		const issues = checkPageForScripts(
+			page('<iframe srcdoc="<p>hi</p>"></iframe>'),
+			"/fixture/",
+		);
+		expect(issues).toEqual([
+			expect.objectContaining({ message: expect.stringContaining("srcdoc") }),
+		]);
+	});
+});
+
+// Chromium's cold start takes a few seconds, same as the Mermaid tests.
+describe("checkPageForScripts: a real Mermaid figure", {
+	timeout: 60_000,
+}, () => {
+	const flowchart = `flowchart LR
+  accTitle: Checkout flow
+  accDescr: The product page hands off to checkout.
+  A[Product page] --> B[Checkout MFE]`;
+
+	it("passes on its own — its <style> doesn't hide what follows it", async () => {
+		const figure = await renderMermaidFigure(flowchart);
+		const issues = checkPageForScripts(page(figure), "/fixture/");
+		expect(issues).toEqual([]);
+	});
+
+	it("still catches a script and an onclick placed after it", async () => {
+		// Regression case: happy-dom 20.14.5 silently drops everything from an
+		// SVG <style> (which every rendered Mermaid figure has) to the end of
+		// the document, so a script placed after a diagram was invisible to
+		// the old implementation.
+		const figure = await renderMermaidFigure(flowchart);
+		const html = page(
+			`${figure}<script>alert(1)</script><button onclick="x()">Go</button>`,
+		);
+		const issues = checkPageForScripts(html, "/fixture/");
+		const messages = issues.map((issue) => issue.message);
+		expect(
+			messages.some((message) => message.includes("inline <script>")),
+		).toBe(true);
+		expect(messages.some((message) => message.includes('onclick="…"'))).toBe(
+			true,
+		);
 	});
 });
