@@ -40,6 +40,18 @@ describe("currentNavState", () => {
 		expect(currentNavState("/404", "/about/")).toBeUndefined();
 		expect(currentNavState("/404", "/topics/")).toBeUndefined();
 	});
+
+	it("compares pathname and href the same way regardless of which one has the trailing slash", () => {
+		expect(currentNavState("/writing", "/writing/")).toBe("page");
+		expect(currentNavState("/writing/", "/writing")).toBe("page");
+		expect(currentNavState("/writing", "/writing")).toBe("page");
+	});
+
+	it('matches href="/" only on the home page itself, not as a section', () => {
+		expect(currentNavState("/", "/")).toBe("page");
+		expect(currentNavState("/about/", "/")).toBeUndefined();
+		expect(currentNavState("/writing/first-post/", "/")).toBeUndefined();
+	});
 });
 
 describe("isDevRoute", () => {
