@@ -7,9 +7,10 @@ name: Deploy
 # Splits a build job (no secrets, caches allowed) from a deploy job (the only
 # place the token lives). The deploy job doesn't share a VM with
 # Astro/Vite/Tailwind/Mermaid/Chromium, project dependencies, install
-# scripts, or any cache ci.yml writes to. It checks out only wrangler.jsonc
-# and .github/deploy/ (a dedicated, integrity-pinned package.json +
-# package-lock.json for wrangler and its full dependency tree — never the
+# scripts, or any cache ci.yml writes to. It checks out only wrangler.jsonc,
+# the root package.json (packageManager, for pinning pnpm itself — nothing
+# else in it), and .github/deploy/ (a dedicated, integrity-pinned package.json
+# + pnpm-lock.yaml for wrangler and its full dependency tree — never the
 # project's own pnpm-lock.yaml; see preview-deploy's install step for why),
 # installs with lifecycle scripts off, and takes dist/ as an artifact.
 on:
@@ -75,7 +76,7 @@ jobs:
           deploy_version="$(node -p "require('./.github/deploy/package.json').devDependencies.wrangler")"
           project_version="$(pnpm list wrangler --json | jq -r '.[0].devDependencies.wrangler.version')"
           if [ "$deploy_version" != "$project_version" ]; then
-            echo "::error::.github/deploy/package.json pins wrangler@$deploy_version but pnpm-lock.yaml resolves wrangler@$project_version. Update .github/deploy/package.json and regenerate .github/deploy/package-lock.json (npm install --ignore-scripts, inside .github/deploy/) to match."
+            echo "::error::.github/deploy/package.json pins wrangler@$deploy_version but pnpm-lock.yaml resolves wrangler@$project_version. Update .github/deploy/package.json and run 'pnpm run deploy-tool:lock' to regenerate .github/deploy/pnpm-lock.yaml to match."
             exit 1
           fi
       # Node's own built-in test runner, not vitest — this tests deploy
@@ -118,14 +119,18 @@ jobs:
       name: Preview
       url: ${{ steps.deploy.outputs.url }}
     steps:
-      # wrangler.jsonc, for wrangler to read, and .github/deploy/ (wrangler's
-      # own dedicated, integrity-pinned install) — see the top-of-file
-      # comment and the install step below. No project code, no source.
+      # wrangler.jsonc, for wrangler to read; .github/deploy/ (wrangler's own
+      # dedicated, integrity-pinned install) — see the top-of-file comment
+      # and the install step below; and the root package.json, whose
+      # packageManager field is all pnpm/action-setup below reads (no other
+      # field in it is used — the project's own dependencies are never
+      # installed here). No project code, no source.
       # persist-credentials: false, since nothing after this needs git auth.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: |
             wrangler.jsonc
+            /package.json
             .github/deploy
           sparse-checkout-cone-mode: false
           persist-credentials: false
@@ -174,6 +179,14 @@ jobs:
       # key. See .github/deploy/route-guard.mjs for why this isn't sed+jq.
       - if: steps.staleness.outputs.stale != 'true'
         run: node .github/deploy/route-guard.mjs wrangler.jsonc website
+      # Reads the version to install from the root package.json's
+      # packageManager field (sparse-checked-out above) — no `version:`
+      # input, so this can never drift from what the project itself pins.
+      # cache defaults to false: no store cache, same as the rest of this
+      # job. Same major (v6) as ./.github/actions/setup, SHA-pinned like
+      # every other action this workflow uses.
+      - if: steps.staleness.outputs.stale != 'true'
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
       - if: steps.staleness.outputs.stale != 'true'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -183,16 +196,23 @@ jobs:
       # project — Astro, Vite, Tailwind, sharp, mermaid-isomorphic,
       # Playwright — none of which this job needs, and all of which would
       # sit on disk next to the Cloudflare token. .github/deploy/ pins
-      # *only* wrangler and its own dependency tree, with npm's own
+      # *only* wrangler and its own dependency tree, with pnpm's own
       # integrity hashes for every resolved package, not just wrangler
-      # itself — `npm ci` refuses to install anything that doesn't match
-      # the committed lockfile exactly. --ignore-scripts skips lifecycle
-      # scripts for the whole tree, same as before.
+      # itself — --frozen-lockfile refuses to install anything that doesn't
+      # match the committed lockfile exactly, and refuses to touch the
+      # lockfile itself. --ignore-scripts skips lifecycle scripts for the
+      # whole tree. --ignore-workspace: this directory has its own
+      # package.json and pnpm-lock.yaml deliberately outside the project's
+      # pnpm-workspace.yaml (which isn't even checked out here) — belt and
+      # suspenders against ever resolving against the project's own
+      # workspace instead. --registry pins where packages come from
+      # explicitly, so no .npmrc this checkout doesn't even carry (and none
+      # is committed anywhere in this repo) could redirect it.
       - if: steps.staleness.outputs.stale != 'true'
         name: Install wrangler and its locked dependency tree, scripts off
         run: |
           set -eu
-          npm ci --prefix .github/deploy --ignore-scripts --no-audit --no-fund
+          pnpm --dir .github/deploy install --frozen-lockfile --ignore-scripts --ignore-workspace --registry=https://registry.npmjs.org/
       # Confirms the resolved Worker name before deploying anything, using
       # wrangler's own --dry-run resolution (which correctly derives
       # "website" for the default target) rather than re-deriving it here.
@@ -202,12 +222,11 @@ jobs:
       - if: steps.staleness.outputs.stale != 'true'
         name: Confirm the resolved Worker name
         env:
-          WRANGLER_BIN: ${{ github.workspace }}/.github/deploy/node_modules/.bin/wrangler
           WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-name-check.ndjson
           CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
         run: |
           set -eu
-          "$WRANGLER_BIN" versions upload --env="" --dry-run >/dev/null
+          pnpm --dir .github/deploy exec wrangler versions upload --env="" --dry-run >/dev/null
           name=$(jq -r 'select(.type == "version-upload") | .worker_name // empty' "$WRANGLER_OUTPUT_FILE_PATH" | tail -n1)
           if [ "$name" != "website" ]; then
             echo "::error::Resolved Worker name is '$name', expected 'website'. Refusing to deploy."
@@ -232,7 +251,6 @@ jobs:
           CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
           WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-output.ndjson
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          WRANGLER_BIN: ${{ github.workspace }}/.github/deploy/node_modules/.bin/wrangler
         run: |
           set -eu
 
@@ -254,7 +272,7 @@ jobs:
           # "<alias>-<worker-name>" together must be <= 63 chars (DNS label
           # limit). "pr-<number>" is always a handful of characters, well
           # under the limit combined with the "website" worker name.
-          "$WRANGLER_BIN" versions upload --env="" --preview-alias "pr-$PR_NUMBER"
+          pnpm --dir .github/deploy exec wrangler versions upload --env="" --preview-alias "pr-$PR_NUMBER"
 
           # Read the alias URL from Wrangler's own ND-JSON output file, not
           # from wrangler-action's outputs (it has none for this — see the

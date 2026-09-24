@@ -10,6 +10,7 @@
 		"astro": "astro",
 		"build": "astro build",
 		"check": "astro check",
+		"deploy-tool:lock": "pnpm --dir .github/deploy install --lockfile-only --ignore-workspace --registry=https://registry.npmjs.org/",
 		"dev": "astro dev",
 		"diagrams:browser": "playwright install --only-shell chromium",
 		"fonts:build": "node scripts/build-fonts.ts",

@@ -58,6 +58,7 @@ All commands are run from the root of the project, from a terminal:
 | `pnpm preview:edge`     | Preview the build through Wrangler, the way it will be served in production                   |
 | `pnpm astro ...`        | Run CLI commands like `astro add`, `astro check`                                              |
 | `pnpm astro -- --help`  | Get help using the Astro CLI                                                                  |
+| `pnpm deploy-tool:lock` | Regenerate `.github/deploy/pnpm-lock.yaml` after bumping wrangler in `.github/deploy/package.json` |
 
 ## 👀 Want to learn more?
 
