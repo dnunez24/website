@@ -11,7 +11,13 @@ type Props = ComponentProps<typeof PageMeta>;
 <!-- Global Metadata -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<!-- `sizes="32x32"` on the .ico keeps Chrome from picking it over the SVG
+     below, a long-standing Chrome bug; every other current browser, and
+     Windows itself since Vista, can still use this ICO as a fallback. -->
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<!-- iOS reads this only for home-screen/bookmark icons, never as the tab favicon. -->
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="sitemap" href="/sitemap-index.xml" />
 <link
 	rel="alternate"
