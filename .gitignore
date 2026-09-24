@@ -2,6 +2,8 @@
 dist/
 # generated types
 .astro/
+# wrangler local state
+.wrangler/
 # check reports (e.g. reports/a11y/, reports/lhci/)
 reports/
 # Lighthouse CI's own scratch directory (reports/lhci/ is the real output)
