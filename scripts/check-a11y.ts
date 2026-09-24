@@ -190,12 +190,13 @@ if (allFiles.length === 0) {
 	);
 }
 
-// The 404 page is never reached by its own name — the server (like Workers)
-// only serves it as the *body* of an unmatched request, at a 404 status, so
-// it's checked that way too: visited through a path that doesn't exist,
-// once, not as an ordinary 200 page in the main list (which would check the
-// same markup twice and, once dist/404.html is a real page, immediately
-// fail on "/404.html responded 200, expected 404").
+// This checker never visits the 404 page by its own name, even though the
+// server (like Workers) would happily serve it there too, with 200, same as
+// any other file. A real broken link lands on it via an unmatched path, at
+// a 404 status, so that's how it's checked too: once, not as an ordinary
+// 200 page in the main list (which would check the same markup twice and,
+// once dist/404.html is a real page, immediately fail on "/404.html
+// responded 200, expected 404").
 const NOT_FOUND_FILE = join(DIST_DIR, "404.html");
 const hasNotFoundPage = allFiles.includes(NOT_FOUND_FILE);
 const NOT_FOUND_PROBE_PATH = "/__a11y-not-found__/";
