@@ -1,0 +1,13 @@
+---
+import Button from "@components/Button.astro";
+import Base from "@layouts/Base.astro";
+---
+
+<Base title="Page not found" description="I couldn't find that page." noindex>
+	<h1 class="f6y-mb-4"><span class="block text-display text-ink-heading">404</span> <span class="mt-1 block font-mono text-label font-medium tracking-caps text-ink-muted uppercase">not found</span></h1>
+	<p class="f6y-mb-8">I couldn't find that page. It may have moved, or the link may be wrong.</p>
+	<div class="flex flex-wrap items-center f6y-gap-2">
+		<Button href="/">Go home</Button>
+		<Button variant="outline" href="/writing/">Browse writing</Button>
+	</div>
+</Base>

@@ -16,9 +16,17 @@ interface Props {
 		| undefined;
 	/** Articles bring their own card; other pages share the default. */
 	image?: ShareImage | undefined;
+	/** Keeps the page out of search results, e.g. the 404 page. */
+	noindex?: boolean | undefined;
 }
 
-const { title, description, article, image = SHARE_IMAGE } = Astro.props;
+const {
+	title,
+	description,
+	article,
+	image = SHARE_IMAGE,
+	noindex = false,
+} = Astro.props;
 // `site` makes every URL absolute to production; without it, to the request.
 const site = Astro.site ?? Astro.url;
 const canonicalURL = new URL(Astro.url.pathname, site);
@@ -28,6 +36,7 @@ const imageURL = new URL(image.path, site);
 <link rel="canonical" href={canonicalURL} />
 <title>{pageTitle(title)}</title>
 <meta name="description" content={description} />
+{noindex && <meta name="robots" content="noindex" />}
 
 <!-- Open Graph. og:title leaves out the site name: og:site_name carries it. -->
 <meta property="og:type" content={article ? "article" : "website"} />

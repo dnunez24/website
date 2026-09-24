@@ -304,6 +304,28 @@ describe("PageMeta", () => {
 		expect(content("article:published_time")).toEqual([]);
 	});
 
+	it("omits the robots meta tag by default", async () => {
+		const { doc } = await meta(
+			{ title: "Writing", description: "Everything I have written." },
+			"https://davidanunez.com/writing/",
+		);
+		expect(doc.querySelector('meta[name="robots"]')).toBeNull();
+	});
+
+	it("adds a noindex robots meta tag when noindex is set", async () => {
+		const { doc } = await meta(
+			{
+				title: "Page not found",
+				description: "I couldn't find that page.",
+				noindex: true,
+			},
+			"https://davidanunez.com/404",
+		);
+		expect(
+			doc.querySelector('meta[name="robots"]')?.getAttribute("content"),
+		).toBe("noindex");
+	});
+
 	it("shares an article's own card", async () => {
 		const { content } = await meta(
 			{
