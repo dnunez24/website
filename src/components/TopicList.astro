@@ -7,12 +7,19 @@ interface TopicItem {
 	count?: number;
 }
 
-interface Props {
+// index and label are mutually exclusive: index mode never renders an
+// aria-label (the Topics page's own h1 names the list), so a caller can't
+// pass label alongside it.
+type Props = {
 	topics: TopicItem[];
-	/** The Topics index: wider spacing, rows balanced to even lengths. */
-	index?: boolean;
-	label?: string;
-}
+} & (
+	| {
+			/** The Topics index: wider spacing, rows balanced to even lengths. No aria-label; the page's h1 names the list. */
+			index: true;
+			label?: undefined;
+	  }
+	| { index?: false; label?: string }
+);
 
 const { topics, index = false, label = "Topics" } = Astro.props;
 ---

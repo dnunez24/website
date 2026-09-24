@@ -1,4 +1,5 @@
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
+import type { ComponentProps } from "astro/types";
 import { Window } from "happy-dom";
 import { beforeAll, describe, expect, it } from "vitest";
 import ArticleList from "./ArticleList.astro";
@@ -845,7 +846,7 @@ describe("TopicList", () => {
 	it("uses the index layout's balanced spacing and takes no aria-label: the page's h1 names it", async () => {
 		const doc = parse(
 			await render(TopicList, {
-				props: { topics, index: true, label: "All topics" },
+				props: { topics, index: true },
 			}),
 		);
 		const list = doc.querySelector("ul");
@@ -854,6 +855,29 @@ describe("TopicList", () => {
 		expect(list?.querySelector("li")?.classList.contains("inline-block")).toBe(
 			true,
 		);
+	});
+
+	it("honors a custom label outside index mode", async () => {
+		const doc = parse(
+			await render(TopicList, { props: { topics, label: "All topics" } }),
+		);
+		expect(doc.querySelector("ul")?.getAttribute("aria-label")).toBe(
+			"All topics",
+		);
+	});
+
+	it("forbids label together with index at the type level", () => {
+		// index and label are mutually exclusive (TopicList.astro): index mode
+		// never renders an aria-label, so a caller can't pass label alongside
+		// it. astro check enforces this on every real <TopicList index label=…>
+		// usage; this pins the same guarantee at the Props type itself.
+		// @ts-expect-error label isn't assignable together with index: true
+		const invalid: ComponentProps<typeof TopicList> = {
+			topics: [],
+			index: true,
+			label: "All topics",
+		};
+		expect(invalid).toBeDefined();
 	});
 });
 
