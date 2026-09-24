@@ -1,0 +1,8 @@
+{
+	"name": "website-deploy-tool",
+	"private": true,
+	"description": "wrangler and its full dependency tree, pinned and integrity-locked for deploy.yml's *-deploy jobs. Kept in sync with the project's own pnpm-lock.yaml wrangler pin by a check in each *-build job.",
+	"devDependencies": {
+		"wrangler": "4.136.3"
+	}
+}

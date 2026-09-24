@@ -4,12 +4,14 @@ name: Deploy
 # secrets, so third-party audit tools (Lighthouse, axe, etc.) in ci.yml's jobs
 # never run in a job that has them.
 #
-# Every environment splits a build job (no secrets, caches allowed) from a
-# deploy job (the only place the token lives). The deploy job doesn't share a
-# VM with Astro/Vite/Tailwind/Mermaid/Chromium, project dependencies, install
-# scripts, or any cache ci.yml writes to — it checks out only wrangler.jsonc,
-# installs wrangler in isolation with scripts off, and takes dist/ as an
-# artifact. See each deploy job's comments for why.
+# Splits a build job (no secrets, caches allowed) from a deploy job (the only
+# place the token lives). The deploy job doesn't share a VM with
+# Astro/Vite/Tailwind/Mermaid/Chromium, project dependencies, install
+# scripts, or any cache ci.yml writes to. It checks out only wrangler.jsonc
+# and .github/deploy/ (a dedicated, integrity-pinned package.json +
+# package-lock.json for wrangler and its full dependency tree — never the
+# project's own pnpm-lock.yaml; see preview-deploy's install step for why),
+# installs with lifecycle scripts off, and takes dist/ as an artifact.
 on:
   pull_request:
     branches: [main]
@@ -32,14 +34,24 @@ jobs:
     # a Dependabot run could never authenticate to Cloudflare anyway. Skip
     # it explicitly instead of letting it fail: a skipped job reports
     # Success, so it doesn't block a security-update PR the way a failed
-    # required check would, and re-running as Dave (the only way to change
-    # the actor) means reviewing the bump first.
+    # required check would. Re-running an existing run keeps the actor who
+    # triggered it (GitHub's own re-run docs); only a new push by Dave, a
+    # different actor, changes github.actor and lets the job run for real.
     # https://docs.github.com/en/code-security/dependabot/troubleshooting-dependabot/troubleshooting-dependabot-on-github-actions
     if: >-
       github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
+    # Cancel an older build for the same PR the moment a newer one starts,
+    # so an older run's build can't finish after a newer one and trigger a
+    # stale deploy. preview-deploy's own staleness check is the backstop for
+    # the remaining race (an older run's build already finished before this
+    # existed, or the two builds landed too close together for cancellation
+    # to catch).
+    concurrency:
+      group: preview-build-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -53,17 +65,25 @@ jobs:
       # undefined when unset, so the build just ships without it (the
       # production build job is the only one that sets it).
       - run: pnpm build
+      # No secrets in this job, so a drift here can't leak anything — but it
+      # can silently make preview-deploy install a stale wrangler if nobody
+      # remembers to update .github/deploy/ after bumping the project's own
+      # pin. Catch that here instead.
+      - name: Confirm .github/deploy/'s wrangler pin matches the project's
+        run: |
+          set -eu
+          deploy_version="$(node -p "require('./.github/deploy/package.json').devDependencies.wrangler")"
+          project_version="$(pnpm list wrangler --json | jq -r '.[0].devDependencies.wrangler.version')"
+          if [ "$deploy_version" != "$project_version" ]; then
+            echo "::error::.github/deploy/package.json pins wrangler@$deploy_version but pnpm-lock.yaml resolves wrangler@$project_version. Update .github/deploy/package.json and regenerate .github/deploy/package-lock.json (npm install --ignore-scripts, inside .github/deploy/) to match."
+            exit 1
+          fi
       # No job output carries anything from here to preview-deploy besides
       # this artifact — deliberately. This job runs pnpm install (with
       # allowBuilds scripts), Astro, Vite, Tailwind, sharp, and everything
       # else `pnpm build` pulls in; any of that could write to $GITHUB_OUTPUT
       # itself (a job output is just a line appended to a file any process
       # in the job can reach, on a hosted runner with passwordless sudo).
-      # preview-deploy used to trust a wrangler-version output from this
-      # job; it no longer does (see preview-deploy) — a poisoned output
-      # here could otherwise have pointed `npm install` at an arbitrary
-      # package, git spec, or tarball, which would then run with
-      # CLOUDFLARE_API_TOKEN present.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: preview-dist
@@ -90,33 +110,40 @@ jobs:
       name: Preview
       url: ${{ steps.deploy.outputs.url }}
     steps:
-      # wrangler.jsonc, for wrangler to read, and pnpm-lock.yaml, so this job
-      # can read the pinned wrangler version from its OWN checkout instead of
-      # trusting preview-build's output (see the version step below for why).
-      # No project code, no source. persist-credentials: false, since nothing
-      # after this needs git auth.
+      # wrangler.jsonc, for wrangler to read, and .github/deploy/ (wrangler's
+      # own dedicated, integrity-pinned install) — see the top-of-file
+      # comment and the install step below. No project code, no source.
+      # persist-credentials: false, since nothing after this needs git auth.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: |
             wrangler.jsonc
-            pnpm-lock.yaml
+            .github/deploy
           sparse-checkout-cone-mode: false
           persist-credentials: false
-      # L2: the only thing that separates this job's --env="" upload from a
-      # production deploy is that the top-level config has no route/routes.
-      # Fail closed if that ever changes, rather than silently deploying
-      # production traffic from a PR run. (wrangler.jsonc is JSONC; strip
-      # `//` line comments before parsing — this file has none inside string
-      # values.)
-      - name: Refuse a top-level route or routes key
+      # First and cheap, before downloading the artifact or installing
+      # anything: if a newer run now exists for this PR, this run's deploy
+      # would either race it or, worse, finish after it and overwrite newer
+      # code with older code. gh reads with the job's own read-only
+      # GITHUB_TOKEN — no elevated permissions needed for a public repo's PR
+      # metadata.
+      - name: Refuse to deploy a superseded commit
+        id: staleness
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          THIS_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -eu
-          json="$(sed -E 's#//.*$##' wrangler.jsonc)"
-          if echo "$json" | jq -e 'has("route") or has("routes")' >/dev/null; then
-            echo "::error::wrangler.jsonc has a top-level route or routes key. Preview deploys the default target with --env=\"\" and must never carry a custom domain or zone route."
-            exit 1
+          current_sha="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .head.sha)"
+          if [ "$current_sha" != "$THIS_SHA" ]; then
+            echo "::notice::PR #$PR_NUMBER's head is now $current_sha, not this run's $THIS_SHA. A newer run covers it; skipping this deploy."
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "stale=false" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      - if: steps.staleness.outputs.stale != 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: preview-dist
           path: dist/
@@ -124,7 +151,8 @@ jobs:
       # wrangler reads dotenv files from the working directory, not from
       # dist/ — but assert it anyway, in case a future change moves where
       # the artifact unpacks, or a crafted artifact tries a path trick.
-      - name: Refuse a stray dotenv-like file at the job root
+      - if: steps.staleness.outputs.stale != 'true'
+        name: Refuse a stray dotenv-like file at the job root
         run: |
           set -eu
           shopt -s nullglob
@@ -134,55 +162,51 @@ jobs:
             echo "::error::Unexpected dotenv-like file(s) before wrangler runs: ${stray[*]}"
             exit 1
           fi
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      # Fails closed on any parse problem, and on a top-level route/routes
+      # key. See .github/deploy/route-guard.mjs for why this isn't sed+jq.
+      - if: steps.staleness.outputs.stale != 'true'
+        run: node .github/deploy/route-guard.mjs wrangler.jsonc website
+      - if: steps.staleness.outputs.stale != 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
-      # Not ./.github/actions/setup: that installs the whole project
-      # (pnpm install, allowBuilds scripts, Playwright/Chromium) from a
-      # cache ci.yml jobs write to. This installs only wrangler, from npm
-      # directly, with install scripts off, into a scratch directory outside
-      # the checkout — nothing here can plant a fake wrangler binary or
-      # touch project code, and nothing here restores or writes a cache.
-      - name: Install wrangler (version from this checkout, verified, scripts off, outside the checkout)
+      # Not ./.github/actions/setup, and not the project's own
+      # pnpm-lock.yaml: those install (or resolve versions from) the whole
+      # project — Astro, Vite, Tailwind, sharp, mermaid-isomorphic,
+      # Playwright — none of which this job needs, and all of which would
+      # sit on disk next to the Cloudflare token. .github/deploy/ pins
+      # *only* wrangler and its own dependency tree, with npm's own
+      # integrity hashes for every resolved package, not just wrangler
+      # itself — `npm ci` refuses to install anything that doesn't match
+      # the committed lockfile exactly. --ignore-scripts skips lifecycle
+      # scripts for the whole tree, same as before.
+      - if: steps.staleness.outputs.stale != 'true'
+        name: Install wrangler and its locked dependency tree, scripts off
         run: |
           set -eu
-
-          # The version comes from THIS job's own sparse checkout of
-          # pnpm-lock.yaml, never from preview-build's job output.
-          # preview-build runs the full dependency/build toolchain (pnpm
-          # install with allowBuilds scripts, Astro, Vite, Tailwind, sharp);
-          # any of that — including a compromised dependency, on a hosted
-          # runner with passwordless sudo — can write a job output. Trusting
-          # a version string from there would let a poisoned build point
-          # this install at an arbitrary package, a git spec, or a tarball
-          # URL, which would then run with CLOUDFLARE_API_TOKEN present in
-          # the next step. This job trusts nothing from preview-build except
-          # the static files in the dist/ artifact.
-          #
-          # Extraction is a fixed grep/sed on pnpm-lock.yaml's stable,
-          # machine-generated shape, not a general YAML parser: the
-          # importers' top-level "wrangler:" entry is 6-space indented and
-          # unique (the packages: section's entries are the different
-          # string "wrangler@4.136.3:"). Whatever comes out still has to
-          # pass the strict x.y.z regex below, so a lockfile format change
-          # fails closed instead of installing an unvalidated string.
-          version="$(grep -A2 -m1 '^      wrangler:$' pnpm-lock.yaml | grep '^        version: ' | sed -E 's/^ {8}version: ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
-          if ! printf '%s' "$version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::Could not extract a valid wrangler version (x.y.z) from pnpm-lock.yaml; got: ${version:-<empty>}"
+          npm ci --prefix .github/deploy --ignore-scripts --no-audit --no-fund
+      # Confirms the resolved Worker name before deploying anything, using
+      # wrangler's own --dry-run resolution (which correctly derives
+      # "website" for the default target) rather than re-deriving it here.
+      # A wrong name here — for example if wrangler.jsonc were ever renamed
+      # to "website-production" at the top level — would otherwise let this
+      # --env="" upload target the production Worker.
+      - if: steps.staleness.outputs.stale != 'true'
+        name: Confirm the resolved Worker name
+        env:
+          WRANGLER_BIN: ${{ github.workspace }}/.github/deploy/node_modules/.bin/wrangler
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-name-check.ndjson
+          CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
+        run: |
+          set -eu
+          "$WRANGLER_BIN" versions upload --env="" --dry-run >/dev/null
+          name=$(jq -r 'select(.type == "version-upload") | .worker_name // empty' "$WRANGLER_OUTPUT_FILE_PATH" | tail -n1)
+          if [ "$name" != "website" ]; then
+            echo "::error::Resolved Worker name is '$name', expected 'website'. Refusing to deploy."
             exit 1
           fi
-
-          # No .npmrc should exist in this sparse checkout (only
-          # wrangler.jsonc and pnpm-lock.yaml were checked out), but remove
-          # one if it somehow appears: an .npmrc can redirect npm's
-          # registry, and --registry below should be the only thing
-          # deciding that.
-          rm -f .npmrc
-
-          mkdir -p "$RUNNER_TEMP/wrangler"
-          npm install --prefix "$RUNNER_TEMP/wrangler" --ignore-scripts --no-audit --no-fund \
-            --registry=https://registry.npmjs.org/ "wrangler@$version"
-      - name: Deploy preview
+      - if: steps.staleness.outputs.stale != 'true'
+        name: Deploy preview
         id: deploy
         env:
           # Scoped to this step only: it's the one step in the job that
@@ -200,7 +224,7 @@ jobs:
           CLOUDFLARE_API_BASE_URL: https://api.cloudflare.com/client/v4
           WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-output.ndjson
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          WRANGLER_BIN: ${{ runner.temp }}/wrangler/node_modules/.bin/wrangler
+          WRANGLER_BIN: ${{ github.workspace }}/.github/deploy/node_modules/.bin/wrangler
         run: |
           set -eu
 
@@ -224,19 +248,11 @@ jobs:
           # under the limit combined with the "website" worker name.
           "$WRANGLER_BIN" versions upload --env="" --preview-alias "pr-$PR_NUMBER"
 
-          # No wrangler-action: even a plain `wrangler` invocation like this
-          # one needs custom parsing for the alias URL (wrangler-action's
-          # `deployment-url`/`pages-deployment-alias-url` outputs don't cover
-          # a Workers preview-alias URL), and using it here would mean either
-          # letting it install its own copy of wrangler inside this already
-          # source-free job or fighting its assumptions about running from a
-          # full checkout — neither is simpler than invoking the isolated
-          # binary above directly.
-          #
-          # Read the alias URL from Wrangler's own ND-JSON output file.
-          # Confirmed the field name against the installed wrangler@4.136.3
-          # source (node_modules/wrangler/wrangler-dist/cli.js): a
-          # `{"type":"version-upload", ..., "preview_alias_url": "..."}`
+          # Read the alias URL from Wrangler's own ND-JSON output file, not
+          # from wrangler-action's outputs (it has none for this — see the
+          # PR body). Confirmed the field name against the installed
+          # wrangler@4.136.3 source (node_modules/wrangler/wrangler-dist/cli.js):
+          # a `{"type":"version-upload", ..., "preview_alias_url": "..."}`
           # record, populated only once the target Worker has Version
           # Preview URLs enabled server-side. `--dry-run` omits both URL
           # fields (no upload happens, so there's no version to preview) —
