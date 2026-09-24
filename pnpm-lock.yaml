@@ -29,6 +29,9 @@ importers:
       fluidity-tailwind:
         specifier: ^0.1.1
         version: 0.1.1(tailwindcss@4.3.3)
+      harfbuzzjs:
+        specifier: ^1.6.2
+        version: 1.6.2
       mermaid-isomorphic:
         specifier: ^3.1.0
         version: 3.1.0(playwright@1.63.0)
@@ -47,6 +50,9 @@ importers:
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
+      wawoff2:
+        specifier: ^2.0.1
+        version: 2.0.1
     devDependencies:
       '@astrojs/check':
         specifier: ^0.9.10
@@ -1784,6 +1790,9 @@ packages:
 
   harfbuzzjs@0.10.3:
     resolution: {integrity: sha512-GJnLUrgLMadlMYrBGEXwYEimObbysy3prWT4HyPpFQERvgTU/OZ+ReUlEPOum6w4RBtFXzXiCCmECOr4sz3qwQ==}
+
+  harfbuzzjs@1.6.2:
+    resolution: {integrity: sha512-95c1vWuzoHjM19d5fQgPbz1wcv1pTa0UM9dZrdPgSMUEVuSwuzeVPkq6UhHHw3jLOkE9AYzzTP8XQkRBpPYpEg==}
 
   hast-util-from-html@2.0.3:
     resolution: {integrity: sha512-CUSRHXyKjzHov8yKsQjGOElXy/3EKpyX56ELnkHH34vDVw1N1XSQ1ZcAvTyAPtGqLTuKP/uxM+aLkSPqF/EtMw==}
@@ -4832,6 +4841,8 @@ snapshots:
       - utf-8-validate
 
   harfbuzzjs@0.10.3: {}
+
+  harfbuzzjs@1.6.2: {}
 
   hast-util-from-html@2.0.3:
     dependencies:

@@ -1,6 +1,11 @@
 ---
 import { SITE_TITLE } from "@constants";
-import { type ArticleData, pageTitle, SHARE_IMAGE } from "@lib/seo";
+import {
+	type ArticleData,
+	pageTitle,
+	SHARE_IMAGE,
+	type ShareImage,
+} from "@lib/seo";
 
 interface Props {
 	title: string;
@@ -9,13 +14,15 @@ interface Props {
 	article?:
 		| Pick<ArticleData, "publishedDate" | "updatedDate" | "topics">
 		| undefined;
+	/** Articles bring their own card; other pages share the default. */
+	image?: ShareImage | undefined;
 }
 
-const { title, description, article } = Astro.props;
+const { title, description, article, image = SHARE_IMAGE } = Astro.props;
 // `site` makes every URL absolute to production; without it, to the request.
 const site = Astro.site ?? Astro.url;
 const canonicalURL = new URL(Astro.url.pathname, site);
-const imageURL = new URL(SHARE_IMAGE.path, site);
+const imageURL = new URL(image.path, site);
 ---
 
 <link rel="canonical" href={canonicalURL} />
@@ -33,7 +40,7 @@ const imageURL = new URL(SHARE_IMAGE.path, site);
 <meta property="og:image:type" content={SHARE_IMAGE.type} />
 <meta property="og:image:width" content={String(SHARE_IMAGE.width)} />
 <meta property="og:image:height" content={String(SHARE_IMAGE.height)} />
-<meta property="og:image:alt" content={SHARE_IMAGE.alt} />
+<meta property="og:image:alt" content={image.alt} />
 {
 	article && (
 		<Fragment>
@@ -46,4 +53,4 @@ const imageURL = new URL(SHARE_IMAGE.path, site);
 
 <!-- X reads Open Graph for the rest. -->
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:image:alt" content={SHARE_IMAGE.alt} />
+<meta name="twitter:image:alt" content={image.alt} />

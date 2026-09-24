@@ -304,6 +304,25 @@ describe("PageMeta", () => {
 		expect(content("article:published_time")).toEqual([]);
 	});
 
+	it("shares an article's own card", async () => {
+		const { content } = await meta(
+			{
+				title: "First post",
+				description: "Lorem ipsum.",
+				image: {
+					path: "/og/writing/first-post.png",
+					alt: "First post: On beginnings",
+				},
+			},
+			"https://davidanunez.com/writing/first-post/",
+		);
+		expect(content("og:image")).toEqual([
+			"https://davidanunez.com/og/writing/first-post.png",
+		]);
+		expect(content("og:image:alt")).toEqual(["First post: On beginnings"]);
+		expect(content("twitter:image:alt")).toEqual(["First post: On beginnings"]);
+	});
+
 	it("adds an article's dates and topics", async () => {
 		const { content } = await meta(
 			{
