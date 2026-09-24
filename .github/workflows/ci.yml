@@ -47,10 +47,6 @@ jobs:
         with:
           name: dist
           path: dist/
-      # Keep the key's version in sync with SCHEMA_ORG_VERSION in
-      # scripts/validate-structured-data.ts.
-      - uses: actions/cache@v6
-        with:
-          path: node_modules/.cache/schema-org
-          key: schema-org-vocab-30.1
+      # The schema.org vocabulary is vendored (scripts/vendor/), not
+      # downloaded, so there's nothing here to cache.
       - run: pnpm validate:structured-data

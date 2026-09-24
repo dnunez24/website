@@ -1,23 +1,26 @@
 import Validator from "@adobe/structured-data-validator";
 import WebAutoExtractor from "@marbec/web-auto-extractor";
+import {
+	checkSiteRules,
+	type StructuredDataIssue,
+} from "./structured-data-rules.ts";
 
-export interface StructuredDataIssue {
-	/** The page the issue is on, e.g. `/writing/first-post/`. */
-	page: string;
-	dataFormat: "jsonld" | "microdata" | "rdfa";
-	rootType: string;
-	severity: "ERROR" | "WARNING";
-	issueMessage: string;
-	fieldNames?: string[];
-}
+export type { StructuredDataIssue };
 
 /**
- * Validates one page's structured data (JSON-LD, Microdata, RDFa) against
- * the schema.org vocabulary. `schemaOrgJson` is the vocabulary graph from
- * `schemaorg-all-https.jsonld`, loaded and cached by
- * `scripts/validate-structured-data.ts`; taking it as a parameter keeps this
- * function pure, so tests can pass a small local vocabulary instead of
- * fetching the real ~1000-node graph.
+ * Validates one page's structured data (JSON-LD, Microdata, RDFa): against
+ * the schema.org vocabulary with `@adobe/structured-data-validator`, and
+ * against this site's own required-field rules with `checkSiteRules` (see
+ * `structured-data-rules.ts`). `schemaOrgJson` is the vocabulary graph from
+ * `schemaorg-all-https.jsonld`, loaded by `scripts/validate-structured-data.ts`.
+ *
+ * Not a pure function despite taking its input as a parameter:
+ * `@adobe/structured-data-validator`'s schema.org handler caches whichever
+ * vocabulary it sees *first* in a process-wide `static` field, and reuses it
+ * for every later call regardless of what's passed in. That's harmless here
+ * because every caller in this codebase — the script and its tests — uses
+ * the same pinned vocabulary; validating against two different vocabularies
+ * in one process would silently validate the second against the first's.
  */
 export async function validatePage(
 	html: string,
@@ -25,13 +28,16 @@ export async function validatePage(
 	schemaOrgJson: unknown,
 ): Promise<StructuredDataIssue[]> {
 	const extracted = new WebAutoExtractor({ addLocation: true }).parse(html);
-	const issues = await new Validator(schemaOrgJson).validate(extracted);
-	return issues.map((issue) => ({
-		page,
-		dataFormat: issue.dataFormat,
-		rootType: issue.rootType,
-		severity: issue.severity,
-		issueMessage: issue.issueMessage,
-		...(issue.fieldNames ? { fieldNames: issue.fieldNames } : {}),
-	}));
+	const adobeIssues = await new Validator(schemaOrgJson).validate(extracted);
+	return [
+		...adobeIssues.map((issue) => ({
+			page,
+			dataFormat: issue.dataFormat,
+			rootType: issue.rootType,
+			severity: issue.severity,
+			issueMessage: issue.issueMessage,
+			...(issue.fieldNames ? { fieldNames: issue.fieldNames } : {}),
+		})),
+		...checkSiteRules(extracted.jsonld, page),
+	];
 }

@@ -1,16 +1,17 @@
 /**
  * Validates the structured data (JSON-LD, Microdata, RDFa) on every built
- * page against the schema.org vocabulary, using Adobe's
- * structured-data-validator. Run after `pnpm build`:
+ * page against the schema.org vocabulary and this site's own required-field
+ * rules (see `src/lib/structured-data-rules.ts`). Run after `pnpm build`:
  *
  *   pnpm validate:structured-data
  *
  * Requires Node >= 22.18, which runs TypeScript without a build step.
  */
 
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { gunzipSync } from "node:zlib";
 import {
 	type StructuredDataIssue,
 	validatePage,
@@ -18,36 +19,17 @@ import {
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const DIST_DIR = join(ROOT, "dist");
-const CACHE_DIR = join(ROOT, "node_modules/.cache/schema-org");
 
-// Pinned rather than "latest" so a run is reproducible and doesn't depend on
-// schema.org being reachable. Bump deliberately, and update the cache key in
-// `.github/workflows/ci.yml` (job `structured-data`) alongside it.
-const SCHEMA_ORG_VERSION = "30.1";
-const SCHEMA_ORG_URL = `https://schema.org/version/${SCHEMA_ORG_VERSION}/schemaorg-all-https.jsonld`;
+// The schema.org vocabulary is vendored rather than fetched: CI has no
+// network dependency on schema.org, and there's no cold-cache request,
+// timeout, or retry to get right. From https://schema.org/version/30.1/
+// schemaorg-all-https.jsonld (CC BY-SA 3.0; see README.md's Credit section).
+// Bump deliberately — replace the file in scripts/vendor/ and this path.
+const VOCABULARY_PATH = join(ROOT, "scripts/vendor/schemaorg-30.1.jsonld.gz");
 
-/** Fetches the schema.org vocabulary graph, caching it on disk by version. */
 async function loadSchemaOrgVocabulary(): Promise<unknown> {
-	const cached = join(CACHE_DIR, `schemaorg-${SCHEMA_ORG_VERSION}.jsonld`);
-
-	try {
-		return JSON.parse(await readFile(cached, "utf8"));
-	} catch {
-		// Not cached yet.
-	}
-
-	console.log(`fetching ${SCHEMA_ORG_URL}`);
-	const response = await fetch(SCHEMA_ORG_URL);
-	if (!response.ok) {
-		throw new Error(
-			`GET ${SCHEMA_ORG_URL} failed: ${response.status} ${response.statusText}`,
-		);
-	}
-
-	const body = await response.text();
-	await mkdir(CACHE_DIR, { recursive: true });
-	await writeFile(cached, body);
-	return JSON.parse(body);
+	const gzipped = await readFile(VOCABULARY_PATH);
+	return JSON.parse(gunzipSync(gzipped).toString("utf8"));
 }
 
 /** `dist/about/index.html` -> `/about/`; `dist/index.html` -> `/`; `dist/404.html` -> `/404.html`. */
@@ -67,13 +49,24 @@ async function findHtmlFiles(dir: string): Promise<string[]> {
 		.sort();
 }
 
-const schemaOrgJson = await loadSchemaOrgVocabulary();
+// Fail fast and readably if `pnpm build` hasn't run, before loading the
+// vocabulary or anything else.
+try {
+	await access(DIST_DIR);
+} catch {
+	throw new Error(
+		`No ${relative(ROOT, DIST_DIR)} directory. Run \`pnpm build\` first.`,
+	);
+}
+
 const files = await findHtmlFiles(DIST_DIR);
 if (files.length === 0) {
 	throw new Error(
 		`No HTML files in ${relative(ROOT, DIST_DIR)}. Run \`pnpm build\` first.`,
 	);
 }
+
+const schemaOrgJson = await loadSchemaOrgVocabulary();
 
 const issues: StructuredDataIssue[] = [];
 for (const file of files) {
@@ -103,6 +96,9 @@ console.log(
 		`${warnings.length} warning${warnings.length === 1 ? "" : "s"}.`,
 );
 
-if (errors.length > 0) {
+// Both severities fail the gate: the site has none today, and a WARNING
+// (e.g. an unrecognized property) is exactly the kind of regression this
+// check exists to catch.
+if (errors.length > 0 || warnings.length > 0) {
 	process.exitCode = 1;
 }
