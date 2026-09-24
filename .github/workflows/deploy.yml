@@ -324,6 +324,8 @@ jobs:
             echo "::error::.github/deploy/package.json pins wrangler@$deploy_version but pnpm-lock.yaml resolves wrangler@$project_version. Update .github/deploy/package.json and regenerate .github/deploy/package-lock.json (npm install --ignore-scripts, inside .github/deploy/) to match."
             exit 1
           fi
+      # See preview-build's matching step.
+      - run: node --test .github/deploy/route-guard.test.mjs
       # No job output carries anything from here to staging-deploy besides
       # this artifact — see preview-build's comment for why.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -504,6 +506,8 @@ jobs:
             echo "::error::.github/deploy/package.json pins wrangler@$deploy_version but pnpm-lock.yaml resolves wrangler@$project_version. Update .github/deploy/package.json and regenerate .github/deploy/package-lock.json (npm install --ignore-scripts, inside .github/deploy/) to match."
             exit 1
           fi
+      # See preview-build's matching step.
+      - run: node --test .github/deploy/route-guard.test.mjs
       # No job output carries anything from here to production-deploy
       # besides this artifact — see preview-build's comment for why.
       # retention-days: 7, not 1 — the Production environment's required
