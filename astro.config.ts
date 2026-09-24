@@ -8,6 +8,7 @@ import { SUBSETS } from "./scripts/fonts.config.ts";
 import { callouts } from "./src/lib/markdown/callouts.ts";
 import { mermaidDiagrams } from "./src/lib/markdown/mermaid.ts";
 import { quoteAttribution } from "./src/lib/markdown/quote-attribution.ts";
+import { taskListState } from "./src/lib/markdown/task-list.ts";
 import { dropsDevPages, isDevRoute, isPublicPage } from "./src/lib/routes.ts";
 import { syntaxTheme, syntaxTransformers } from "./src/lib/syntax.ts";
 
@@ -67,6 +68,7 @@ export default defineConfig({
 				...callouts(),
 				quoteAttribution(),
 				mermaidDiagrams(projectRoot),
+				taskListState(),
 			],
 		}),
 	},
