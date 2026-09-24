@@ -17,10 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Installs the version pinned by packageManager in package.json, same as local.
       - uses: pnpm/action-setup@v6
-        with:
-          # No packageManager field in package.json; matches the local pnpm major.
-          version: 12
       - uses: actions/setup-node@v7
         with:
           node-version: 24
