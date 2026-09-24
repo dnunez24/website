@@ -35,4 +35,33 @@ describe("prose.css and components.css (compiled)", () => {
 		const callout = ruleBody(css, /&\s*\[data-callout\]\s*\{/);
 		expect(callout).toMatch(/--color-quote-cite:\s*var\(--color-quote-ink\)/);
 	});
+
+	it("gives the footnote reference brackets an empty accessible alternative, with a plain fallback first", async () => {
+		const css = await compileGlobalCss();
+		const ref = ruleBody(css, /&\s*a\[data-footnote-ref\]\s*\{/);
+		const before = ruleBody(ref, /&::before\s*\{/);
+		expect(before).toMatch(/content:\s*"\[";/);
+		expect(before).toMatch(/content:\s*"\["\s*\/\s*"";/);
+		const after = ruleBody(ref, /&::after\s*\{/);
+		expect(after).toMatch(/content:\s*"\]";/);
+		expect(after).toMatch(/content:\s*"\]"\s*\/\s*"";/);
+	});
+
+	it("doesn't transform the hidden footnotes heading to uppercase, so its accessible name stays sentence case", async () => {
+		const css = await compileGlobalCss();
+		const footnotes = ruleBody(css, /&\s*\.footnotes\s*\{/);
+		const h2 = ruleBody(footnotes, /&\s*h2\s*\{/);
+		expect(h2).not.toMatch(/text-transform/);
+	});
+
+	it("doesn't transition outline-color, so the focus ring shows at full color on the first frame", async () => {
+		const css = await compileGlobalCss();
+		const link = ruleBody(css, /&\s*a:not\(\[data-button\]\)\s*\{/);
+		expect(link).toMatch(/transition-property:[^;]*color/);
+		expect(link).not.toMatch(/transition-property:[^;]*outline-color/);
+
+		const foldIcon = ruleBody(css, /&\s*\.callout-fold-icon\s*\{/);
+		expect(foldIcon).toMatch(/transition-property:[^;]*color/);
+		expect(foldIcon).not.toMatch(/transition-property:[^;]*outline-color/);
+	});
 });

@@ -59,6 +59,24 @@
 		@apply outline-4 outline-offset-2 outline-focus;
 	}
 
+	/*
+	 * Forced colors (Windows contrast themes): Callout, CodeBlock and plain
+	 * `pre` draw their frame with a background tint alone, which forced
+	 * colors flattens to Canvas. A transparent inset outline is invisible
+	 * normally and painted as an edge once forced colors takes over borders.
+	 * `:where()` keeps this at zero specificity, and the base layer keeps it
+	 * below every layer Tailwind ranks higher (components, utilities) so it
+	 * can never beat a real focus-ring rule, in this layer or above it.
+	 */
+	:where(
+		.prose [data-callout],
+		[data-codeblock],
+		.prose pre:not([data-codeblock] pre)
+	) {
+		outline: 1px solid transparent;
+		outline-offset: -1px;
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		*,
 		*::before,

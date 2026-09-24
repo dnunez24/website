@@ -55,7 +55,7 @@
 		}
 
 		& a:not([data-button]) {
-			@apply rounded-sm text-link underline decoration-current decoration-2 underline-offset-2 transition-colors;
+			@apply rounded-sm text-link underline decoration-current decoration-2 underline-offset-2 transition-colors-no-outline;
 
 			&:is(:hover, :focus-visible) {
 				@apply text-link-hover decoration-transparent;
@@ -105,6 +105,12 @@
 
 			&:checked {
 				@apply border-brand bg-brand;
+
+				/* The fill is a background and the border is a color; both give way to Canvas without this. */
+				@media (forced-colors: active) {
+					background-color: SelectedItem;
+					border-color: CanvasText;
+				}
 			}
 			&:checked::before {
 				@apply bg-on-brand;
@@ -114,6 +120,10 @@
 				mask:
 					url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='square'%3E%3Cpath d='M3 8.5l3 3 7-7'/%3E%3C/svg%3E")
 					center / contain no-repeat;
+
+				@media (forced-colors: active) {
+					background-color: SelectedItemText;
+				}
 			}
 		}
 
@@ -236,7 +246,7 @@
 			@apply outline-4 outline-offset-2 outline-focus;
 		}
 		& .callout-fold-icon {
-			@apply ms-auto font-mono text-label text-ink-muted transition-colors;
+			@apply ms-auto font-mono text-label text-ink-muted transition-colors-no-outline;
 
 			&::before {
 				content: "+";
@@ -323,18 +333,36 @@
 		}
 		& a[data-footnote-ref] {
 			@apply px-0.5 font-mono no-underline;
+			/*
+			 * The plain string is a fallback for browsers that don't support the
+			 * alternative-text content syntax; they treat the second declaration as
+			 * invalid and keep the first. Screen readers that do support it read
+			 * "1", not "left bracket 1 right bracket".
+			 */
 			&::before {
 				content: "[";
+				/* biome-ignore lint/suspicious/noDuplicateProperties: intentional fallback for browsers without alternative-text content. */
+				content: "[" / "";
 			}
 			&::after {
 				content: "]";
+				/* biome-ignore lint/suspicious/noDuplicateProperties: intentional fallback for browsers without alternative-text content. */
+				content: "]" / "";
 			}
 		}
 		& .footnotes {
 			@apply f6y-pt-4 mt-line-double border-t border-line text-small text-ink-muted;
 
+			/*
+			 * remark's default footnotes heading is visually hidden (`sr-only`),
+			 * not this uppercase label style: `uppercase` would only affect its
+			 * rendered text, but Chromium reads that rendered, transformed text
+			 * for accessible names, so it would still turn the accessible
+			 * description every footnote reference carries ("Footnotes", via
+			 * `aria-describedby`) into "FOOTNOTES".
+			 */
 			& h2 {
-				@apply f6y-mb-2 mt-0 font-mono text-label font-medium tracking-caps text-ink-muted uppercase;
+				@apply f6y-mb-2 mt-0 font-mono text-label font-medium tracking-caps text-ink-muted;
 			}
 			& ol {
 				@apply m-0;

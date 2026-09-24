@@ -1,0 +1,23 @@
+/*
+ * m6: the current-page/section rule on a ghost Button (Header nav, Footer
+ * nav, Pagination) is `after:bg-current`, a Tailwind utility compiled into
+ * the utilities layer - the highest of Tailwind's layers, above `components`
+ * and `base`. Overriding it from a hand-written rule in one of those layers
+ * would lose regardless of selector specificity, since a cascade layer
+ * always beats specificity from a lower layer. Staying unlayered outranks
+ * every layer instead, including utilities, so it doesn't need to guess at
+ * Tailwind's generated class name or specificity.
+ *
+ * Every other forced-colors fix lives beside the rule it overrides (see
+ * utilities.css's `link-external` and `transition-colors-no-outline`,
+ * prose.css's task checkbox and base.css's transparent frame outline,
+ * components.css's Mermaid frame), each already in the right layer for its
+ * own case. This file exists only for the one override that has no
+ * hand-written rule of its own to sit beside.
+ */
+@media (forced-colors: active) {
+	/* Ghost buttons are links, so LinkText is the label's forced color, and the rule keeps matching it. */
+	[data-button]:is([aria-current="page"], [aria-current="true"])::after {
+		background-color: LinkText;
+	}
+}
