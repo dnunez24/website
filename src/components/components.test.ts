@@ -790,6 +790,16 @@ describe("WordMark", () => {
 		expect(link?.textContent).toContain("Software leader");
 	});
 
+	it("hides the tagline from assistive technology, so the link's name is just the name", async () => {
+		const doc = parse(
+			await render(WordMark, {
+				props: { name: "Dave Nuñez", tagline: "Leader / Builder / Integrator" },
+			}),
+		);
+		const tagline = doc.querySelectorAll("span")[1];
+		expect(tagline?.getAttribute("aria-hidden")).toBe("true");
+	});
+
 	it("shows the tagline only from the measure breakpoint up", async () => {
 		const doc = parse(
 			await render(WordMark, {
@@ -818,14 +828,14 @@ describe("TopicList", () => {
 		);
 	});
 
-	it("uses the index layout's balanced spacing and a custom label", async () => {
+	it("uses the index layout's balanced spacing and takes no aria-label: the page's h1 names it", async () => {
 		const doc = parse(
 			await render(TopicList, {
 				props: { topics, index: true, label: "All topics" },
 			}),
 		);
 		const list = doc.querySelector("ul");
-		expect(list?.getAttribute("aria-label")).toBe("All topics");
+		expect(list?.hasAttribute("aria-label")).toBe(false);
 		expect(list?.classList.contains("text-balance")).toBe(true);
 		expect(list?.querySelector("li")?.classList.contains("inline-block")).toBe(
 			true,

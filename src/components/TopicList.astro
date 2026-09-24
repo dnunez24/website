@@ -20,7 +20,9 @@ const { topics, index = false, label = "Topics" } = Astro.props;
 {
 	index ? (
 		// Inline-block items, because text-wrap: balance does not apply to flex.
-		<ul aria-label={label} class="m-0 list-none bleed-e-4 bleed-b-4 p-0 text-balance">
+		// No aria-label: index mode is only used on the Topics page, whose own
+		// h1 already names this list.
+		<ul class="m-0 list-none bleed-e-4 bleed-b-4 p-0 text-balance">
 			{topics.map((topic) => (
 				<li class="inline-block f6y-me-4 f6y-mb-4 align-top"><Topic {...topic} /></li>
 			))}
