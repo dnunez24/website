@@ -154,7 +154,11 @@
 
 	/* Astro's font API variables (astro.config.ts) already carry the fallbacks. */
 	--font-sans: var(--font-afacad-flux);
-	--font-sans--font-feature-settings: "calt", "case", "pnum", "zero", "ss02";
+	/*
+	 * No "case": it raises - – — : to cap height, which suits text set in
+	 * capitals only. Sans text set in capitals takes this list plus "case".
+	 */
+	--font-sans--font-feature-settings: "calt", "pnum", "zero", "ss02";
 	--font-mono: var(--font-jetbrains-mono);
 
 	--font-weight-normal: 400;
