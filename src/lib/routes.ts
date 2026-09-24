@@ -7,9 +7,6 @@ export const isCurrentSection = (pathname: string, href: string): boolean =>
 export const isDevRoute = (pathname: string): boolean =>
 	pathname.startsWith("/dev/");
 
-/**
- * `@astrojs/sitemap` filter. The sitemap lists every route, including the
- * dev routes the build drops, so they would otherwise ship as 404s.
- */
+/** `@astrojs/sitemap` filter: excludes the dev routes the build drops, which would otherwise ship as 404s. `@astrojs/sitemap` already excludes status-code pages like `/404` itself. */
 export const isPublicPage = (page: string): boolean =>
 	!isDevRoute(new URL(page).pathname);
