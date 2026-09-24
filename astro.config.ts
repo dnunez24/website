@@ -87,6 +87,21 @@ export default defineConfig({
 	// instead of the default "warn", which would silently drop the article.
 	prerenderConflictBehavior: "error",
 
+	build: {
+		// Every page inlines its CSS in a <style> tag instead of linking one
+		// shared /_astro/*.css file. That removes the render-blocking CSS
+		// request from a first visit: HTML + CSS arrive in the same TCP
+		// flight, which measured FCP/LCP 1,433 -> 750ms on Slow 4G (G2 perf
+		// audit, finding 3). The trade-off is repeat page views: each one
+		// re-downloads the same ~10KB of CSS (+~44ms) that an external,
+		// cached file would instead skip. Most sessions on a personal site
+		// are one page, so this should net positive; Cloudflare Web
+		// Analytics' pages-per-visit can confirm that after launch. Only
+		// affects `astro build`; `astro dev` still serves CSS through
+		// Vite's own dev-time module graph.
+		inlineStylesheets: "always",
+	},
+
 	integrations: [mdx(), sitemap({ filter: isPublicPage }), excludeDevPages()],
 
 	markdown: {
