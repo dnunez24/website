@@ -1,105 +1,25 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { gunzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
-import { validatePage } from "./structured-data";
+import { hasBlockingIssues, validatePage } from "./structured-data";
 
 /**
- * A minimal slice of the schema.org vocabulary graph, shaped like
- * `schemaorg-all-https.jsonld` (the `@graph` of `rdfs:Class`/`rdf:Property`
- * nodes `Validator`'s schema.org handler reads). Real validation runs
- * against the pinned vocabulary vendored in `scripts/vendor/`; this fixture
- * just keeps the tests fast and offline.
- *
- * Every test in this file must reuse this single instance.
- * `@adobe/structured-data-validator`'s schema.org handler caches the first
- * vocabulary it's given in a process-wide `static` field (see the note on
- * `validatePage` in `structured-data.ts`), so a second, differently-shaped
- * vocabulary fixture would silently validate against this one instead of
- * its own.
+ * The real, pinned vocabulary (`scripts/vendor/`), not a hand-written
+ * subset. `@adobe/structured-data-validator`'s schema.org handler caches the
+ * first vocabulary it's given in a process-wide `static` field (see the note
+ * on `validatePage`), so every test in this file shares this one instance
+ * regardless — loading the real ~230 KB file costs that once per run, and in
+ * return tests stay honest about what schema.org actually accepts, with
+ * nothing to keep in sync with the vendored copy by hand.
  */
-const VOCABULARY = {
-	"@graph": [
-		{ "@id": "schema:Thing", "@type": "rdfs:Class" },
-		{
-			"@id": "schema:CreativeWork",
-			"@type": "rdfs:Class",
-			"rdfs:subClassOf": { "@id": "schema:Thing" },
-		},
-		{
-			"@id": "schema:BlogPosting",
-			"@type": "rdfs:Class",
-			"rdfs:subClassOf": { "@id": "schema:CreativeWork" },
-		},
-		{
-			"@id": "schema:Person",
-			"@type": "rdfs:Class",
-			"rdfs:subClassOf": { "@id": "schema:Thing" },
-		},
-		{
-			"@id": "schema:BreadcrumbList",
-			"@type": "rdfs:Class",
-			"rdfs:subClassOf": { "@id": "schema:Thing" },
-		},
-		{
-			"@id": "schema:ListItem",
-			"@type": "rdfs:Class",
-			"rdfs:subClassOf": { "@id": "schema:Thing" },
-		},
-		{
-			"@id": "schema:name",
-			"@type": "rdf:Property",
-			"schema:domainIncludes": { "@id": "schema:Thing" },
-		},
-		{
-			"@id": "schema:description",
-			"@type": "rdf:Property",
-			"schema:domainIncludes": { "@id": "schema:Thing" },
-		},
-		{
-			"@id": "schema:url",
-			"@type": "rdf:Property",
-			"schema:domainIncludes": { "@id": "schema:Thing" },
-		},
-		{
-			"@id": "schema:image",
-			"@type": "rdf:Property",
-			"schema:domainIncludes": { "@id": "schema:Thing" },
-		},
-		{
-			"@id": "schema:headline",
-			"@type": "rdf:Property",
-			"schema:domainIncludes": { "@id": "schema:CreativeWork" },
-		},
-		{
-			"@id": "schema:datePublished",
-			"@type": "rdf:Property",
-			"schema:domainIncludes": { "@id": "schema:CreativeWork" },
-		},
-		{
-			"@id": "schema:dateModified",
-			"@type": "rdf:Property",
-			"schema:domainIncludes": { "@id": "schema:CreativeWork" },
-		},
-		{
-			"@id": "schema:author",
-			"@type": "rdf:Property",
-			"schema:domainIncludes": { "@id": "schema:CreativeWork" },
-		},
-		{
-			"@id": "schema:itemListElement",
-			"@type": "rdf:Property",
-			"schema:domainIncludes": { "@id": "schema:BreadcrumbList" },
-		},
-		{
-			"@id": "schema:position",
-			"@type": "rdf:Property",
-			"schema:domainIncludes": { "@id": "schema:ListItem" },
-		},
-		{
-			"@id": "schema:item",
-			"@type": "rdf:Property",
-			"schema:domainIncludes": { "@id": "schema:ListItem" },
-		},
-	],
-};
+const VOCABULARY = JSON.parse(
+	gunzipSync(
+		readFileSync(
+			join(process.cwd(), "scripts/vendor/schemaorg-30.1.jsonld.gz"),
+		),
+	).toString("utf8"),
+);
 
 /** Wraps one JSON-LD graph in an otherwise-empty page, as `dist/**\/*.html` pages would have it. */
 const page = (graph: object) =>
@@ -162,9 +82,8 @@ describe("validatePage", () => {
 	});
 
 	it("flags an invalid @type as an ERROR", async () => {
-		// The vocabulary only checks that a @type exists and that supplied
-		// properties are recognized; it has no BlogPosting-specific handler
-		// enforcing required fields (that's this site's own rules, tested in
+		// checkSiteRules has no BlogPosting-specific handler enforcing required
+		// fields by itself (that's this site's own rules, tested in
 		// structured-data-rules.test.ts). A misspelled @type is the reliable
 		// way to force an ERROR out of the vendor validator itself: schema.org's
 		// generic handler rejects unknown types outright.
@@ -200,6 +119,30 @@ describe("validatePage", () => {
 		);
 	});
 
+	it("flags a relative breadcrumb item, via the vendor validator", async () => {
+		// checkSiteRules doesn't check this itself: Adobe's own
+		// BreadcrumbListValidator already does (validateItemUrl), so checking
+		// it again here would just double-report the same issue.
+		const graph = completeArticle();
+		const breadcrumbs = graph["@graph"][1] as {
+			itemListElement: Record<string, unknown>[];
+		};
+		const first = breadcrumbs.itemListElement[0];
+		if (!first) throw new Error("fixture has no first breadcrumb item");
+		first.item = "/";
+		const issues = await validatePage(
+			page(graph),
+			"/writing/a-great-post/",
+			VOCABULARY,
+		);
+		expect(issues).toContainEqual(
+			expect.objectContaining({
+				rootType: "BreadcrumbList",
+				issueMessage: expect.stringContaining("Invalid URL"),
+			}),
+		);
+	});
+
 	it("also runs this site's own rules, e.g. a missing BreadcrumbList", async () => {
 		const graph = completeArticle();
 		graph["@graph"] = graph["@graph"].filter(
@@ -230,5 +173,37 @@ describe("validatePage", () => {
 		expect(
 			issues.every((issue) => issue.page === "/writing/broken-post/"),
 		).toBe(true);
+	});
+});
+
+describe("hasBlockingIssues", () => {
+	it("is false with no issues", () => {
+		expect(hasBlockingIssues([])).toBe(false);
+	});
+
+	it("is true for an ERROR", () => {
+		expect(
+			hasBlockingIssues([
+				{
+					page: "/",
+					dataFormat: "jsonld",
+					rootType: "WebSite",
+					severity: "ERROR",
+					issueMessage: "x",
+				},
+			]),
+		).toBe(true);
+	});
+
+	it("is true for a WARNING alone — the gate has no free pass for warnings", async () => {
+		const graph = completeArticle();
+		(graph["@graph"][0] as Record<string, unknown>).notARealProperty = "x";
+		const issues = await validatePage(
+			page(graph),
+			"/writing/a-great-post/",
+			VOCABULARY,
+		);
+		expect(issues.every((issue) => issue.severity === "WARNING")).toBe(true);
+		expect(hasBlockingIssues(issues)).toBe(true);
 	});
 });

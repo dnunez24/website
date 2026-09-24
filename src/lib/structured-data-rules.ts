@@ -47,16 +47,6 @@ const hasType = (node: ExtractedNode, type: string): boolean =>
 	node["@type"] === type ||
 	(Array.isArray(node["@type"]) && node["@type"].includes(type));
 
-/** The URL string on a BreadcrumbList `item`, inline or `{"@id": ...}`. */
-function breadcrumbItemUrl(item: unknown): unknown {
-	if (typeof item !== "object" || item === null) return undefined;
-	const value = (item as ExtractedNode).item;
-	if (typeof value === "object" && value !== null) {
-		return (value as ExtractedNode)["@id"];
-	}
-	return value;
-}
-
 /**
  * Field rules per root `@type`, checked against every node of that type on
  * a page. Covers the fields Google's rich results and this site's `seo.ts`
@@ -97,18 +87,16 @@ const FIELD_RULES: Record<
 		return issues;
 	},
 
+	// Item count and URL validity are Adobe's own BreadcrumbListValidator's
+	// job (`atLeastTwoItems`, `validateItemUrl`) — checked here too, it would
+	// just double-report the same issue. `position` isn't, so that's all
+	// that's left to check.
 	BreadcrumbList: (node) => {
 		const issues: string[] = [];
 		const items = Array.isArray(node.itemListElement)
 			? (node.itemListElement as unknown[])
 			: [];
-		if (items.length < 2) {
-			issues.push('"itemListElement" must have at least 2 items');
-		}
 		items.forEach((item, index) => {
-			if (!isAbsoluteUrl(breadcrumbItemUrl(item))) {
-				issues.push(`itemListElement[${index}].item must be an absolute URL`);
-			}
 			const position =
 				typeof item === "object" && item !== null
 					? (item as ExtractedNode).position
@@ -154,9 +142,13 @@ interface RouteRule {
 const ROUTES: readonly RouteRule[] = [
 	{ pattern: /^\/$/, types: ["WebSite"] },
 	{ pattern: /^\/about\/$/, types: ["ProfilePage"] },
+	// Order matters: pagination must match before the general article
+	// pattern, which is deliberately greedy (`.+`, not `[^/]+`) so nested
+	// article ids like `/writing/series/part-1/` — allowed by the content
+	// glob and `[...slug].astro` — still map to BlogPosting.
 	{ pattern: /^\/writing\/page\/\d+\/$/, types: ["CollectionPage"] },
 	{ pattern: /^\/writing\/$/, types: ["CollectionPage"] },
-	{ pattern: /^\/writing\/[^/]+\/$/, types: ["BlogPosting", "BreadcrumbList"] },
+	{ pattern: /^\/writing\/.+\/$/, types: ["BlogPosting", "BreadcrumbList"] },
 	{ pattern: /^\/topics\/$/, types: ["CollectionPage"] },
 	{ pattern: /^\/topics\/[^/]+\/$/, types: ["CollectionPage"] },
 ];

@@ -13,6 +13,7 @@ import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gunzipSync } from "node:zlib";
 import {
+	hasBlockingIssues,
 	type StructuredDataIssue,
 	validatePage,
 } from "../src/lib/structured-data.ts";
@@ -96,9 +97,6 @@ console.log(
 		`${warnings.length} warning${warnings.length === 1 ? "" : "s"}.`,
 );
 
-// Both severities fail the gate: the site has none today, and a WARNING
-// (e.g. an unrecognized property) is exactly the kind of regression this
-// check exists to catch.
-if (errors.length > 0 || warnings.length > 0) {
+if (hasBlockingIssues(issues)) {
 	process.exitCode = 1;
 }

@@ -68,4 +68,4 @@ Check out [our documentation](https://docs.astro.build) or jump into our [Discor
 
 This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
 
-`scripts/vendor/schemaorg-30.1.jsonld.gz` is the [schema.org](https://schema.org/) vocabulary, version 30.1, licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+`scripts/vendor/schemaorg-30.1.jsonld.gz` is the [schema.org](https://schema.org/) vocabulary, version 30.1, copyright [Schema.org Sponsors](https://schema.org/docs/terms.html) and licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).

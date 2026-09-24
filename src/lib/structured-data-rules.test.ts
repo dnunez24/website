@@ -127,6 +127,19 @@ describe("checkSiteRules: routes", () => {
 			checkSiteRules(extract(article()), "/writing/a-great-post/"),
 		).toEqual([]);
 	});
+
+	it("maps a nested article id to BlogPosting, not 'no rule'", () => {
+		// The content glob and [...slug].astro both allow ids with slashes
+		// (e.g. a series), so the article route must too.
+		const graph = articleGraph(site, "/writing/series/part-1/", {
+			title: "Part one",
+			description: "First in a series.",
+			publishedDate: new Date("2024-01-01T00:00:00Z"),
+		});
+		expect(checkSiteRules(extract(graph), "/writing/series/part-1/")).toEqual(
+			[],
+		);
+	});
 });
 
 describe("checkSiteRules: BlogPosting", () => {
@@ -148,6 +161,28 @@ describe("checkSiteRules: BlogPosting", () => {
 		expect(checkSiteRules(extract(graph), page)).toContainEqual(
 			expect.objectContaining({
 				issueMessage: '"datePublished" must be an ISO 8601 date',
+			}),
+		);
+	});
+
+	it("fails on a bad dateModified", () => {
+		const graph = withNode(article(), "BlogPosting", (node) => {
+			node.dateModified = "2024-01-02";
+		});
+		expect(checkSiteRules(extract(graph), page)).toContainEqual(
+			expect.objectContaining({
+				issueMessage: '"dateModified" must be an ISO 8601 date',
+			}),
+		);
+	});
+
+	it("fails on a relative url", () => {
+		const graph = withNode(article(), "BlogPosting", (node) => {
+			node.url = "/writing/a-great-post/";
+		});
+		expect(checkSiteRules(extract(graph), page)).toContainEqual(
+			expect.objectContaining({
+				issueMessage: '"url" must be an absolute URL',
 			}),
 		);
 	});
@@ -174,6 +209,17 @@ describe("checkSiteRules: BlogPosting", () => {
 		);
 	});
 
+	it("fails when author.name is missing (not just when author is a string)", () => {
+		const graph = withNode(article(), "BlogPosting", (node) => {
+			delete (node.author as Record<string, unknown>).name;
+		});
+		expect(checkSiteRules(extract(graph), page)).toContainEqual(
+			expect.objectContaining({
+				issueMessage: expect.stringContaining('"author.name"'),
+			}),
+		);
+	});
+
 	it("fails when the JSON-LD block is missing entirely", () => {
 		expect(checkSiteRules({}, page)).toEqual([
 			expect.objectContaining({
@@ -188,19 +234,62 @@ describe("checkSiteRules: BlogPosting", () => {
 	});
 });
 
-describe("checkSiteRules: BreadcrumbList", () => {
-	const page = "/writing/a-great-post/";
-
-	it("fails with fewer than two items", () => {
-		const graph = withNode(article(), "BreadcrumbList", (node) => {
-			(node.itemListElement as unknown[]).splice(1);
+describe("checkSiteRules: WebSite and CollectionPage", () => {
+	it("fails when the WebSite has no name", () => {
+		const graph = withNode(homeGraph(site), "WebSite", (node) => {
+			node.name = "";
 		});
-		expect(checkSiteRules(extract(graph), page)).toContainEqual(
+		expect(checkSiteRules(extract(graph), "/")).toContainEqual(
+			expect.objectContaining({ issueMessage: '"name" must be non-empty' }),
+		);
+	});
+
+	it("fails when the WebSite has no url", () => {
+		const graph = withNode(homeGraph(site), "WebSite", (node) => {
+			delete node.url;
+		});
+		expect(checkSiteRules(extract(graph), "/")).toContainEqual(
 			expect.objectContaining({
-				issueMessage: '"itemListElement" must have at least 2 items',
+				issueMessage: '"url" must be an absolute URL',
 			}),
 		);
 	});
+
+	it("fails when the CollectionPage has no name", () => {
+		const graph = withNode(
+			collectionGraph(site, "/writing/", "Writing", "Everything."),
+			"CollectionPage",
+			(node) => {
+				node.name = "";
+			},
+		);
+		expect(checkSiteRules(extract(graph), "/writing/")).toContainEqual(
+			expect.objectContaining({ issueMessage: '"name" must be non-empty' }),
+		);
+	});
+
+	it("fails when the CollectionPage has no url", () => {
+		const graph = withNode(
+			collectionGraph(site, "/writing/", "Writing", "Everything."),
+			"CollectionPage",
+			(node) => {
+				delete node.url;
+			},
+		);
+		expect(checkSiteRules(extract(graph), "/writing/")).toContainEqual(
+			expect.objectContaining({
+				issueMessage: '"url" must be an absolute URL',
+			}),
+		);
+	});
+});
+
+describe("checkSiteRules: BreadcrumbList", () => {
+	const page = "/writing/a-great-post/";
+
+	// Item count and URL validity aren't checked here: that's Adobe's own
+	// BreadcrumbListValidator's job (see structured-data.test.ts for a
+	// relative item still getting caught through the full validatePage).
 
 	it("fails when an item has no position", () => {
 		const graph = withNode(article(), "BreadcrumbList", (node) => {

@@ -41,3 +41,17 @@ export async function validatePage(
 		...checkSiteRules(extracted.jsonld, page),
 	];
 }
+
+/**
+ * Whether any issue should fail the structured-data gate. Both severities
+ * do: the site has no WARNINGs today, so one appearing (e.g. an
+ * unrecognized property) is exactly the kind of regression this check
+ * exists to catch, not something to wave through.
+ */
+export function hasBlockingIssues(
+	issues: readonly StructuredDataIssue[],
+): boolean {
+	return issues.some(
+		(issue) => issue.severity === "ERROR" || issue.severity === "WARNING",
+	);
+}
