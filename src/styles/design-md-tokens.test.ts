@@ -3,40 +3,41 @@ import { resolve } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
-const EPSILON = 0.001;
 
 /**
- * Color tokens that legitimately differ between DESIGN.md (the approved
- * design system) and theme.css (main) because an open PR hasn't landed yet.
- * One place, one PR number each. Remove an entry once its PR merges and
- * theme.css catches up — the comparison below then holds that token to
- * strict equality like every other one.
+ * Both files write decimal literals with no arithmetic between them, so
+ * exact equality is the intent. A tiny epsilon only guards against
+ * incidental float noise (e.g. "77" vs "77.0"), not real token drift: it
+ * must stay far below the palette's smallest recorded step (0.001).
  */
-const PENDING_DIFFERENCES: Record<string, string> = {
-	"color-quote-ink":
-		"#30 (claude/prose-quotes-footnotes): earth-800 -> earth-700",
-	"color-quote-cite":
-		"#30 (claude/prose-quotes-footnotes): earth-600 -> earth-500",
-	"color-quote-link":
-		"#30 (claude/prose-quotes-footnotes): new token, not yet in theme.css",
-	"color-quote-link-hover":
-		"#30 (claude/prose-quotes-footnotes): new token, not yet in theme.css",
+const EPSILON = 1e-9;
+
+/**
+ * Color tokens that differ from theme.css today because an open PR hasn't
+ * landed yet. One place, one PR number each, with the exact value theme.css
+ * holds right now (`themeValueBefore`, omitted if the token doesn't exist in
+ * theme.css yet). The main comparison below accepts a pending token at
+ * EITHER its documented "before" value or DESIGN.md's ("after") value; any
+ * third value is real, unrelated drift and fails immediately. That also
+ * means merge order doesn't matter: if the PR lands before this file does,
+ * these tokens are simply already at their "after" value and stop being
+ * treated as different, with no edit to this file required.
+ */
+const PENDING_DIFFERENCES: Record<
+	string,
+	{ pr: string; themeValueBefore?: string }
+> = {
+	"color-quote-ink": { pr: "#30", themeValueBefore: "oklch(40.0% 0.031 78.5)" }, // earth-800
+	"color-quote-cite": { pr: "#30", themeValueBefore: "oklch(48.1% 0.044 77)" }, // earth-600
+	"color-quote-link": { pr: "#30" }, // new token, not yet in theme.css
+	"color-quote-link-hover": { pr: "#30" }, // new token, not yet in theme.css
 };
 
-/**
- * theme.css tokens the design system deliberately doesn't name. Media's
- * guidance in DESIGN.md points straight at the `color-concrete-200` palette
- * step; `color-media-ground` is only theme.css's local alias for it, not a
- * design-system token with a counterpart to compare against. Not a pending
- * sync — there is no token to add on either side.
- */
-const UNNAMED_BY_DESIGN = new Set(["color-media-ground"]);
-
-/** Matches `oklch(L% C H)` and captures its three numeric components. */
-const OKLCH_RE = /oklch\(\s*([\d.]+)%\s+([\d.]+)\s+([\d.]+)\s*\)/;
+/** Matches a whole value of the form `oklch(L% C H)` and captures its three numeric components. */
+const OKLCH_RE = /^oklch\(\s*([\d.]+)%\s+([\d.]+)\s+([\d.]+)\s*\)$/;
 
 function parseOklch(value: string): [number, number, number] | null {
-	const [, l = "", c = "", h = ""] = OKLCH_RE.exec(value) ?? [];
+	const [, l = "", c = "", h = ""] = OKLCH_RE.exec(value.trim()) ?? [];
 	if (!l || !c || !h) return null;
 	return [Number(l), Number(c), Number(h)];
 }
@@ -56,7 +57,10 @@ function sameOklch(a: string, b: string): boolean | null {
  * Extracts DESIGN.md's `colors:` front-matter map (`name: "value"` entries,
  * two-space indent) and resolves single-hop `{colors.other-name}` references
  * to their literal value, the same way the design system's own tokens.json
- * aliases a semantic color to a palette step.
+ * aliases a semantic color to a palette step. Throws on any non-blank,
+ * non-comment line under `colors:` that isn't in that exact shape, rather
+ * than silently skipping it: a value in single quotes, missing quotes, or
+ * any other shape the linter would still accept must not go uncompared.
  */
 function parseDesignMdColors(source: string): Map<string, string> {
 	const body = /^---\r?\n([\s\S]*?)\r?\n---/.exec(source)?.[1];
@@ -74,7 +78,12 @@ function parseDesignMdColors(source: string): Map<string, string> {
 		if (line === "" || line.trimStart().startsWith("#")) continue;
 		if (!/^\s/.test(line)) break; // the next top-level key
 		const [, name = "", value = ""] = entry.exec(line) ?? [];
-		if (name) raw.set(name, value);
+		if (!name) {
+			throw new Error(
+				`DESIGN.md: unrecognized line under \`colors:\` (expected \`  name: "value"\`): ${line}`,
+			);
+		}
+		raw.set(name, value);
 	}
 
 	const ref = /^\{colors\.([a-zA-Z0-9-]+)\}$/;
@@ -147,9 +156,38 @@ describe("DESIGN.md color tokens", () => {
 		const problems: string[] = [];
 
 		for (const [name, designValue] of designMdColors) {
-			if (name in PENDING_DIFFERENCES) continue;
-
+			const pending = Object.hasOwn(PENDING_DIFFERENCES, name)
+				? PENDING_DIFFERENCES[name]
+				: undefined;
 			const themeValue = themeCssColors.get(name);
+
+			if (pending) {
+				if (themeValue === undefined) {
+					if (pending.themeValueBefore !== undefined) {
+						problems.push(
+							`${name}: expected in theme.css (as ${pending.themeValueBefore}, pending ${pending.pr}) but missing entirely`,
+						);
+					}
+					// else: documented as not-yet-added by pending.pr. Expected.
+					continue;
+				}
+				const matchesBefore =
+					pending.themeValueBefore !== undefined &&
+					sameOklch(themeValue, pending.themeValueBefore);
+				const matchesAfter = sameOklch(themeValue, designValue);
+				if (!matchesBefore && !matchesAfter) {
+					problems.push(
+						`${name}: theme.css "${themeValue}" is neither the documented pre-${pending.pr} value` +
+							(pending.themeValueBefore !== undefined
+								? ` ("${pending.themeValueBefore}")`
+								: "") +
+							` nor DESIGN.md's ("${designValue}"). Real drift: update PENDING_DIFFERENCES.`,
+					);
+				}
+				// else: still at the documented "before" value, or #30 already landed. Expected either way.
+				continue;
+			}
+
 			if (themeValue === undefined) {
 				problems.push(`${name}: in DESIGN.md but not in theme.css`);
 				continue;
@@ -168,7 +206,8 @@ describe("DESIGN.md color tokens", () => {
 		}
 
 		for (const name of themeCssColors.keys()) {
-			if (name in PENDING_DIFFERENCES || UNNAMED_BY_DESIGN.has(name)) continue;
+			if (Object.hasOwn(PENDING_DIFFERENCES, name)) continue;
+			if (name === "color-media-ground") continue; // checked on its own below
 			if (!designMdColors.has(name)) {
 				problems.push(`${name}: in theme.css but not in DESIGN.md`);
 			}
@@ -177,28 +216,21 @@ describe("DESIGN.md color tokens", () => {
 		expect(problems).toEqual([]);
 	});
 
-	it("keeps the pending-differences list from going stale", () => {
-		const stale: string[] = [];
-
-		for (const [name, reason] of Object.entries(PENDING_DIFFERENCES)) {
-			const designValue = designMdColors.get(name);
-			if (designValue === undefined) {
-				stale.push(
-					`${name}: no longer in DESIGN.md (${reason}) — drop it from the list`,
-				);
-				continue;
-			}
-
-			const themeValue = themeCssColors.get(name);
-			if (themeValue === undefined) continue; // still not synced: expected
-
-			if (sameOklch(designValue, themeValue)) {
-				stale.push(
-					`${name}: DESIGN.md and theme.css now match (${reason}) — drop it from the list`,
-				);
-			}
-		}
-
-		expect(stale).toEqual([]);
+	// theme.css's color-media-ground has no DESIGN.md token of its own: the
+	// design system's Media guidance points straight at the color-concrete-200
+	// palette step (see DESIGN.md's Colors section), not a semantic alias.
+	// Check the value it actually resolves to, rather than skipping it.
+	it("resolves theme.css's color-media-ground to DESIGN.md's color-concrete-200", () => {
+		const mediaGround = themeCssColors.get("color-media-ground");
+		const concrete200 = designMdColors.get("color-concrete-200");
+		expect(
+			mediaGround,
+			"theme.css should define --color-media-ground",
+		).toBeDefined();
+		expect(
+			concrete200,
+			"DESIGN.md should define color-concrete-200",
+		).toBeDefined();
+		expect(sameOklch(mediaGround ?? "", concrete200 ?? "")).toBe(true);
 	});
 });
