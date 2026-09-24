@@ -1,0 +1,49 @@
+---
+import { SITE_TITLE } from "@constants";
+import { type ArticleData, pageTitle, SHARE_IMAGE } from "@lib/seo";
+
+interface Props {
+	title: string;
+	description: string;
+	/** Articles add their dates and topics to the Open Graph tags. */
+	article?:
+		| Pick<ArticleData, "publishedDate" | "updatedDate" | "topics">
+		| undefined;
+}
+
+const { title, description, article } = Astro.props;
+// `site` makes every URL absolute to production; without it, to the request.
+const site = Astro.site ?? Astro.url;
+const canonicalURL = new URL(Astro.url.pathname, site);
+const imageURL = new URL(SHARE_IMAGE.path, site);
+---
+
+<link rel="canonical" href={canonicalURL} />
+<title>{pageTitle(title)}</title>
+<meta name="description" content={description} />
+
+<!-- Open Graph. og:title leaves out the site name: og:site_name carries it. -->
+<meta property="og:type" content={article ? "article" : "website"} />
+<meta property="og:site_name" content={SITE_TITLE} />
+<meta property="og:locale" content="en_US" />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={imageURL} />
+<meta property="og:image:type" content={SHARE_IMAGE.type} />
+<meta property="og:image:width" content={String(SHARE_IMAGE.width)} />
+<meta property="og:image:height" content={String(SHARE_IMAGE.height)} />
+<meta property="og:image:alt" content={SHARE_IMAGE.alt} />
+{
+	article && (
+		<Fragment>
+			<meta property="article:published_time" content={article.publishedDate.toISOString()} />
+			{article.updatedDate && <meta property="article:modified_time" content={article.updatedDate.toISOString()} />}
+			{article.topics?.map((topic) => <meta property="article:tag" content={topic} />)}
+		</Fragment>
+	)
+}
+
+<!-- X reads Open Graph for the rest. -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image:alt" content={SHARE_IMAGE.alt} />

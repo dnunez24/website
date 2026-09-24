@@ -1,12 +1,15 @@
 ---
 import portrait from "@assets/blog-placeholder-about.jpg";
+import JsonLd from "@components/JsonLd.astro";
 import PageTitle from "@components/PageTitle.astro";
 import Portrait from "@components/Portrait.astro";
 import Prose from "@components/Prose.astro";
 import Base from "@layouts/Base.astro";
+import { profileGraph } from "@lib/seo";
 ---
 
 <Base title="About" description="Who I am and what I do.">
+	<JsonLd slot="head" data={profileGraph(Astro.site ?? Astro.url, Astro.url.pathname)} />
 	<PageTitle>About</PageTitle>
 	<div class="flow-root">
 		<Portrait src={portrait} alt="Dave Nuñez" float />

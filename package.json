@@ -42,6 +42,7 @@
 		"@google/design.md": "^0.4.0",
 		"@types/node": "^22.20.3",
 		"happy-dom": "^20.14.5",
+		"schema-dts": "^2.0.0",
 		"subset-font": "^2.7.0",
 		"typescript": "^6.0.3",
 		"vitest": "^5.0.1"

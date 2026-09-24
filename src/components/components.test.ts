@@ -11,8 +11,10 @@ import Figure from "./Figure.astro";
 import Footer from "./Footer.astro";
 import FormattedDate from "./FormattedDate.astro";
 import Header from "./Header.astro";
+import JsonLd from "./JsonLd.astro";
 import Link from "./Link.astro";
 import MermaidDiagram from "./MermaidDiagram.astro";
+import PageMeta from "./PageMeta.astro";
 import PageTitle from "./PageTitle.astro";
 import Pagination from "./Pagination.astro";
 import Portrait from "./Portrait.astro";
@@ -236,6 +238,16 @@ describe("Footer", () => {
 		expect(await current("https://example.com/writing/")).toEqual([]);
 	});
 
+	it("marks the LinkedIn and GitHub profiles as the same person", async () => {
+		const doc = parse(
+			await render(Footer, { request: new Request("https://example.com/") }),
+		);
+		const rels = [...doc.querySelectorAll("nav a")].map(
+			(link) => `${link.textContent?.trim()}:${link.getAttribute("rel") ?? ""}`,
+		);
+		expect(rels).toEqual(["Topics:", "LinkedIn:me", "GitHub:me", "RSS:"]);
+	});
+
 	it("labels its navigation Secondary and ends with the copyright", async () => {
 		const doc = parse(
 			await render(Footer, { request: new Request("https://example.com/") }),
@@ -252,6 +264,84 @@ describe("Footer", () => {
 		expect(doc.querySelector("footer p")?.textContent).toMatch(
 			/^© 2026(–\d{4})? Dave Nuñez\. All rights reserved\.$/,
 		);
+	});
+});
+
+describe("PageMeta", () => {
+	const meta = async (props: Record<string, unknown>, url: string) => {
+		const doc = parse(
+			await render(PageMeta, { props, request: new Request(url) }),
+		);
+		const content = (key: string) =>
+			[
+				...doc.querySelectorAll(`meta[property="${key}"], meta[name="${key}"]`),
+			].map((tag) => tag.getAttribute("content"));
+		return { doc, content };
+	};
+
+	it("titles the page, links the canonical URL and shares the card", async () => {
+		const { doc, content } = await meta(
+			{ title: "Writing", description: "Everything I have written." },
+			"https://davidanunez.com/writing/",
+		);
+		expect(doc.querySelector("title")?.textContent).toBe(
+			"Writing — Dave Nuñez",
+		);
+		expect(
+			doc.querySelector('link[rel="canonical"]')?.getAttribute("href"),
+		).toBe("https://davidanunez.com/writing/");
+		expect(content("og:type")).toEqual(["website"]);
+		expect(content("og:url")).toEqual(["https://davidanunez.com/writing/"]);
+		expect(content("og:image")).toEqual([
+			"https://davidanunez.com/og/default.png",
+		]);
+		expect(content("og:image:width")).toEqual(["1200"]);
+		expect(content("og:image:height")).toEqual(["630"]);
+		expect(content("og:image:alt")).toEqual([
+			"Dave Nuñez: Leader / Builder / Integrator",
+		]);
+		expect(content("twitter:card")).toEqual(["summary_large_image"]);
+		expect(content("article:published_time")).toEqual([]);
+	});
+
+	it("adds an article's dates and topics", async () => {
+		const { content } = await meta(
+			{
+				title: "First post",
+				description: "Lorem ipsum.",
+				article: {
+					publishedDate: new Date("2022-07-08T00:00:00Z"),
+					updatedDate: new Date("2022-08-01T00:00:00Z"),
+					topics: ["systems", "architecture"],
+				},
+			},
+			"https://davidanunez.com/writing/first-post/",
+		);
+		expect(content("og:type")).toEqual(["article"]);
+		expect(content("article:published_time")).toEqual([
+			"2022-07-08T00:00:00.000Z",
+		]);
+		expect(content("article:modified_time")).toEqual([
+			"2022-08-01T00:00:00.000Z",
+		]);
+		expect(content("article:tag")).toEqual(["systems", "architecture"]);
+	});
+});
+
+describe("JsonLd", () => {
+	it("writes the graph as JSON-LD and escapes a closing script tag", async () => {
+		const html = await render(JsonLd, {
+			props: {
+				data: {
+					"@context": "https://schema.org",
+					"@graph": [{ "@type": "Thing", name: "</script><b>" }],
+				},
+			},
+		});
+		expect(html).toContain('<script type="application/ld+json">');
+		expect(html).not.toContain("</script><b>");
+		const json = html.replace(/^.*?>/s, "").replace(/<\/script>\s*$/, "");
+		expect(JSON.parse(json)["@graph"][0].name).toBe("</script><b>");
 	});
 });
 
@@ -608,6 +698,17 @@ describe("WordMark", () => {
 		expect(link?.getAttribute("href")).toBe("/about");
 		expect(doc.querySelectorAll("span")).toHaveLength(2);
 		expect(link?.textContent).toContain("Software leader");
+	});
+
+	it("shows the tagline only from the measure breakpoint up", async () => {
+		const doc = parse(
+			await render(WordMark, {
+				props: { name: "Dave Nuñez", tagline: "Leader / Builder / Integrator" },
+			}),
+		);
+		const tagline = doc.querySelectorAll("span")[1]?.classList;
+		expect(tagline).toContain("hidden");
+		expect(tagline).toContain("measure:block");
 	});
 });
 
