@@ -8,8 +8,12 @@
  */
 
 import { createReadStream } from "node:fs";
-import { access, mkdir, readdir, writeFile } from "node:fs/promises";
-import { createServer } from "node:http";
+import { access, mkdir, stat, writeFile } from "node:fs/promises";
+import {
+	createServer,
+	type IncomingMessage,
+	type ServerResponse,
+} from "node:http";
 import { extname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -17,6 +21,7 @@ import {
 	type A11yPageResult,
 	checkPageAccessibility,
 } from "../src/lib/a11y.ts";
+import { findHtmlFiles, pagePath } from "../src/lib/dist-pages.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const DIST_DIR = join(ROOT, "dist");
@@ -29,6 +34,8 @@ const HEIGHT = 800;
 const CONTENT_TYPES: Record<string, string> = {
 	".html": "text/html; charset=utf-8",
 	".css": "text/css; charset=utf-8",
+	".js": "text/javascript; charset=utf-8",
+	".mjs": "text/javascript; charset=utf-8",
 	".svg": "image/svg+xml",
 	".png": "image/png",
 	".jpg": "image/jpeg",
@@ -41,78 +48,109 @@ const CONTENT_TYPES: Record<string, string> = {
 	".json": "application/json",
 };
 
-async function findHtmlFiles(dir: string): Promise<string[]> {
-	const entries = await readdir(dir, {
-		withFileTypes: true,
-		recursive: true,
-	});
-	return entries
-		.filter((entry) => entry.isFile() && entry.name.endsWith(".html"))
-		.map((entry) => join(entry.parentPath, entry.name))
-		.sort();
-}
+type Resolved =
+	| { kind: "file"; path: string }
+	| { kind: "redirect"; to: string }
+	| { kind: "not-found" };
 
-/** `dist/about/index.html` -> `/about/`; `dist/index.html` -> `/`; `dist/404.html` -> `/404.html`. */
-function pagePath(file: string): string {
-	const path = relative(DIST_DIR, file).split(sep).join("/");
-	return `/${path.replace(/index\.html$/, "")}`;
-}
-
-/** Maps a URL path to a file under `dist/`, adding `index.html` for a directory-style path. */
-async function resolveFile(urlPath: string): Promise<string | undefined> {
-	const candidate = join(
-		DIST_DIR,
-		urlPath.endsWith("/") ? `${urlPath}index.html` : urlPath,
-	);
-	if (!(candidate + sep).startsWith(DIST_DIR + sep) && candidate !== DIST_DIR) {
-		return undefined; // outside dist/, e.g. via "../"
-	}
-	try {
-		await access(candidate);
-		return candidate;
-	} catch {
-		return undefined;
-	}
+function withinDist(candidate: string): boolean {
+	return candidate === DIST_DIR || (candidate + sep).startsWith(DIST_DIR + sep);
 }
 
 /**
- * Serves `dist/` as a static site the way Workers will: `/x/` resolves to
- * `/x/index.html`, and any path with no matching file gets `404.html`'s
- * markup back with a 404 status, rather than a bare Node error page.
+ * Maps a URL path to a file under `dist/`, the way Workers serves static
+ * assets: `/x/` resolves to `/x/index.html`, and a directory requested
+ * without its trailing slash (`/x`) redirects to `/x/` rather than being
+ * read as a file (which throws EISDIR).
  */
+async function resolve(urlPath: string): Promise<Resolved> {
+	if (urlPath.endsWith("/")) {
+		const filePath = join(DIST_DIR, `${urlPath}index.html`);
+		if (!withinDist(filePath)) return { kind: "not-found" };
+		try {
+			if ((await stat(filePath)).isFile()) {
+				return { kind: "file", path: filePath };
+			}
+		} catch {
+			// Not found.
+		}
+		return { kind: "not-found" };
+	}
+
+	const candidate = join(DIST_DIR, urlPath);
+	if (!withinDist(candidate)) return { kind: "not-found" };
+	try {
+		const info = await stat(candidate);
+		if (info.isFile()) return { kind: "file", path: candidate };
+		if (info.isDirectory()) return { kind: "redirect", to: `${urlPath}/` };
+	} catch {
+		// Not found.
+	}
+	return { kind: "not-found" };
+}
+
+async function handleRequest(
+	req: IncomingMessage,
+	res: ServerResponse,
+): Promise<void> {
+	let urlPath: string;
+	try {
+		urlPath = decodeURIComponent(
+			new URL(req.url ?? "/", "http://localhost").pathname,
+		);
+	} catch {
+		// A malformed percent-escape (e.g. a truncated UTF-8 sequence) throws.
+		res.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" });
+		res.end("Bad request: malformed URL");
+		return;
+	}
+
+	const result = await resolve(urlPath);
+	if (result.kind === "file") {
+		res.writeHead(200, {
+			"Content-Type":
+				CONTENT_TYPES[extname(result.path)] ?? "application/octet-stream",
+		});
+		createReadStream(result.path).pipe(res);
+		return;
+	}
+	if (result.kind === "redirect") {
+		res.writeHead(301, { Location: result.to });
+		res.end();
+		return;
+	}
+
+	const notFound = await resolve("/404.html");
+	res.writeHead(404, { "Content-Type": "text/html; charset=utf-8" });
+	if (notFound.kind === "file") {
+		createReadStream(notFound.path).pipe(res);
+	} else {
+		res.end("Not found");
+	}
+}
+
+/** Serves `dist/` on a free port, the way Workers will. */
 function startServer(): Promise<{ url: string; close: () => Promise<void> }> {
 	const server = createServer((req, res) => {
-		void (async () => {
-			const urlPath = decodeURIComponent(
-				new URL(req.url ?? "/", "http://localhost").pathname,
-			);
-			const file = await resolveFile(urlPath);
-			if (file) {
-				res.writeHead(200, {
-					"Content-Type":
-						CONTENT_TYPES[extname(file)] ?? "application/octet-stream",
-				});
-				createReadStream(file).pipe(res);
-				return;
+		// However a request fails — a bad URL, a bad path, a bug in resolve()
+		// — the server must respond, not let an unhandled rejection crash
+		// the whole run.
+		handleRequest(req, res).catch((error: unknown) => {
+			console.error("check-a11y static server error:", error);
+			if (!res.headersSent) {
+				res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
 			}
-
-			const notFound = await resolveFile("/404.html");
-			res.writeHead(404, { "Content-Type": "text/html; charset=utf-8" });
-			if (notFound) {
-				createReadStream(notFound).pipe(res);
-			} else {
-				res.end("Not found");
-			}
-		})();
+			res.end("Internal error");
+		});
 	});
 
-	return new Promise((resolve) => {
+	return new Promise((resolvePromise) => {
 		server.listen(0, "127.0.0.1", () => {
 			const address = server.address();
 			if (address === null || typeof address === "string") {
 				throw new Error("Static server has no port");
 			}
-			resolve({
+			resolvePromise({
 				url: `http://127.0.0.1:${address.port}`,
 				close: () => new Promise((res) => server.close(() => res())),
 			});
@@ -153,7 +191,7 @@ if (files.length === 0) {
 }
 
 const server = await startServer();
-const browser = await chromium.launch();
+const browser = await chromium.launch({ timeout: 60_000 });
 // An explicit context, not the browser.newPage() shorthand: axe-core's own
 // "finish" step opens a second page in the same context, which Playwright
 // refuses on the shorthand's implicit single-page context.
@@ -161,16 +199,29 @@ const context = await browser.newContext();
 const page = await context.newPage();
 
 const results: A11yPageResult[] = [];
+let crawlError: unknown;
 try {
 	for (const file of files) {
-		const path = pagePath(file);
+		const path = pagePath(DIST_DIR, file);
+		// The site's own 404 page is visited by its real name and is
+		// deliberately expected to answer 404, not 200.
+		const expectedStatusOption =
+			path === "/404.html" ? { expectedStatus: 404 } : {};
 		for (const width of WIDTHS) {
-			await page.goto(server.url + path);
-			const result = await checkPageAccessibility(page, path, width, HEIGHT);
+			const result = await checkPageAccessibility({
+				page,
+				url: server.url + path,
+				label: path,
+				width,
+				height: HEIGHT,
+				...expectedStatusOption,
+			});
 			results.push(result);
 			printResult(result);
 		}
 	}
+} catch (error) {
+	crawlError = error;
 } finally {
 	await browser.close();
 	await server.close();
@@ -182,6 +233,8 @@ const incompleteCount = results.reduce(
 	0,
 );
 
+// Written even when the crawl threw partway through, so a run that fails on
+// page 5 doesn't also lose the report for pages 1-4.
 await mkdir(join(ROOT, "reports/a11y"), { recursive: true });
 await writeFile(
 	REPORT_PATH,
@@ -190,7 +243,17 @@ await writeFile(
 			generatedAt: new Date().toISOString(),
 			widths: WIDTHS,
 			height: HEIGHT,
-			pagesChecked: files.length,
+			pagesPlanned: files.length,
+			checksRecorded: results.length,
+			complete: crawlError === undefined,
+			...(crawlError
+				? {
+						error:
+							crawlError instanceof Error
+								? crawlError.message
+								: String(crawlError),
+					}
+				: {}),
 			violationCount,
 			incompleteCount,
 			results,
@@ -201,12 +264,16 @@ await writeFile(
 );
 
 console.log(
-	`\n${files.length} page${files.length === 1 ? "" : "s"} checked at ${WIDTHS.join("px, ")}px, ` +
+	`\n${results.length} check${results.length === 1 ? "" : "s"} recorded ` +
+		`(of ${files.length * WIDTHS.length} planned at ${WIDTHS.join("px, ")}px), ` +
 		`${violationCount} violation${violationCount === 1 ? "" : "s"}, ` +
 		`${incompleteCount} needing manual review.`,
 );
 console.log(`Report: ${relative(ROOT, REPORT_PATH)}`);
 
+if (crawlError) {
+	throw crawlError;
+}
 if (violationCount > 0) {
 	process.exitCode = 1;
 }

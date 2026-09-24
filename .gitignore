@@ -2,7 +2,7 @@
 dist/
 # generated types
 .astro/
-# check reports (structured data, a11y, ...)
+# check reports (e.g. reports/a11y/)
 reports/
 
 # dependencies
