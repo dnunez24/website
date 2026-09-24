@@ -239,4 +239,43 @@ describe("callouts", () => {
 			expect(page.querySelectorAll(`#${id}`)).toHaveLength(1);
 		}
 	});
+
+	it('tells apart two folder entries that would otherwise both slug to "index"', async () => {
+		// src/content/writing/folder-a/index.md and .../folder-b/index.md: a
+		// content entry keeps images beside its post this way. Both entries'
+		// basename is "index", so the slug falls back to the parent directory.
+		const plugins = callouts();
+		const compile = (markdown: string, fileURL: URL) =>
+			markdownToHtml(markdown, { hastPlugins: plugins, fileURL });
+
+		const [a, b] = await Promise.all([
+			compile(
+				"> [!NOTE]\n> From folder-a.\n",
+				new URL("file:///project/src/content/writing/folder-a/index.md"),
+			),
+			compile(
+				"> [!WARNING]\n> From folder-b.\n",
+				new URL("file:///project/src/content/writing/folder-b/index.md"),
+			),
+		]);
+		const page = parse(`<body>${a.html}${b.html}</body>`);
+
+		const ids = [...page.querySelectorAll(".callout-title")].map((t) => t.id);
+		expect(ids).toEqual(["dn-callout-folder-a-1", "dn-callout-folder-b-1"]);
+		expect(new Set(ids).size).toBe(2);
+	});
+
+	// Known limitation: satteri compiles a document once, and calloutTitles()
+	// bakes the ids into that one compile's output. If the same .md partial is
+	// imported and rendered twice inside one MDX page (two <SharedNote />
+	// instances of the same import), both instances are the same compiled
+	// output, so both copies repeat the same ids. There is no per-render
+	// signal available inside the plugin to tell the two instances apart:
+	// the factory only knows it is compiling this source file once, not how
+	// many times the resulting component will be inserted into a page. See
+	// the PR body for how this is caught in the meantime (a dist-level
+	// duplicate-id check).
+	it.todo(
+		"gives a .md partial rendered twice into one MDX page its own ids each time",
+	);
 });

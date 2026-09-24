@@ -1,4 +1,4 @@
-import { basename, extname } from "node:path";
+import { basename, dirname, extname } from "node:path";
 import {
 	defineHastPlugin,
 	type HastNode,
@@ -32,16 +32,21 @@ const span = (className: string, text: string): Element => ({
  * documents rendered onto one page (an MDX article importing a partial, a
  * specimen page) never share a callout id. Derived from the file name –
  * `first-post.md` becomes "first-post" – the same id a content entry
- * already gets in its own URL (`articleHref`). Falls back to "doc" when
- * satteri compiles without a `fileURL`: Astro's own markdown pipeline
- * always sets one, so this only fires when a test calls `markdownToHtml`
- * directly.
+ * already gets in its own URL (`articleHref`). A folder entry
+ * (`folder-a/index.md`, Astro's usual way to keep images beside a post)
+ * would otherwise slug to the same "index" for every folder; its parent
+ * directory name is used instead, so `folder-a/index.md` and
+ * `folder-b/index.md` don't collide. Falls back to "doc" when satteri
+ * compiles without a `fileURL`: Astro's own markdown pipeline always sets
+ * one, so this only fires when a test calls `markdownToHtml` directly.
  */
 function documentSlug(fileURL: URL | undefined): string {
 	if (fileURL === undefined) return "doc";
 	const name = basename(fileURL.pathname);
 	const stem = name.slice(0, name.length - extname(name).length);
-	const slug = stem
+	const base =
+		stem.toLowerCase() === "index" ? basename(dirname(fileURL.pathname)) : stem;
+	const slug = base
 		.toLowerCase()
 		.replace(/[^a-z0-9]+/g, "-")
 		.replace(/^-+|-+$/g, "");
