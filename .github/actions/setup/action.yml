@@ -1,5 +1,5 @@
 name: Setup
-description: Install pnpm, Node.js and dependencies, and optionally cache Playwright Chromium.
+description: Install pnpm, Node.js and dependencies, and optionally install Playwright Chromium.
 
 inputs:
   browser:
