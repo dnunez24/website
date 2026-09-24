@@ -282,7 +282,7 @@ const orderSequence = `sequenceDiagram
 				semantic.map(([name, swatch]) => (
 					<li class="flex items-center gap-1">
 						<span class:list={["size-6 shrink-0 rounded-sm border border-line", swatch]} />
-						<span class="min-w-0 break-all font-mono text-label">{name}</span>
+						<span class="min-w-0 wrap-anywhere font-mono text-label">{name}</span>
 					</li>
 				))
 			}
