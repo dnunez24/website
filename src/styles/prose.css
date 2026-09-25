@@ -119,6 +119,19 @@
 
 		& blockquote {
 			@apply f6y-px-8 text-quote-ink slant;
+			/*
+			 * Scopes the base link rule's `--color-link`/`-hover` instead of adding
+			 * a selector to beat it. `text-link` is a utility class, which Tailwind
+			 * always puts in the utilities layer even when a component (BlockQuote,
+			 * Link) applies it directly to an element - that layer outranks any
+			 * selector we write here in @layer components, regardless of
+			 * specificity. A custom property's resolved value isn't layer-bound, so
+			 * this reaches the base rule, footnote references and the Link
+			 * component alike, in Markdown and in BlockQuote.astro alike (see
+			 * components.css's matching rule for the non-prose case).
+			 */
+			--color-link: var(--color-quote-link);
+			--color-link-hover: var(--color-quote-link-hover);
 
 			& > * + * {
 				@apply mt-line-half;
@@ -152,6 +165,17 @@
 			& a:not([data-button]):is(:hover, :focus-visible) {
 				@apply text-ink;
 			}
+			/*
+			 * quote-cite falls to 4.1:1 or less on these five 200-step tints;
+			 * quote-ink clears 5.5:1 on all of them. A variable, not a `blockquote
+			 * footer` selector, so it also reaches BlockQuote.astro's footer, whose
+			 * own `text-quote-cite` utility class lives in the utilities layer and
+			 * would otherwise win over any selector this rule could write (see the
+			 * blockquote rule above for the same reasoning applied to links). This
+			 * rule wins the cascade for links (`color-ink`) because it's more
+			 * specific than the base link rule at equal layer; that's unchanged.
+			 */
+			--color-quote-cite: var(--color-quote-ink);
 		}
 		& [data-callout="tip"] {
 			--callout-ink: var(--color-callout-tip);
@@ -284,10 +308,18 @@
 		}
 
 		/* Footnote references and the footnotes section. */
+		/*
+		 * Preflight sets every `sup` to `position: relative; top: -0.5em`. The
+		 * old `vertical-align: super` stacked its own raise on top of that,
+		 * leaving references ~0.65em above the ascenders. `position: static`
+		 * cancels preflight's `top` (which only moves positioned elements), so
+		 * this `vertical-align` is the one raise applied.
+		 */
 		& sup:has(> a[data-footnote-ref]) {
+			position: static;
 			font-size: 0.7em;
 			line-height: 0;
-			vertical-align: super;
+			vertical-align: 0.3em;
 		}
 		& a[data-footnote-ref] {
 			@apply px-0.5 font-mono no-underline;

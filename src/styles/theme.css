@@ -125,8 +125,10 @@
 	--color-topic-count-ground-hover: var(--color-fungus-400);
 	--color-topic-count-hover: var(--color-fungus-950);
 	--color-focus: var(--color-fungus-600);
-	--color-quote-ink: var(--color-earth-800);
-	--color-quote-cite: var(--color-earth-600);
+	--color-quote-ink: var(--color-earth-700);
+	--color-quote-cite: var(--color-earth-500);
+	--color-quote-link: var(--color-fungus-700);
+	--color-quote-link-hover: var(--color-fungus-900);
 	--color-callout-note-ground: var(--color-lake-200);
 	--color-callout-note: var(--color-lake-800);
 	--color-callout-tip-ground: var(--color-pine-200);

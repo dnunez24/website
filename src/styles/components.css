@@ -38,6 +38,20 @@
 	}
 
 	/*
+	 * BlockQuote: scopes the same --color-link/-hover variables prose.css's
+	 * blockquote rule does, for quotes rendered outside `.prose`. A selector
+	 * here (e.g. `[data-quote] a`) can't reach the Link component or a plain
+	 * `<a>` styled by a utility class applied directly in markup: Tailwind
+	 * puts those in the utilities layer, which always beats a components-
+	 * layer selector regardless of specificity. The custom property's
+	 * resolved value isn't layer-bound, so it reaches them.
+	 */
+	[data-quote] {
+		--color-link: var(--color-quote-link);
+		--color-link-hover: var(--color-quote-link-hover);
+	}
+
+	/*
 	 * MermaidDiagram: the figure src/lib/mermaid.ts renders, in Markdown and in
 	 * the component. The SVG keeps its rendered size so labels stay 13px; a
 	 * diagram wider than the column scrolls inside the frame, which is focusable

@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
-import { __unstable__loadDesignSystem } from "tailwindcss";
+import { __unstable__loadDesignSystem, compile } from "tailwindcss";
 
 const require = createRequire(import.meta.url);
 export const ROOT = resolve(import.meta.dirname, "../..");
@@ -20,6 +20,43 @@ export async function loadDesignSystem() {
 		base: dirname(entry),
 		loadStylesheet,
 	});
+}
+
+/**
+ * Compiles global.css the way `astro build` does, minus the Vite/Lightning
+ * CSS minification pass, so hand-written rules (custom properties, selectors)
+ * can be asserted on directly instead of via a single utility's own CSS.
+ * `candidates` are the utility classes to generate; hand-written rules
+ * compile regardless, since they aren't gated by usage scanning. Nesting
+ * (`&`) is preserved as written, not flattened.
+ */
+export async function compileGlobalCss(candidates: string[] = []) {
+	const entry = join(ROOT, "src/styles/global.css");
+	const { build } = await compile(await readFile(entry, "utf8"), {
+		base: dirname(entry),
+		loadStylesheet,
+	});
+	return build(candidates);
+}
+
+/**
+ * The declarations inside `selector {`, matching brace depth so a rule
+ * containing further nested `&` rules still returns its whole body.
+ * `selector` is matched as written in source, including a literal `&`.
+ */
+export function ruleBody(css: string, selector: RegExp): string {
+	const match = selector.exec(css);
+	if (!match) throw new Error(`rule not found in compiled CSS: ${selector}`);
+	let depth = 1;
+	let i = match.index + match[0].length;
+	const start = i;
+	while (depth > 0 && i < css.length) {
+		if (css[i] === "{") depth++;
+		else if (css[i] === "}") depth--;
+		i++;
+	}
+	if (depth !== 0) throw new Error(`unbalanced braces after: ${selector}`);
+	return css.slice(start, i - 1);
 }
 
 const CLASS_TOKEN = /^[!a-z0-9:*\-/.]+$/;
