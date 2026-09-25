@@ -1,7 +1,13 @@
+import { pathToFileURL } from "node:url";
 import type { APIContext } from "astro";
 import { describe, expect, it } from "vitest";
 import { GET as robots } from "../pages/robots.txt";
-import { isCurrentSection, isDevRoute, isPublicPage } from "./routes";
+import {
+	isCurrentSection,
+	isDevPageFile,
+	isDevRoute,
+	isPublicPage,
+} from "./routes";
 
 describe("isCurrentSection", () => {
 	it("matches the link's own page and the pages under it", () => {
@@ -35,6 +41,26 @@ describe("isPublicPage", () => {
 		expect(isPublicPage("https://davidanunez.com/dev/design-system/")).toBe(
 			false,
 		);
+	});
+});
+
+describe("isDevPageFile", () => {
+	it("matches a file under src/pages/dev/, by path rather than route", () => {
+		const fileURL = pathToFileURL(
+			`${process.cwd()}/src/pages/dev/design-system-markdown.md`,
+		);
+		expect(isDevPageFile(fileURL)).toBe(true);
+	});
+
+	it("leaves a file outside src/pages/dev/ alone", () => {
+		const fileURL = pathToFileURL(
+			`${process.cwd()}/src/pages/writing/first-post.md`,
+		);
+		expect(isDevPageFile(fileURL)).toBe(false);
+	});
+
+	it("treats a missing fileURL as not a dev page", () => {
+		expect(isDevPageFile(undefined)).toBe(false);
 	});
 });
 

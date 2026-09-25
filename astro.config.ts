@@ -8,7 +8,7 @@ import { SUBSETS } from "./scripts/fonts.config.ts";
 import { callouts } from "./src/lib/markdown/callouts.ts";
 import { mermaidDiagrams } from "./src/lib/markdown/mermaid.ts";
 import { quoteAttribution } from "./src/lib/markdown/quote-attribution.ts";
-import { isDevRoute, isPublicPage } from "./src/lib/routes.ts";
+import { dropsDevPages, isDevRoute, isPublicPage } from "./src/lib/routes.ts";
 import { syntaxTheme, syntaxTransformers } from "./src/lib/syntax.ts";
 
 function excludeDevPages(): AstroIntegration {
@@ -19,7 +19,7 @@ function excludeDevPages(): AstroIntegration {
 		name: "exclude-dev-pages",
 		hooks: {
 			"astro:build:setup": ({ pages, logger }) => {
-				if (import.meta.env.PROD) {
+				if (dropsDevPages()) {
 					for (const [page, data] of pages.entries()) {
 						if (data.route.route && isDevRoute(data.route.route)) {
 							logger.info(`page: ${ansiBlue}${data.component}${ansiReset}`);
