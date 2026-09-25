@@ -2,6 +2,8 @@
 dist/
 # generated types
 .astro/
+# check reports (e.g. reports/a11y/)
+reports/
 
 # dependencies
 node_modules/

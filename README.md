@@ -56,6 +56,7 @@ All commands are run from the root of the project, from a terminal:
 | `pnpm build`                    | Build your production site to `./dist/`                                                       |
 | `DN_DEV_PAGES=1 pnpm build`     | Build with the `/dev/*` design-system specimens included, for accessibility testing           |
 | `pnpm validate:structured-data` | Validates the built pages' JSON-LD against schema.org; run after `pnpm build`                 |
+| `pnpm test:a11y`                | Checks the built pages for accessibility violations with axe-core; run after `pnpm build`     |
 | `pnpm preview`                  | Preview your build locally, before deploying                                                  |
 | `pnpm astro ...`                | Run CLI commands like `astro add`, `astro check`                                              |
 | `pnpm astro -- --help`          | Get help using the Astro CLI                                                                  |
