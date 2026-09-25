@@ -6,6 +6,7 @@ import type { AstroIntegration } from "astro";
 import { defineConfig, envField, fontProviders } from "astro/config";
 import { loadEnv, type Plugin } from "vite";
 import { SUBSETS } from "./scripts/fonts.config.ts";
+import { assertValidProdToken } from "./src/lib/cloudflare-analytics.ts";
 import { callouts } from "./src/lib/markdown/callouts.ts";
 import { mermaidDiagrams } from "./src/lib/markdown/mermaid.ts";
 import { quoteAttribution } from "./src/lib/markdown/quote-attribution.ts";
@@ -75,6 +76,29 @@ function excludeDevPages(): AstroIntegration {
 	};
 }
 
+/**
+ * Fails a `prod` branch build immediately when it's missing a valid
+ * Cloudflare Web Analytics token, instead of shipping a page without the
+ * beacon. `astro:build:start` only runs in the `astro build` pipeline, so
+ * this never touches `astro dev`, `pnpm test` or `astro check`; reading
+ * `branch`/`token` off `process.env` rather than `astro:env/server` works
+ * here because Workers Builds sets real process environment variables, and
+ * no `.env` file needs loading.
+ */
+function failProdBuildWithoutToken(): AstroIntegration {
+	return {
+		name: "fail-prod-build-without-token",
+		hooks: {
+			"astro:build:start": () => {
+				assertValidProdToken({
+					branch: process.env.WORKERS_CI_BRANCH,
+					token: process.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN,
+				});
+			},
+		},
+	};
+}
+
 // https://astro.build/config
 export default defineConfig({
 	site: "https://davidanunez.com",
@@ -104,14 +128,20 @@ export default defineConfig({
 		inlineStylesheets: "always",
 	},
 
-	integrations: [mdx(), sitemap({ filter: isPublicPage }), excludeDevPages()],
+	integrations: [
+		mdx(),
+		sitemap({ filter: isPublicPage }),
+		excludeDevPages(),
+		failProdBuildWithoutToken(),
+	],
 
 	env: {
 		schema: {
-			// Set only by the production deploy job; unset locally, in CI and in
-			// previews, so those builds ship without the beacon. Read at build
-			// time in frontmatter only (BaseHead.astro), never by client code,
-			// so "server" keeps it out of the client bundle. `length` catches a
+			// A build variable, set only on the Workers Builds Production tab —
+			// never on Previews Base — so every preview (main's included), CI
+			// and local build all ship without the beacon. Read at build time
+			// in frontmatter only (BaseHead.astro), never by client code, so
+			// "server" keeps it out of the client bundle. `length` catches a
 			// truncated or padded token; src/lib/cloudflare-analytics.ts checks
 			// the character set.
 			PUBLIC_CF_WEB_ANALYTICS_TOKEN: envField.string({
@@ -119,6 +149,15 @@ export default defineConfig({
 				access: "public",
 				optional: true,
 				length: 32,
+			}),
+			// Set by Workers Builds to the branch being built (e.g. "prod",
+			// "main", a PR branch). BaseHead.astro reads it alongside the token
+			// above to gate the beacon to a production build of "prod"; unset
+			// in astro dev, pnpm test, and any build Workers Builds didn't run.
+			WORKERS_CI_BRANCH: envField.string({
+				context: "server",
+				access: "public",
+				optional: true,
 			}),
 		},
 	},

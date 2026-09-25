@@ -1,21 +1,27 @@
 ---
 import "@styles/global.css";
 import { Font } from "astro:assets";
-import { PUBLIC_CF_WEB_ANALYTICS_TOKEN } from "astro:env/server";
+import {
+	PUBLIC_CF_WEB_ANALYTICS_TOKEN,
+	WORKERS_CI_BRANCH,
+} from "astro:env/server";
 import CloudflareAnalytics from "@components/CloudflareAnalytics.astro";
 import PageMeta from "@components/PageMeta.astro";
 import { SITE_TITLE } from "@constants";
-import { parseBeaconToken } from "@lib/cloudflare-analytics";
+import { resolveBeaconToken } from "@lib/cloudflare-analytics";
 import type { ComponentProps } from "astro/types";
 
 type Props = ComponentProps<typeof PageMeta>;
 
 // The one exception to no client JS (design system v93): Cloudflare Web
-// Analytics' beacon. PROD-gated so `astro dev` never renders it, even if a
-// token leaks into a local .env file.
-const beaconToken = import.meta.env.PROD
-	? parseBeaconToken(PUBLIC_CF_WEB_ANALYTICS_TOKEN)
-	: undefined;
+// Analytics' beacon. Ships only from a production build of the "prod"
+// branch, so `astro dev`, CI and every preview (main's included) render
+// nothing, even if a token leaks into a local .env file.
+const beaconToken = resolveBeaconToken({
+	prod: import.meta.env.PROD,
+	branch: WORKERS_CI_BRANCH,
+	token: PUBLIC_CF_WEB_ANALYTICS_TOKEN,
+});
 ---
 
 <!-- Global Metadata -->

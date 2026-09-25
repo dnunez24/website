@@ -82,6 +82,11 @@ Previews Base settings apply to new Previews only — an existing branch's Previ
 
 Releases are a pull request from `main` to `prod`, merged with a merge commit.
 
+### Cloudflare Web Analytics
+
+- `PUBLIC_CF_WEB_ANALYTICS_TOKEN` is the Cloudflare Web Analytics site token. Set it as a build variable on the Production tab only, never on Previews Base — it's not secret (it ends up in page HTML), but every other branch, `main` included, must ship without the beacon.
+- A `prod` branch build fails immediately if the token is missing or malformed, instead of shipping a page without it.
+
 ### Every branch build holds a production-capable token (accepted risk)
 
 Both dashboard tabs currently point at the same Cloudflare-generated API token (account-wide Workers Scripts edit, enough to deploy `website`, plus KV, R2 and Workers Routes edit). Workers Builds runs that token in every branch's build, not just `prod`'s — Dependabot's dependency-bump branches included — because `pnpm build` executes whatever code a branch's dependencies import, before `wrangler preview` or `wrangler deploy` ever runs. The old GitHub Actions stack skipped preview deploys for `dependabot[bot]`; this stack doesn't. Workers Builds' branch filters (Settings → Build → Branch control) take exact names or `*`, not prefix patterns: a `dependabot/*`-style carve-out is reportedly rejected ([workers-sdk#15722](https://github.com/cloudflare/workers-sdk/issues/15722)), and each Dependabot bump gets its own branch name (the bumped package and version baked in), so there's no fixed set of exact names to list either. Its build watch paths filter by changed file path only, not by branch, so that's not a way around it.
@@ -95,11 +100,6 @@ Accepted, on the strength of two mitigations already in place, plus a dashboard 
 
 - What it buys: the preview token could drop zone-level permissions like Workers Routes edit, since previews never touch routes, and it could be rotated or revoked without touching production deploys.
 - What it doesn't buy: creating a Preview still needs Workers Scripts edit — the same permission that lets `wrangler deploy` replace production code. Cloudflare documents no preview-only permission today. Not applied here.
-
-## Environment variables
-
-`PUBLIC_CF_WEB_ANALYTICS_TOKEN` is the Cloudflare Web Analytics site token.
-Only the production deploy sets it; other builds ship without the beacon.
 
 ## 👀 Want to learn more?
 

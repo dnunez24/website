@@ -5,10 +5,14 @@ import BaseHead from "./BaseHead.astro";
 
 // Read on every render, so each test controls it without re-importing BaseHead.
 let mockToken: string | undefined;
+let mockBranch: string | undefined;
 
 vi.mock("astro:env/server", () => ({
 	get PUBLIC_CF_WEB_ANALYTICS_TOKEN() {
 		return mockToken;
+	},
+	get WORKERS_CI_BRANCH() {
+		return mockBranch;
 	},
 }));
 
@@ -25,6 +29,7 @@ beforeAll(async () => {
 afterEach(() => {
 	vi.unstubAllEnvs();
 	mockToken = undefined;
+	mockBranch = undefined;
 });
 
 // Only the parser comes from happy-dom, as in `components.test.ts`.
@@ -64,14 +69,16 @@ describe("BaseHead", () => {
 		]);
 	});
 
-	it("wires no beacon into the head in production without a token", async () => {
+	it("wires no beacon into the head on prod in production without a token", async () => {
 		vi.stubEnv("PROD", true);
+		mockBranch = "prod";
 		const doc = await renderBaseHead();
 		expect(doc.querySelector("script[data-cf-beacon]")).toBeNull();
 	});
 
-	it("wires exactly one beacon into the head in production with a valid token", async () => {
+	it("wires exactly one beacon into the head for a production build of prod with a valid token", async () => {
 		vi.stubEnv("PROD", true);
+		mockBranch = "prod";
 		mockToken = "0123456789abcdef0123456789abcdef";
 		const doc = await renderBaseHead();
 		const scripts = doc.querySelectorAll("script[data-cf-beacon]");
@@ -81,8 +88,17 @@ describe("BaseHead", () => {
 		).toEqual({ token: mockToken });
 	});
 
-	it("wires no beacon outside production, even with a valid token", async () => {
+	it("wires no beacon in production on main, even with a valid token", async () => {
+		vi.stubEnv("PROD", true);
+		mockBranch = "main";
+		mockToken = "0123456789abcdef0123456789abcdef";
+		const doc = await renderBaseHead();
+		expect(doc.querySelector("script[data-cf-beacon]")).toBeNull();
+	});
+
+	it("wires no beacon outside production, even on prod with a valid token", async () => {
 		// PROD isn't stubbed here, so it defaults to false, matching `astro dev`.
+		mockBranch = "prod";
 		mockToken = "0123456789abcdef0123456789abcdef";
 		const doc = await renderBaseHead();
 		expect(doc.querySelector("script[data-cf-beacon]")).toBeNull();
