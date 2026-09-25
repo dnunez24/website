@@ -2,6 +2,7 @@ import { glob, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import {
+	compileGlobalCss,
 	extractApplyClasses,
 	extractAstroClasses,
 	loadDesignSystem,
@@ -181,5 +182,122 @@ describe("DS-2 sync guards", () => {
 		const config = await readFile(join(ROOT, "astro.config.ts"), "utf8");
 		const afacad = config.slice(config.indexOf('name: "Afacad Flux"'));
 		expect(afacad).toMatch(/fallbacks:\s*\[[^\]]*"system-ui"\s*\]/);
+	});
+});
+
+describe("DS-100 sync guards", () => {
+	it("wraps a long CodeBlock caption instead of letting it clip (DS-100 v100)", async () => {
+		const css = await readFile(join(ROOT, "src/styles/components.css"), "utf8");
+		const start = css.indexOf("[data-codeblock] > figcaption {");
+		const caption = css.slice(start, css.indexOf("}", start));
+		expect(caption).toMatch(/overflow-wrap:\s*anywhere|\bwrap-anywhere\b/);
+	});
+
+	it("gives font-mono its own feature settings, not the sans list (DS-100 v100)", () => {
+		expect(system.theme.get(["--font-mono--font-feature-settings"])).toBe(
+			'"zero"',
+		);
+		// Unchanged by this sync: sans keeps every feature it had.
+		expect(system.theme.get(["--font-sans--font-feature-settings"])).toBe(
+			'"calt", "pnum", "zero", "ss02"',
+		);
+	});
+
+	it('carries "zero" on the font-mono utility', () => {
+		const css = system.candidatesToCss(["font-mono"])[0] ?? "";
+		expect(css).toContain(
+			"font-feature-settings: var(--font-mono--font-feature-settings);",
+		);
+	});
+
+	describe("compiled preflight and component rules", () => {
+		let css: string;
+		beforeAll(async () => {
+			css = await compileGlobalCss(["font-mono", "font-sans"]);
+		});
+
+		/** The last `property:` declaration in a balanced `{...}` block: CSS applies the one written last. */
+		function lastDeclaration(
+			block: string,
+			property: string,
+		): string | undefined {
+			const matches = [
+				...block.matchAll(new RegExp(`${property}:\\s*([^;]+);`, "g")),
+			];
+			return matches.at(-1)?.[1];
+		}
+
+		/**
+		 * Every balanced block for an exact selector. CSS nesting reuses `&` at
+		 * every depth (prose.css nests a `:not(pre) > code` override two levels
+		 * deep, inside `[data-callout]`, as well as the top-level one this
+		 * suite cares about), so a plain text search can land on the wrong one.
+		 */
+		function ruleBlocks(selector: string): string[] {
+			const marker = `${selector} {`;
+			const blocks: string[] = [];
+			let from = 0;
+			for (;;) {
+				const open = css.indexOf(marker, from);
+				if (open === -1) return blocks;
+				let depth = 1;
+				let index = open + marker.length;
+				while (depth > 0 && index < css.length) {
+					if (css[index] === "{") depth++;
+					else if (css[index] === "}") depth--;
+					index++;
+				}
+				blocks.push(css.slice(open + marker.length, index - 1));
+				from = index;
+			}
+		}
+
+		it("resets preflight's code, kbd, samp and pre to the font's defaults", () => {
+			const [block] = ruleBlocks("code, kbd, samp, pre");
+			expect(block).toBeDefined();
+			expect(lastDeclaration(block ?? "", "font-feature-settings")).toBe(
+				"var(--default-mono-font-feature-settings, normal)",
+			);
+			expect(system.theme.get(["--default-mono-font-feature-settings"])).toBe(
+				"normal",
+			);
+		});
+
+		it("keeps body's sans text at all four features", () => {
+			const [block] = ruleBlocks("body");
+			expect(block).toBeDefined();
+			expect(lastDeclaration(block ?? "", "font-feature-settings")).toBe(
+				"var(--font-sans--font-feature-settings)",
+			);
+		});
+
+		it.each([
+			["kbd", "kbd"],
+			["the CodeBlock <pre>", "[data-codeblock] pre"],
+			["prose inline code", "& :not(pre) > code"],
+			["prose's <pre>", "& pre"],
+		])(
+			"keeps %s at the font's defaults, not font-mono's zero",
+			(_label, selector) => {
+				const block = ruleBlocks(selector).find((candidate) =>
+					candidate.includes("font-feature-settings"),
+				);
+				expect(
+					block,
+					`no ${selector} block sets font-feature-settings`,
+				).toBeDefined();
+				expect(lastDeclaration(block ?? "", "font-feature-settings")).toBe(
+					"normal",
+				);
+			},
+		);
+
+		it("gives Mermaid SVG text the mono label's zero, not code's normal", () => {
+			const [block] = ruleBlocks("[data-diagram] svg");
+			expect(block).toBeDefined();
+			expect(lastDeclaration(block ?? "", "font-feature-settings")).toBe(
+				'"zero" !important',
+			);
+		});
 	});
 });

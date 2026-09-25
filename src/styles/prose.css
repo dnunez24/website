@@ -305,11 +305,13 @@
 
 		& :not(pre) > code {
 			@apply rounded-sm bg-code-ground font-mono text-ink;
+			font-feature-settings: normal;
 			font-size: 0.875em;
 			padding: 0.1em 0.3em;
 		}
 		& pre {
 			@apply f6y-p-4 mx-0 overflow-x-auto rounded-md bg-codeblock-ground font-mono text-code scheme-dark text-syntax-plain;
+			font-feature-settings: normal;
 			tab-size: 2;
 
 			& code {
