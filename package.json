@@ -15,6 +15,7 @@
 		"fonts:build": "node scripts/build-fonts.ts",
 		"fonts:features": "node scripts/build-fonts.ts --features",
 		"lint": "biome check .",
+		"lint:design": "design.md lint DESIGN.md",
 		"preview": "astro preview",
 		"test": "vitest run"
 	},
