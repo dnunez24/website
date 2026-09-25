@@ -67,18 +67,35 @@ All commands are run from the root of the project, from a terminal:
 
 ## Deploys
 
-Cloudflare Workers Builds (Cloudflare's GitHub app, not GitHub Actions) builds and deploys the `website` Worker straight from this repo. The dashboard has two tabs, each with its own build command and its own Cloudflare API token:
+Cloudflare Workers Builds (Cloudflare's GitHub app, not GitHub Actions) builds and deploys the `website` Worker straight from this repo. The dashboard has two tabs, each with its own build command and its own token setting:
 
-| Tab            | Build command | Deploy/preview command       |
-| :------------- | :------------ | :---------------------------- |
-| Production     | `pnpm build`  | `pnpm exec wrangler deploy`   |
-| Previews Base  | `pnpm build`  | `pnpm exec wrangler preview`  |
+| Tab           | Build command | Deploy/preview command       |
+| :------------ | :------------ | :--------------------------- |
+| Production    | `pnpm build`  | `pnpm exec wrangler deploy`  |
+| Previews Base | `pnpm build`  | `pnpm exec wrangler preview` |
 
 The production branch is set to `prod`: a push there runs the Production tab's commands, which deploys `website` to the `davidanunez.com` custom domain. Every other branch, including `main`, runs the Previews Base tab's commands instead, which creates a Worker Preview at `<branch-slug>-website.dnunez24.workers.dev`, behind Cloudflare Access. `main`'s Preview is staging. Workers Builds comments the Preview URL on the pull request and posts a `Workers Builds: website` check run.
 
-Previews Base settings apply to new Previews only — an existing branch's Preview keeps whatever settings were live when it was first built, so a Previews Base change needs a new branch (or that branch's Preview reset) to take effect.
+**Cloudflare Access on `website` must be set to Previews only (the `preview_worker` destination) — never "All traffic," and never the account-wide "protect all Workers" option.** Access covers every hostname a Worker answers on, including its Custom Domain, so either of those broader settings would put `davidanunez.com` itself behind an Access login the moment the first release attaches it. Confirm the mode before that release merges; after it, `curl -sI https://davidanunez.com/` should return a plain `200`, not a redirect to `*.cloudflareaccess.com`.
+
+Previews Base settings apply to new Previews only — an existing branch's Preview keeps whatever settings were live when it was first built. To pick up a Previews Base change on an existing branch, delete that branch's Preview (dashboard, or `pnpm exec wrangler preview delete --name <slug>`) and push again.
 
 Releases are a pull request from `main` to `prod`, merged with a merge commit.
+
+### Every branch build holds a production-capable token (accepted risk)
+
+Both dashboard tabs currently point at the same Cloudflare-generated API token (account-wide Workers Scripts edit, enough to deploy `website`, plus KV, R2 and Workers Routes edit). Workers Builds runs that token in every branch's build, not just `prod`'s — Dependabot's dependency-bump branches included — because `pnpm build` executes whatever code a branch's dependencies import, before `wrangler preview` or `wrangler deploy` ever runs. The old GitHub Actions stack skipped preview deploys for `dependabot[bot]`; this stack doesn't, because it can't: Workers Builds has no way to exclude a branch by name, and its build watch paths filter by changed file path only, not by branch.
+
+Accepted, on the strength of three mitigations already in place:
+
+- pnpm's `minimumReleaseAge` (default 1440 minutes since pnpm 11, in effect here — see `minimumReleaseAgeExclude` in `pnpm-workspace.yaml`) keeps a just-published package version uninstallable for about a day, so a newly compromised release can't reach a build immediately.
+- `pnpm-workspace.yaml`'s `allowBuilds` limits which dependencies may run an *install* script. It does nothing about code a dependency runs normally, which is most of what `pnpm build` executes, but it closes one common route in.
+- pnpm's lockfile supply-chain check, which runs on every install (`Lockfile passes supply-chain policies` in the install output) and would flag a resolved package pnpm's own policy service considers unsafe.
+
+**Possible later mitigation:** give the Previews Base tab its own, narrower API token instead of sharing Production's.
+
+- What it buys: the preview token could drop zone-level permissions like Workers Routes edit, since previews never touch routes, and it could be rotated or revoked without touching production deploys.
+- What it doesn't buy: creating a Preview still needs Workers Scripts edit — the same permission that lets `wrangler deploy` replace production code. Cloudflare documents no preview-only permission today. Not applied here.
 
 ## 👀 Want to learn more?
 

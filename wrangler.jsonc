@@ -21,8 +21,9 @@
 	// The production route, davidanunez.com. `wrangler deploy` attaches it
 	// (and, run outside a terminal, silently replaces the domain's existing
 	// DNS records to do so) — so a local `wrangler deploy` must never run:
-	// only Workers Builds runs it, only on `prod`, and only ever once for
-	// this cutover, at the first release.
+	// only Workers Builds runs it, only on `prod`. Every push to `prod` runs
+	// this; it replaces the domain's DNS records only once, at the first
+	// release, since the route is already attached after that.
 	"routes": [{ "pattern": "davidanunez.com", "custom_domain": true }],
 	"workers_dev": false,
 	// workers.dev Worker Preview URLs, behind Cloudflare Access.
