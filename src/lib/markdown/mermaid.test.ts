@@ -12,13 +12,14 @@ vi.mock("../mermaid", () => ({
 
 const fence = "```mermaid\nflowchart LR\n  accTitle: Stub\n  A --> B\n```\n";
 
+const root = pathToFileURL(`${process.cwd()}/`);
 const fileURLFor = (path: string) => pathToFileURL(`${process.cwd()}/${path}`);
 const devPageURL = fileURLFor("src/pages/dev/design-system-markdown.md");
 const articleURL = fileURLFor("src/pages/writing/first-post.md");
 
 const render = async (fileURL: URL) => {
 	const { html } = await markdownToHtml(fence, {
-		hastPlugins: [mermaidDiagrams()],
+		hastPlugins: [mermaidDiagrams(root)],
 		fileURL,
 	});
 	return html;

@@ -11,6 +11,12 @@ import { quoteAttribution } from "./src/lib/markdown/quote-attribution.ts";
 import { dropsDevPages, isDevRoute, isPublicPage } from "./src/lib/routes.ts";
 import { syntaxTheme, syntaxTransformers } from "./src/lib/syntax.ts";
 
+// This file's own directory is the project root, so the Mermaid plugin can
+// match a dev-page file below without assuming `process.cwd()` is the
+// root too: `astro build --root <path>` points Astro at the project
+// without moving the working directory.
+const projectRoot = new URL(".", import.meta.url);
+
 function excludeDevPages(): AstroIntegration {
 	const ansiBlue = "\x1b[34m";
 	const ansiReset = "\x1b[0m";
@@ -52,7 +58,11 @@ export default defineConfig({
 			features: {
 				smartPunctuation: true,
 			},
-			hastPlugins: [...callouts(), quoteAttribution(), mermaidDiagrams()],
+			hastPlugins: [
+				...callouts(),
+				quoteAttribution(),
+				mermaidDiagrams(projectRoot),
+			],
 		}),
 	},
 

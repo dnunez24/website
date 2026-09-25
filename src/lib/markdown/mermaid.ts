@@ -12,8 +12,11 @@ import { dropsDevPages, isDevPageFile } from "../routes";
  * Chromium: Cloudflare Workers Builds can't install it, and no dev-page
  * diagram ships to production anyway. `astro dev`, vitest, and a build that
  * keeps dev pages still render them.
+ *
+ * @param root The project root, passed through to `isDevPageFile` — see
+ *   there for why it can't just read `process.cwd()`.
  */
-export const mermaidDiagrams = () =>
+export const mermaidDiagrams = (root: URL) =>
 	defineHastPlugin({
 		name: "mermaid-diagrams",
 		element: {
@@ -26,7 +29,7 @@ export const mermaidDiagrams = () =>
 				// Sätteri keeps the fence's language in `data`, as Astro's highlighter reads it.
 				const lang = (code.data as { lang?: string } | undefined)?.lang;
 				if (lang !== "mermaid") return;
-				if (dropsDevPages() && isDevPageFile(ctx.fileURL)) return;
+				if (dropsDevPages() && isDevPageFile(ctx.fileURL, root)) return;
 
 				try {
 					return {

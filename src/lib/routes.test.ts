@@ -1,10 +1,12 @@
+import { win32 } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { APIContext } from "astro";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { GET as robots } from "../pages/robots.txt";
 import {
 	isCurrentSection,
 	isDevPageFile,
+	isDevPagePath,
 	isDevRoute,
 	isPublicPage,
 } from "./routes";
@@ -44,23 +46,69 @@ describe("isPublicPage", () => {
 	});
 });
 
+describe("isDevPagePath", () => {
+	it("matches the dev directory and files under it", () => {
+		expect(isDevPagePath("dev/design-system-markdown.md")).toBe(true);
+		expect(isDevPagePath("dev/x/y.md")).toBe(true);
+	});
+
+	it("matches dev.md itself, agreeing with isDevRoute's /dev/ route", () => {
+		expect(isDevPagePath("dev.md")).toBe(true);
+	});
+
+	it("doesn't match a sibling that only starts with dev", () => {
+		expect(isDevPagePath("devices.md")).toBe(false);
+	});
+
+	it("matches a path computed with Windows separators", () => {
+		expect(isDevPagePath(win32.join("dev", "x", "y.md"))).toBe(true);
+	});
+});
+
 describe("isDevPageFile", () => {
+	const root = pathToFileURL(`${process.cwd()}/`);
+	const fileURLFor = (path: string) =>
+		pathToFileURL(`${process.cwd()}/${path}`);
+
 	it("matches a file under src/pages/dev/, by path rather than route", () => {
-		const fileURL = pathToFileURL(
-			`${process.cwd()}/src/pages/dev/design-system-markdown.md`,
-		);
-		expect(isDevPageFile(fileURL)).toBe(true);
+		expect(
+			isDevPageFile(
+				fileURLFor("src/pages/dev/design-system-markdown.md"),
+				root,
+			),
+		).toBe(true);
 	});
 
 	it("leaves a file outside src/pages/dev/ alone", () => {
-		const fileURL = pathToFileURL(
-			`${process.cwd()}/src/pages/writing/first-post.md`,
-		);
-		expect(isDevPageFile(fileURL)).toBe(false);
+		expect(
+			isDevPageFile(fileURLFor("src/pages/writing/first-post.md"), root),
+		).toBe(false);
+	});
+
+	it("matches dev.md and a nested file, not devices.md", () => {
+		expect(isDevPageFile(fileURLFor("src/pages/dev.md"), root)).toBe(true);
+		expect(isDevPageFile(fileURLFor("src/pages/dev/x/y.md"), root)).toBe(true);
+		expect(isDevPageFile(fileURLFor("src/pages/devices.md"), root)).toBe(false);
 	});
 
 	it("treats a missing fileURL as not a dev page", () => {
-		expect(isDevPageFile(undefined)).toBe(false);
+		expect(isDevPageFile(undefined, root)).toBe(false);
+	});
+
+	it("treats a non-file URL as not a dev page, instead of throwing", () => {
+		expect(
+			isDevPageFile(new URL("https://example.com/src/pages/dev/x.md"), root),
+		).toBe(false);
+	});
+
+	it("ignores process.cwd(): astro build --root can point elsewhere", () => {
+		const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue("/not/the/root");
+		const fakeRoot = pathToFileURL("/fake/project/");
+		const fileURL = pathToFileURL(
+			"/fake/project/src/pages/dev/design-system-markdown.md",
+		);
+		expect(isDevPageFile(fileURL, fakeRoot)).toBe(true);
+		cwdSpy.mockRestore();
 	});
 });
 
