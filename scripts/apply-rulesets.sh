@@ -2,16 +2,12 @@
 set -euo pipefail
 
 # Idempotently applies .github/rulesets/*.json and the allow_merge_commit
-# repo setting prod.json's "merge" method needs (--apply), to
-# dnunez24/website via the GitHub REST and GraphQL APIs.
-#
-# Scope is rulesets and that one repo setting — nothing else repo-wide.
-# Repo-wide hardening (default workflow token permissions, PR approval by
-# Actions, secret scanning) is a separate concern, added behind
-# --apply-hardening by claude/deploy-5-repo-hardening on top of this branch:
-# those settings affect every workflow's token, not just this deploy stack,
-# so they're a separate PR and a separate flag, not bundled into --apply
-# here.
+# repo setting prod.json's "merge" method needs (--apply), and separately,
+# repo-wide token/scanning hardening that affects every workflow, not just
+# this deploy stack (--apply-hardening), to dnunez24/website via the GitHub
+# REST and GraphQL APIs. The two flags are independent on purpose — --apply
+# alone never touches the hardening settings, and --apply-hardening alone
+# never touches rulesets or allow_merge_commit.
 #
 # No GitHub environments or deployment branch policies: Cloudflare Workers
 # Builds deploys straight from Cloudflare's GitHub app, with no GitHub
@@ -39,10 +35,11 @@ set -euo pipefail
 # context that reported in the past and then stopped (see their own
 # comments).
 #
-# Default mode is a dry run: every GET is real, but every PUT/POST/PATCH is
-# only printed, with its payload, and the one GraphQL query (phase 2 of a
-# bypassed ruleset's apply, below) never runs at all. Nothing is sent to
-# GitHub, and no bypass actor is checked, unless invoked with --apply.
+# Default mode (neither flag) is a dry run: every GET is real, but every
+# PUT/POST/PATCH is only printed, with its payload, and the one GraphQL
+# query (phase 2 of a bypassed ruleset's apply, below) never runs at all.
+# Nothing is sent to GitHub, and no bypass actor is checked, unless invoked
+# with --apply.
 #
 # Order matters and is enforced here, not just documented: every ruleset
 # file's required-status-checks preflight first (a pure GET, so it's safe
@@ -51,9 +48,10 @@ set -euo pipefail
 #
 # https://docs.github.com/en/rest/repos/rules
 # https://docs.github.com/en/rest/repos/repos#update-a-repository
+# https://docs.github.com/en/rest/actions/permissions
 # https://docs.github.com/en/graphql/reference/objects#repositoryruleset
 #
-# Usage: scripts/apply-rulesets.sh [--apply]
+# Usage: scripts/apply-rulesets.sh [--apply] [--apply-hardening]
 
 REPO="dnunez24/website"
 HOST="github.com"
@@ -62,13 +60,14 @@ RULESETS_DIR="$SCRIPT_DIR/../.github/rulesets"
 WORKDIR="$(mktemp -d)"
 trap 'rm -rf "$WORKDIR"' EXIT
 
-# Default so every function below has $APPLY defined even when this file is
-# only sourced, not executed — scripts/apply-rulesets.test.sh does exactly
-# that, to unit-test functions like verify_bypass_actors against a fixture
-# without running a real apply. The guard at the bottom of this file is
-# what parses argv and does the script's real work, and only when it's
-# executed directly.
+# Defaults so every function below has $APPLY and $APPLY_HARDENING defined
+# even when this file is only sourced, not executed — scripts/
+# apply-rulesets.test.sh does exactly that, to unit-test functions like
+# verify_bypass_actors against a fixture without running a real apply. The
+# guard at the bottom of this file is what parses argv and does the
+# script's real work, and only when it's executed directly.
 APPLY=false
+APPLY_HARDENING=false
 
 # Every gh call in this script goes through here, always pinned to
 # github.com regardless of GH_HOST or any other ambient gh config, and
@@ -85,8 +84,11 @@ gh_api_to_file() {
 }
 
 # $1 = HTTP method, $2 = API path, $3 = path to a JSON file to send as the
-# request body (optional). GET always runs for real, even in dry-run mode —
-# it changes nothing, and both the preflight and the ruleset diff need it.
+# request body (optional), $4 = which flag governs sending this for real
+# (true/false; defaults to $APPLY — pass $APPLY_HARDENING for a hardening
+# call, so --apply alone can never trigger it). GET always runs for real,
+# even in dry-run mode — it changes nothing, and both the preflight and the
+# ruleset diff need it.
 #
 # Dry-run announcements go to stderr, not stdout: every call site redirects
 # this function's stdout to /dev/null when it doesn't need the real
@@ -94,9 +96,9 @@ gh_api_to_file() {
 # to show — only the announcement, which must survive that redirect to be
 # visible at all.
 request() {
-	local method="$1" path="$2" input="${3:-}" outfile
+	local method="$1" path="$2" input="${3:-}" governing_flag="${4:-$APPLY}" outfile
 	outfile="$WORKDIR/response-$(echo "$path" | tr -c 'a-zA-Z0-9' '-')-$$-$RANDOM.json"
-	if [ "$method" = "GET" ] || [ "$APPLY" = true ]; then
+	if [ "$method" = "GET" ] || [ "$governing_flag" = true ]; then
 		if [ -n "$input" ]; then
 			if ! gh api --hostname "$HOST" "$path" --method "$method" --input "$input" >"$outfile"; then
 				echo "::error::gh api --method $method $path failed" >&2
@@ -473,16 +475,18 @@ apply_ruleset() {
 # scripts/apply-rulesets.test.sh does, to unit-test the functions above
 # against a fixture): parse argv and do the real work. Sourcing this file
 # defines every function above, plus REPO/HOST/WORKDIR/RULESET_SHAPE and
-# APPLY=false, and nothing more.
+# APPLY=APPLY_HARDENING=false, and nothing more.
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then
-	case "${1:-}" in
-		--apply) APPLY=true ;;
-		"") ;;
-		*)
-			echo "Usage: $0 [--apply]" >&2
-			exit 1
-			;;
-	esac
+	for arg in "$@"; do
+		case "$arg" in
+			--apply) APPLY=true ;;
+			--apply-hardening) APPLY_HARDENING=true ;;
+			*)
+				echo "Usage: $0 [--apply] [--apply-hardening]" >&2
+				exit 1
+				;;
+		esac
+	done
 
 	echo "== Preflight =="
 	user_file="$WORKDIR/user.json"
@@ -524,12 +528,51 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
 	request PATCH "repos/$REPO" "$repo_settings_file" >/dev/null
 	echo
 
+	# Repo-wide hardening: affects every workflow's GITHUB_TOKEN and every
+	# push to the repo, not just the deploy stack, so it's gated on its own
+	# flag — --apply alone never sends these two calls, only
+	# --apply-hardening does.
+	#
+	# Deliberately NOT here yet (follow-ups, once P0's composite action is
+	# itself SHA-pinned — see this branch's PR body):
+	#   - sha_pinning_required: true (Require actions to be pinned to a full
+	#     commit SHA) — P0's action.yml still uses pnpm/action-setup@v6,
+	#     setup-node@v7 and cache@v6, and turning this on would break every
+	#     workflow that runs it, including ci.yml.
+	#   - allowed_actions restricted to GitHub-owned plus pnpm/action-setup —
+	#     same blocker.
+	echo "== Repository hardening =="
+	echo "  default_workflow_permissions=read, can_approve_pull_request_reviews=false"
+	workflow_perms_file="$WORKDIR/workflow-perms.json"
+	jq -n '{
+		default_workflow_permissions: "read",
+		can_approve_pull_request_reviews: false
+	}' >"$workflow_perms_file"
+	request PUT "repos/$REPO/actions/permissions/workflow" "$workflow_perms_file" "$APPLY_HARDENING" >/dev/null
+
+	echo "  secret_scanning=enabled, secret_scanning_push_protection=enabled"
+	security_settings_file="$WORKDIR/security-settings.json"
+	jq -n '{
+		security_and_analysis: {
+			secret_scanning: { status: "enabled" },
+			secret_scanning_push_protection: { status: "enabled" }
+		}
+	}' >"$security_settings_file"
+	request PATCH "repos/$REPO" "$security_settings_file" "$APPLY_HARDENING" >/dev/null
+	echo
+
 	for ruleset_file in "$RULESETS_DIR"/*.json; do
 		apply_ruleset "$ruleset_file"
 	done
 
-	if [ "$APPLY" = false ]; then
+	if [ "$APPLY" = false ] && [ "$APPLY_HARDENING" = false ]; then
 		echo "Dry run only — nothing above was changed."
-		echo "Re-run with --apply to send the PUT/POST/PATCH requests shown above."
+		echo "Re-run with --apply for the rulesets/allow_merge_commit section, --apply-hardening for the repository-hardening section, or both."
+	elif [ "$APPLY" = true ] && [ "$APPLY_HARDENING" = true ]; then
+		echo "Ran with --apply and --apply-hardening: everything above was sent for real."
+	elif [ "$APPLY" = false ]; then
+		echo "Ran with --apply-hardening only: the repository-hardening section was sent for real; rulesets/allow_merge_commit above were a dry run."
+	else
+		echo "Ran with --apply only: rulesets/allow_merge_commit above were sent for real; the repository-hardening section was a dry run."
 	fi
 fi
