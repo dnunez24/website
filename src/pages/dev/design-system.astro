@@ -255,6 +255,11 @@ const orderSequence = `sequenceDiagram
   C->>Pay: Authorize
   Pay-->>C: Approved
   C-->>P: Order placed`;
+
+// No spaces or hyphens to break at, so it shows wrap-anywhere keeping the
+// caption from overflowing the frame at 320px.
+const longCaption =
+	"https://example.com/releases/2026/09/9ad792ef7efc296ac49e84bb28b95a523379256852b1d6d19";
 ---
 
 <Base title="Design system" description="Every token and component, rendered with the real styles.">
@@ -409,6 +414,9 @@ const orderSequence = `sequenceDiagram
 	<section aria-labelledby="code" class="f6y-mb-16">
 		<SectionTitle id="code">Code block</SectionTitle>
 		<CodeBlock code={code} lang="ts" file="src/lib/writing.ts" caption="Articles sorted newest first." />
+		<div class="f6y-mt-8">
+			<CodeBlock code={code} lang="ts" caption={longCaption} />
+		</div>
 	</section>
 
 	<section aria-labelledby="kbd" class="f6y-mb-16">

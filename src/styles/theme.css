@@ -162,6 +162,13 @@
 	 */
 	--font-sans--font-feature-settings: "calt", "pnum", "zero", "ss02";
 	--font-mono: var(--font-jetbrains-mono);
+	/*
+	 * Just the slashed zero. code/kbd/samp/pre reset below: preflight derives
+	 * --default-mono-font-feature-settings from this same value, and a
+	 * reader's local JetBrains Mono (2.3+) curls the l under "ss02".
+	 */
+	--font-mono--font-feature-settings: "zero";
+	--default-mono-font-feature-settings: normal;
 
 	--font-weight-normal: 400;
 	--font-weight-medium: 500;

@@ -44,6 +44,7 @@
 	   sits on a lighter one with a heavier bottom edge. No shadow. */
 	kbd {
 		@apply inline-block rounded-sm border border-b-2 border-line-strong bg-surface-inset text-center font-mono text-ink;
+		font-feature-settings: normal;
 		min-width: 1.6em;
 		padding: 0.05em 0.45em;
 		margin-inline: 0.05em;
