@@ -5,7 +5,37 @@ import { loadDesignSystem, ROOT } from "../test/classes";
 
 type DesignSystem = Awaited<ReturnType<typeof loadDesignSystem>>;
 
-/** Markdown sections where DESIGN.md tells an agent which class to write for a token. */
+/**
+ * SCOPE, read this before adding a test here.
+ *
+ * Full compile-checking below (does this class exist, is it arbitrary, is
+ * its spacing step real) covers only three places: Layout & Spacing,
+ * Elevation & Depth, and the Building table's utility column. Those are
+ * where this design system's own Tailwind-utility guidance concentrates,
+ * and where B1 and R3's regressions actually landed.
+ *
+ * It does NOT cover Overview, Colors, Typography, Shapes, Components,
+ * Do's and Don'ts, Motion, Iconography or Accessibility. An invented class
+ * dropped into one of those, such as `text-fungus-950` in Components,
+ * `shadow-card` in Do's and Don'ts, or `sr-only-focusable` in Accessibility,
+ * compiles or fails silently: nothing here checks it.
+ *
+ * Widening full compile-checking to the whole document was tried and
+ * dropped. After excluding every frontmatter token name, HTML tag, ARIA
+ * attribute, file path, CSS custom property and symbol-only fragment by
+ * structural rule, 86 backticked spans in the current file still weren't
+ * classes (CSS keywords and functions like `oklch`/`cubic-bezier(0.25,`,
+ * OpenType feature tags, typeface-family words, component-name shorthands
+ * like `-tip`, GitHub alert syntax, formula pieces...) and would need
+ * denylisting one by one. That's not a short, honest allowlist; it's most
+ * of the document. The two whole-document tests near the bottom of this
+ * file are the narrower check that stayed: they scan every section for the
+ * specific arbitrary-value syntax (`-(--`, `-[`) that caused both real
+ * regressions, and pin the Building table's key mappings, without
+ * asserting every backticked span anywhere is a valid, compilable class.
+ */
+
+/** Markdown sections where DESIGN.md tells an agent which class to write for a token, fully compile-checked below. */
 const SECTIONS_TEACHING_CLASSES = ["Layout & Spacing", "Elevation & Depth"];
 
 /**
@@ -134,14 +164,14 @@ describe("DESIGN.md's Building and Layout guidance matches main's real utilities
 		expect(classes.length).toBeGreaterThan(15);
 	});
 
-	it("every class DESIGN.md tells an agent to write actually compiles", () => {
+	it("every class taught in Layout & Spacing, Elevation & Depth or the Building table compiles", () => {
 		const unknown = classes.filter(
 			(name) => system.candidatesToCss([name])[0] === null,
 		);
 		expect(unknown).toEqual([]);
 	});
 
-	it("uses no arbitrary values, the same ban conformance.test.ts enforces", () => {
+	it("those same classes use no arbitrary values, the same ban conformance.test.ts enforces", () => {
 		const arbitrary = classes.filter((name) =>
 			system.parseCandidate(name).some((candidate) => {
 				if (candidate.kind === "arbitrary") return true;
@@ -155,7 +185,7 @@ describe("DESIGN.md's Building and Layout guidance matches main's real utilities
 		expect(arbitrary).toEqual([]);
 	});
 
-	it("fails on an invented class, by mutation", () => {
+	it("fails on an invented class in a scanned section, by mutation", () => {
 		// max-w-reading names no real container size in this or any Tailwind
 		// design system; it must fail to compile, not just fail to be listed.
 		const mutated = designMdSource.replace(
@@ -194,7 +224,7 @@ describe("DESIGN.md's Building and Layout guidance matches main's real utilities
 	const FLUID_SPACING_ROOT =
 		/^f6y-(p|px|py|ps|pe|pt|pr|pb|pl|m|mx|my|ms|me|mt|mr|mb|ml|gap|gap-x|gap-y)$/;
 
-	it("uses only real design-system spacing steps, the same check conformance.test.ts makes", () => {
+	it("those same classes use only real design-system spacing steps, the same check conformance.test.ts makes", () => {
 		const badSteps = classes.flatMap((name) =>
 			system
 				.parseCandidate(name)
@@ -222,7 +252,7 @@ describe("DESIGN.md's Building and Layout guidance matches main's real utilities
 		expect(badSteps).toEqual([]);
 	});
 
-	it("fails on an unsanctioned fluid step, by mutation", () => {
+	it("fails on an unsanctioned fluid step in a scanned section, by mutation", () => {
 		const mutated = designMdSource.replace(
 			"`f6y-p-8` is `space-5`",
 			"`f6y-p-8` is `space-5`, `f6y-p-3` is nothing",
@@ -251,13 +281,12 @@ describe("DESIGN.md's Building and Layout guidance matches main's real utilities
 		expect(badSteps).toContain("f6y-p-3");
 	});
 
-	// The three checks above only scan Layout & Spacing, Elevation & Depth
-	// and the Building table: a class taught anywhere else in the document
-	// (Building's own prose, Typography, Motion) went unchecked, so B1's
-	// original `p-(--space-4)` text could come back in its original spot, or
-	// the whole Building table could be replaced by a regeneration from the
-	// design system's still-stale README, and nothing here would fail. These
-	// two scan the whole document body instead of specific sections.
+	// Unlike the checks above (see the SCOPE note at the top of this file),
+	// these two scan the whole document body, not specific sections: they
+	// exist because B1's original `p-(--space-4)` text, or a regeneration
+	// replacing the whole Building table, could otherwise land anywhere and
+	// go unnoticed. They catch that one syntactic shape everywhere, not
+	// every invented class everywhere (see the SCOPE note).
 	it("teaches no arbitrary-value class anywhere in DESIGN.md", () => {
 		const body = designMdSource.slice(designMdSource.indexOf("\n---\n", 4));
 		const arbitrary = backtickSpans(body).filter((token) =>
