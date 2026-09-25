@@ -27,19 +27,27 @@ set -euo pipefail
 # `structured-data`, `a11y` and `perf` checks (claude/quality-3-perf,
 # #38-#40). Apply this script only after those land on `main`: before then,
 # nothing ever posts those check names, and requiring an unreported check
-# blocks every PR forever. check_required_contexts_have_reported (below)
-# refuses --apply, and warns in a dry run, when a required context has
-# never reported on main's current tip — a cheap, single-commit check, not
-# a guarantee: it can't see contexts that reported in the past and then
-# stopped (see its own comment).
+# blocks every PR forever. check_required_contexts_have_reported runs for
+# every ruleset file as its own preflight step, before any write (so a
+# refusal never leaves a partial apply), and refuses --apply, or warns in
+# a dry run, when a required context has never reported where it actually
+# can: on the ruleset's own target branch tip for a push-triggered
+# context, or on an open PR into that branch for a pull_request-only one
+# (context_is_pull_request_only) — release-source (release.yml) is
+# exactly the latter, and never posts to a branch tip at all. Both are
+# cheap, single-snapshot checks, not a guarantee: neither can see a
+# context that reported in the past and then stopped (see their own
+# comments).
 #
 # Default mode is a dry run: every GET is real, but every PUT/POST/PATCH is
 # only printed, with its payload, and the one GraphQL query (phase 2 of a
 # bypassed ruleset's apply, below) never runs at all. Nothing is sent to
 # GitHub, and no bypass actor is checked, unless invoked with --apply.
 #
-# Order matters and is enforced here, not just documented: the repo PATCH
-# first, then the rulesets.
+# Order matters and is enforced here, not just documented: every ruleset
+# file's required-status-checks preflight first (a pure GET, so it's safe
+# before anything else), then the repo PATCH, then the rulesets
+# themselves.
 #
 # https://docs.github.com/en/rest/repos/rules
 # https://docs.github.com/en/rest/repos/repos#update-a-repository
@@ -271,64 +279,151 @@ apply_bypassed_ruleset() {
 	echo "  confirmed: current_user_can_bypass == \"always\""
 }
 
-# Fetches the check-run names present on main's current tip commit, once,
-# caching them in MAIN_CHECK_RUN_NAMES_FILE for the rest of this run. This
-# approximates "has this context ever reported": it only sees the latest
-# commit on main, not the branch's full history, so a context that
-# reported once and later stopped still counts as reported. That's enough
-# to catch what check_required_contexts_have_reported guards against — a
-# required context nothing has ever posted, because the workflow that
-# produces it hasn't merged to main yet (see this file's header) — without
-# an expensive walk of every commit on main.
+# True (exit 0) if $1 (a required-check context name)'s owning workflow
+# job has no `push:` trigger that covers $2 (a branch name) — so for
+# *this* branch specifically, the context can only ever appear while
+# reviewing a pull request into it, never as a standalone completed check
+# on $2's own tip commit. This is branch-specific, not file-wide:
+# ci.yml's `check`/`build`/`structured-data`/`a11y`/`perf` push-trigger
+# only on `main` (`push: branches: [main]`) — required by main.json or
+# main-merge.json, they're verifiable on main's tip; required by
+# prod.json, they never push-trigger on prod at all, so they need the
+# same open-PR fallback release-source does. release.yml's release-source
+# has no push trigger for any branch, so it's always pull_request-only.
 #
-# A failed GET (main has no commits, or a transient API error) leaves the
-# cache empty, the safe direction: every required context then looks
-# unreported, so check_required_contexts_have_reported warns or refuses
-# rather than silently trusting a GET that didn't work.
-MAIN_CHECK_RUN_NAMES_FILE=""
-ensure_main_check_run_names() {
-	if [ -n "$MAIN_CHECK_RUN_NAMES_FILE" ]; then
+# Crude YAML matching (a 2-space-indented job-id line, then whether the
+# next `push:` block's `branches: […]` contains $2) — adequate for this
+# repo's small, hand-written workflow files, not a general-purpose
+# parser. A context or branch name containing ERE metacharacters would
+# need escaping first; none of this repo's do.
+context_is_pull_request_only() {
+	local context="$1" branch="$2" workflow_file
+	for workflow_file in "$SCRIPT_DIR"/../.github/workflows/*.yml; do
+		if grep -qE "^  ${context}:[[:space:]]*\$" "$workflow_file"; then
+			if grep -A1 -E "^  push:[[:space:]]*\$" "$workflow_file" | grep -qE "branches:.*\[[^]]*\\b${branch}\\b"; then
+				return 1
+			fi
+			return 0
+		fi
+	done
+	# Not defined in any workflow this script can see (e.g. "Workers
+	# Builds: website", posted by Cloudflare's GitHub app, not an Actions
+	# job) — don't guess; the ordinary tip check still applies to it.
+	return 1
+}
+
+# Fetches the check-run names reported on $1 (a SHA, branch or tag),
+# caching per ref in $WORKDIR so two rulesets that target the same branch
+# (main.json and main-merge.json both target main) only fetch once.
+#
+# A failed GET (no commits yet, a transient API error) caches an empty
+# array, the safe direction: every context then looks unreported on that
+# ref, so callers warn or refuse rather than silently trusting a GET that
+# didn't work. Prints the cache file's path.
+fetch_check_run_names() {
+	local ref="$1" cache_file raw_file
+	cache_file="$WORKDIR/check-run-names-$(echo "$ref" | tr -c 'a-zA-Z0-9' '-').json"
+	if [ -f "$cache_file" ]; then
+		echo "$cache_file"
 		return
 	fi
-	MAIN_CHECK_RUN_NAMES_FILE="$WORKDIR/main-check-run-names.json"
-	local raw_file="$WORKDIR/main-check-runs-raw.json"
-	if ! gh api --hostname "$HOST" "repos/$REPO/commits/main/check-runs" --paginate >"$raw_file" 2>/dev/null; then
-		echo "::warning::couldn't list check runs on main's tip; treating every required context as unreported" >&2
-		echo '[]' >"$MAIN_CHECK_RUN_NAMES_FILE"
+	raw_file="$WORKDIR/check-runs-raw-$(echo "$ref" | tr -c 'a-zA-Z0-9' '-').json"
+	if ! gh api --hostname "$HOST" "repos/$REPO/commits/$ref/check-runs" --paginate >"$raw_file" 2>/dev/null; then
+		echo "::warning::couldn't list check runs on $ref" >&2
+		echo '[]' >"$cache_file"
+		echo "$cache_file"
 		return
 	fi
-	jq -s '[.[].check_runs[]?.name] | unique' "$raw_file" >"$MAIN_CHECK_RUN_NAMES_FILE"
+	jq -s '[.[].check_runs[]?.name] | unique' "$raw_file" >"$cache_file"
+	echo "$cache_file"
+}
+
+# Fetches check-run names from the head commit of every open PR based on
+# $1 (a branch name, e.g. "prod"), merged into one deduped, cached array.
+# This is how a pull_request-only context (context_is_pull_request_only)
+# gets verified: it can never appear via fetch_check_run_names on the
+# branch's own tip, only on an open PR's head SHA while one exists — "never
+# reported" for such a context, right after a push that closes the one
+# open PR that showed it, is expected, not a sign of anything wrong.
+# A failed GET, or no open PRs, both cache an empty array — same safe
+# direction as fetch_check_run_names. Prints the cache file's path.
+fetch_open_pr_check_run_names() {
+	local base="$1" cache_file prs_file sha names_file combined
+	cache_file="$WORKDIR/pr-check-run-names-$(echo "$base" | tr -c 'a-zA-Z0-9' '-').json"
+	if [ -f "$cache_file" ]; then
+		echo "$cache_file"
+		return
+	fi
+	prs_file="$WORKDIR/open-prs-$(echo "$base" | tr -c 'a-zA-Z0-9' '-').json"
+	echo '[]' >"$cache_file"
+	if ! gh api --hostname "$HOST" "repos/$REPO/pulls" -f base="$base" -f state=open --paginate >"$prs_file" 2>/dev/null; then
+		echo "::warning::couldn't list open PRs into $base" >&2
+		echo "$cache_file"
+		return
+	fi
+	for sha in $(jq -r -s '[.[][] | .head.sha] | .[]' "$prs_file"); do
+		names_file="$(fetch_check_run_names "$sha")"
+		combined="$WORKDIR/pr-check-run-names-$(echo "$base" | tr -c 'a-zA-Z0-9' '-')-tmp.json"
+		jq -s '(.[0] + .[1]) | unique' "$cache_file" "$names_file" >"$combined"
+		mv "$combined" "$cache_file"
+	done
+	echo "$cache_file"
 }
 
 # Warns (dry run) or refuses to apply (--apply) when $1's
-# required_status_checks names a context that has never reported on main's
-# current tip — seen most often right after this script starts requiring a
-# context whose workflow (the quality stack, #38-#40 — see this file's
-# header) hasn't merged to main yet. Without this, --apply would happily
-# require a check nothing will ever post, blocking every PR on `main` or
-# `prod` forever.
+# required_status_checks names a context that has never reported where it
+# actually can: on $1's own target branch tip (conditions.ref_name) for a
+# push-triggered context, or on an open PR into that branch for a
+# pull_request-only one. Seen most often right after this script starts
+# requiring a context whose workflow (the quality stack, #38-#40 — see
+# this file's header) hasn't merged to main yet. Without this, --apply
+# would happily require a check nothing will ever post, blocking every PR
+# on `main` or `prod` forever.
 check_required_contexts_have_reported() {
-	local file="$1"
+	local file="$1" branch
 	local contexts_file
 	contexts_file="$WORKDIR/required-contexts-$(basename "$file").json"
 	jq '[.rules[]? | select(.type == "required_status_checks") | .parameters.required_status_checks[]?.context]' "$file" >"$contexts_file"
 	if [ "$(jq 'length' "$contexts_file")" -eq 0 ]; then
 		return
 	fi
-	ensure_main_check_run_names
+
+	branch="$(jq -r '.conditions.ref_name.include[0] // empty' "$file" | sed 's#^refs/heads/##')"
+	if [ -z "$branch" ]; then
+		echo "::error::$(basename "$file") has a required_status_checks rule but no conditions.ref_name.include[0] to check it against" >&2
+		exit 1
+	fi
+
+	local tip_names_file pr_names_file="" context reported
+	tip_names_file="$(fetch_check_run_names "$branch")"
+
 	local missing_file
-	missing_file="$WORKDIR/missing-contexts-$(basename "$file").json"
-	jq -s '.[0] - .[1]' "$contexts_file" "$MAIN_CHECK_RUN_NAMES_FILE" >"$missing_file"
+	missing_file="$WORKDIR/missing-$(basename "$file").json"
+	echo '[]' >"$missing_file"
+	while IFS= read -r context; do
+		[ -z "$context" ] && continue
+		reported="$(jq --arg c "$context" 'any(.[]; . == $c)' "$tip_names_file")"
+		if [ "$reported" = "false" ] && context_is_pull_request_only "$context" "$branch"; then
+			if [ -z "$pr_names_file" ]; then
+				pr_names_file="$(fetch_open_pr_check_run_names "$branch")"
+			fi
+			reported="$(jq --arg c "$context" 'any(.[]; . == $c)' "$pr_names_file")"
+		fi
+		if [ "$reported" = "false" ]; then
+			jq --arg c "$context" '. + [$c]' "$missing_file" >"$missing_file.tmp" && mv "$missing_file.tmp" "$missing_file"
+		fi
+	done < <(jq -r '.[]' "$contexts_file")
+
 	if [ "$(jq 'length' "$missing_file")" -eq 0 ]; then
 		return
 	fi
 	local missing_list
 	missing_list="$(jq -r 'join(", ")' "$missing_file")"
 	if [ "$APPLY" = true ]; then
-		echo "::error::$(basename "$file") requires status check(s) that have never reported on main's current tip: $missing_list. Merge the PR(s) that add them first, or drop them from this file — applying now would block every PR waiting on a check that never runs." >&2
+		echo "::error::$(basename "$file") requires status check(s) that have never reported where they can: $missing_list. If a context's own workflow hasn't merged to $branch yet, merge that first; a pull_request-only one needs an open PR into $branch before it can report. Re-run --apply once it has." >&2
 		exit 1
 	fi
-	echo "  ⚠ requires status check(s) that have never reported on main's current tip: $missing_list — --apply will refuse until they do"
+	echo "  ⚠ requires status check(s) that have never reported where they can: $missing_list — --apply will refuse until they do"
 }
 
 apply_ruleset() {
@@ -338,8 +433,6 @@ apply_ruleset() {
 	echo "== Validating $(basename "$file") =="
 	jq empty "$file"
 	echo "  jq syntax OK"
-
-	check_required_contexts_have_reported "$file"
 
 	name="$(jq -r .name "$file")"
 	echo "== Ruleset '$name' =="
@@ -410,6 +503,18 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
 		exit 1
 	fi
 	echo "  $login has admin permission on $REPO"
+	echo
+
+	# Every ruleset's required-status-checks guard, before any write
+	# (including the repo PATCH below): a pure GET, so running it first
+	# costs nothing, and it means a refusal here can never leave a partial
+	# apply the way running it inside the per-file loop used to (a real
+	# --apply against main once PATCHed allow_merge_commit and fully
+	# activated main-merge before refusing on prod.json's release-source).
+	echo "== Required-status-checks preflight =="
+	for ruleset_file in "$RULESETS_DIR"/*.json; do
+		check_required_contexts_have_reported "$ruleset_file"
+	done
 	echo
 
 	echo "== Repository settings =="
