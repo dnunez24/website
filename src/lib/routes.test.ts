@@ -4,24 +4,53 @@ import type { APIContext } from "astro";
 import { describe, expect, it, vi } from "vitest";
 import { GET as robots } from "../pages/robots.txt";
 import {
-	isCurrentSection,
+	currentNavState,
 	isDevPageFile,
 	isDevPagePath,
 	isDevRoute,
 	isPublicPage,
 } from "./routes";
 
-describe("isCurrentSection", () => {
-	it("matches the link's own page and the pages under it", () => {
-		expect(isCurrentSection("/topics/", "/topics/")).toBe(true);
-		expect(isCurrentSection("/topics/systems/", "/topics/")).toBe(true);
-		expect(isCurrentSection("/writing/first-post/", "/writing")).toBe(true);
+describe("currentNavState", () => {
+	it('marks the link\'s own page "page"', () => {
+		expect(currentNavState("/topics/", "/topics/")).toBe("page");
+		expect(currentNavState("/writing/", "/writing/")).toBe("page");
+		// An href without its trailing slash still matches exactly.
+		expect(currentNavState("/writing/", "/writing")).toBe("page");
+	});
+
+	it('marks a page under the link\'s section "true", not "page"', () => {
+		expect(currentNavState("/topics/systems/", "/topics/")).toBe("true");
+		expect(currentNavState("/writing/first-post/", "/writing")).toBe("true");
+	});
+
+	it('marks a later writing page "true", ahead of that route\'s own PR', () => {
+		expect(currentNavState("/writing/page/2/", "/writing/")).toBe("true");
+		expect(currentNavState("/writing/page/10/", "/writing/")).toBe("true");
 	});
 
 	it("ignores pages that only share a prefix, and external links", () => {
-		expect(isCurrentSection("/topicsx/", "/topics/")).toBe(false);
-		expect(isCurrentSection("/writing-notes/", "/writing")).toBe(false);
-		expect(isCurrentSection("/", "https://github.com/dnunez24")).toBe(false);
+		expect(currentNavState("/topicsx/", "/topics/")).toBeUndefined();
+		expect(currentNavState("/writing-notes/", "/writing")).toBeUndefined();
+		expect(currentNavState("/", "https://github.com/dnunez24")).toBeUndefined();
+	});
+
+	it("marks nothing on the 404 page: it sits under no section", () => {
+		expect(currentNavState("/404", "/writing/")).toBeUndefined();
+		expect(currentNavState("/404", "/about/")).toBeUndefined();
+		expect(currentNavState("/404", "/topics/")).toBeUndefined();
+	});
+
+	it("compares pathname and href the same way regardless of which one has the trailing slash", () => {
+		expect(currentNavState("/writing", "/writing/")).toBe("page");
+		expect(currentNavState("/writing/", "/writing")).toBe("page");
+		expect(currentNavState("/writing", "/writing")).toBe("page");
+	});
+
+	it('matches href="/" only on the home page itself, not as a section', () => {
+		expect(currentNavState("/", "/")).toBe("page");
+		expect(currentNavState("/about/", "/")).toBeUndefined();
+		expect(currentNavState("/writing/first-post/", "/")).toBeUndefined();
 	});
 });
 

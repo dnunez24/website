@@ -1,4 +1,5 @@
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
+import type { ComponentProps } from "astro/types";
 import { Window } from "happy-dom";
 import { beforeAll, describe, expect, it } from "vitest";
 import ArticleList from "./ArticleList.astro";
@@ -70,7 +71,7 @@ describe("Button", () => {
 	it("marks the current page on a ghost button", async () => {
 		const doc = parse(
 			await render(Button, {
-				props: { href: "/about", variant: "ghost", current: true },
+				props: { href: "/about", variant: "ghost", current: "page" },
 				slots: { default: "About" },
 			}),
 		);
@@ -79,10 +80,23 @@ describe("Button", () => {
 		expect(link?.className).toContain("font-bold");
 	});
 
+	it("marks the current section true, with the same styling as the current page", async () => {
+		const doc = parse(
+			await render(Button, {
+				props: { href: "/writing/", variant: "ghost", current: "true" },
+				slots: { default: "Writing" },
+			}),
+		);
+		const link = doc.querySelector("a");
+		expect(link?.getAttribute("aria-current")).toBe("true");
+		expect(link?.className).toContain("font-bold");
+		expect(link?.className).toContain("text-brand");
+	});
+
 	it("draws the current page's rule in the label's color and hides it on hover", async () => {
 		const doc = parse(
 			await render(Button, {
-				props: { href: "/about", variant: "ghost", current: true },
+				props: { href: "/about", variant: "ghost", current: "page" },
 				slots: { default: "About" },
 			}),
 		);
@@ -187,10 +201,10 @@ describe("Topic", () => {
 });
 
 describe("Header", () => {
-	it("marks only the current section in the navigation", async () => {
+	it('marks the exact current page "page"', async () => {
 		const doc = parse(
 			await render(Header, {
-				request: new Request("https://example.com/writing/some-article/"),
+				request: new Request("https://example.com/writing/"),
 			}),
 		);
 		const current = [...doc.querySelectorAll('nav a[aria-current="page"]')];
@@ -200,6 +214,19 @@ describe("Header", () => {
 		expect(doc.querySelector("nav")?.getAttribute("aria-label")).toBe(
 			"Primary",
 		);
+	});
+
+	it('marks the section "true" on a page inside it, not "page"', async () => {
+		const doc = parse(
+			await render(Header, {
+				request: new Request("https://example.com/writing/some-article/"),
+			}),
+		);
+		expect(doc.querySelectorAll('nav a[aria-current="page"]')).toHaveLength(0);
+		const section = [...doc.querySelectorAll('nav a[aria-current="true"]')];
+		expect(section.map((link) => link.getAttribute("href"))).toEqual([
+			"/writing/",
+		]);
 	});
 
 	it("opens with the skip link, before the word mark", async () => {
@@ -220,22 +247,36 @@ describe("Header", () => {
 		);
 		expect(doc.querySelectorAll("[aria-current]")).toHaveLength(0);
 	});
+
+	it("marks nothing on the 404 page", async () => {
+		const doc = parse(
+			await render(Header, { request: new Request("https://example.com/404") }),
+		);
+		expect(doc.querySelectorAll("[aria-current]")).toHaveLength(0);
+	});
 });
 
 describe("Footer", () => {
-	const current = async (url: string) => {
+	const currentState = async (url: string) => {
 		const doc = parse(await render(Footer, { request: new Request(url) }));
-		return [...doc.querySelectorAll('nav a[aria-current="page"]')].map((link) =>
-			link.getAttribute("href"),
-		);
+		return doc
+			.querySelector('nav a[href="/topics/"]')
+			?.getAttribute("aria-current");
 	};
 
-	it("marks Topics current on the Topics page and every topic page", async () => {
-		expect(await current("https://example.com/topics/")).toEqual(["/topics/"]);
-		expect(await current("https://example.com/topics/systems/")).toEqual([
-			"/topics/",
-		]);
-		expect(await current("https://example.com/writing/")).toEqual([]);
+	it('marks Topics "page" on the Topics page and "true" on every topic page', async () => {
+		expect(await currentState("https://example.com/topics/")).toBe("page");
+		expect(await currentState("https://example.com/topics/systems/")).toBe(
+			"true",
+		);
+		expect(await currentState("https://example.com/writing/")).toBeNull();
+	});
+
+	it("marks nothing on the 404 page", async () => {
+		const doc = parse(
+			await render(Footer, { request: new Request("https://example.com/404") }),
+		);
+		expect(doc.querySelectorAll("[aria-current]")).toHaveLength(0);
 	});
 
 	it("marks the LinkedIn and GitHub profiles as the same person", async () => {
@@ -764,6 +805,16 @@ describe("WordMark", () => {
 		expect(link?.textContent).toContain("Software leader");
 	});
 
+	it("hides the tagline from assistive technology, so the link's name is just the name", async () => {
+		const doc = parse(
+			await render(WordMark, {
+				props: { name: "Dave Nuñez", tagline: "Leader / Builder / Integrator" },
+			}),
+		);
+		const tagline = doc.querySelectorAll("span")[1];
+		expect(tagline?.getAttribute("aria-hidden")).toBe("true");
+	});
+
 	it("shows the tagline only from the measure breakpoint up", async () => {
 		const doc = parse(
 			await render(WordMark, {
@@ -792,18 +843,41 @@ describe("TopicList", () => {
 		);
 	});
 
-	it("uses the index layout's balanced spacing and a custom label", async () => {
+	it("uses the index layout's balanced spacing and takes no aria-label: the page's h1 names it", async () => {
 		const doc = parse(
 			await render(TopicList, {
-				props: { topics, index: true, label: "All topics" },
+				props: { topics, index: true },
 			}),
 		);
 		const list = doc.querySelector("ul");
-		expect(list?.getAttribute("aria-label")).toBe("All topics");
+		expect(list?.hasAttribute("aria-label")).toBe(false);
 		expect(list?.classList.contains("text-balance")).toBe(true);
 		expect(list?.querySelector("li")?.classList.contains("inline-block")).toBe(
 			true,
 		);
+	});
+
+	it("honors a custom label outside index mode", async () => {
+		const doc = parse(
+			await render(TopicList, { props: { topics, label: "All topics" } }),
+		);
+		expect(doc.querySelector("ul")?.getAttribute("aria-label")).toBe(
+			"All topics",
+		);
+	});
+
+	it("forbids label together with index at the type level", () => {
+		// index and label are mutually exclusive (TopicList.astro): index mode
+		// never renders an aria-label, so a caller can't pass label alongside
+		// it. astro check enforces this on every real <TopicList index label=…>
+		// usage; this pins the same guarantee at the Props type itself.
+		// @ts-expect-error label isn't assignable together with index: true
+		const invalid: ComponentProps<typeof TopicList> = {
+			topics: [],
+			index: true,
+			label: "All topics",
+		};
+		expect(invalid).toBeDefined();
 	});
 });
 
