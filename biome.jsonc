@@ -25,6 +25,19 @@
 	},
 	"overrides": [
 		{
+			// Ships byte-identical from the design system (public/favicon.svg):
+			// browser chrome referenced via <link rel="icon">, never inlined into
+			// a page's accessibility tree, so it carries no <title> of its own.
+			"includes": ["public/favicon.svg"],
+			"linter": {
+				"rules": {
+					"a11y": {
+						"noSvgWithoutTitle": "off"
+					}
+				}
+			}
+		},
+		{
 			"includes": ["**/*.astro"],
 			"linter": {
 				"rules": {
