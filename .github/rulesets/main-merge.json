@@ -29,12 +29,7 @@
 				"strict_required_status_checks_policy": false,
 				"required_status_checks": [
 					{ "context": "check", "integration_id": 15368 },
-					{ "context": "build", "integration_id": 15368 },
-					{ "context": "structured-data", "integration_id": 15368 },
-					{ "context": "a11y", "integration_id": 15368 },
-					{ "context": "perf", "integration_id": 15368 },
-					{ "context": "preview-build", "integration_id": 15368 },
-					{ "context": "preview-deploy", "integration_id": 15368 }
+					{ "context": "Workers Builds: website", "integration_id": 85455 }
 				]
 			}
 		}

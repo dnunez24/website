@@ -1,30 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Idempotently applies .github/rulesets/*.json, plus the environment
-# settings and the allow_merge_commit repo setting the deploy stack depends
-# on, to dnunez24/website via the GitHub REST and GraphQL APIs.
+# Idempotently applies .github/rulesets/*.json and the allow_merge_commit
+# repo setting prod.json's "merge" method needs, to dnunez24/website via the
+# GitHub REST and GraphQL APIs.
 #
-# Scope is rulesets, environments and the one repo setting prod.json's
-# "merge" method needs — nothing repo-wide. Repo-wide hardening (default
-# workflow token permissions, PR approval by Actions, secret scanning) is a
-# separate concern, added behind --apply-hardening by
-# claude/deploy-5-repo-hardening on top of this branch: those settings
-# affect every workflow's token, not just this deploy stack, so they're a
-# separate PR and a separate flag, not bundled into --apply here.
+# Scope is rulesets and that one repo setting — nothing else repo-wide.
+# Repo-wide hardening (default workflow token permissions, PR approval by
+# Actions, secret scanning) is a separate concern, added behind
+# --apply-hardening by claude/deploy-5-repo-hardening on top of this branch:
+# those settings affect every workflow's token, not just this deploy stack,
+# so they're a separate PR and a separate flag, not bundled into --apply
+# here.
+#
+# No GitHub environments or deployment branch policies: Cloudflare Workers
+# Builds deploys straight from Cloudflare's GitHub app, with no GitHub
+# Actions deploy job and no GitHub Deployments API call for an Environment's
+# protection rules to gate. main.json and prod.json's branch rules, plus
+# Workers Builds' own required status check, are what stand in front of a
+# deploy now.
 #
 # Default mode is a dry run: every GET (and the one GraphQL query, also
 # read-only) is real, but every PUT/POST/PATCH is only printed, with its
 # payload. Nothing is sent to GitHub unless invoked with --apply.
 #
 # Order matters and is enforced here, not just documented: the repo PATCH
-# first, then the environments (Staging doesn't exist yet, and prod.json's
-# required_deployments references it), then the rulesets.
+# first, then the rulesets.
 #
 # https://docs.github.com/en/rest/repos/rules
 # https://docs.github.com/en/rest/repos/repos#update-a-repository
-# https://docs.github.com/en/rest/deployments/environments
-# https://docs.github.com/en/rest/deployments/branch-policies
 # https://docs.github.com/en/graphql/reference/objects#repositoryruleset
 #
 # Usage: scripts/apply-rulesets.sh [--apply]
@@ -121,65 +125,6 @@ echo "  allow_merge_commit=true (squash stays on; rebase left untouched) — pro
 repo_settings_file="$WORKDIR/repo-settings.json"
 jq -n '{ allow_merge_commit: true }' >"$repo_settings_file"
 request PATCH "repos/$REPO" "$repo_settings_file" >/dev/null
-echo
-
-# Idempotently makes sure environment $1 has a deployment branch/tag policy
-# matching pattern $2 (type $3, default "branch"): lists the environment's
-# existing policies, and only POSTs if that exact name isn't already there.
-#
-# The listing GET is attempted for real even in a dry run (same reasoning as
-# everywhere else: GETs are read-only), but tolerated if it fails — in a dry
-# run, Staging's own environment PUT above was only printed, never sent, so
-# Staging doesn't exist yet and this 404s. Treating "couldn't list" the same
-# as "listed, found nothing" is correct either way: either the environment
-# is new (nothing to find) or something else is wrong, in which case the
-# POST attempted next will surface the same error for real.
-ensure_branch_policy() {
-	local env_name="$1" pattern="$2" type="${3:-branch}"
-	local list_file="$WORKDIR/branch-policies-$env_name.json"
-	if ! gh api --hostname "$HOST" "repos/$REPO/environments/$env_name/deployment-branch-policies" >"$list_file" 2>/dev/null; then
-		echo '{"branch_policies":[]}' >"$list_file"
-	fi
-	if jq -e --arg p "$pattern" '.branch_policies[]? | select(.name == $p)' "$list_file" >/dev/null 2>&1; then
-		echo "  branch policy '$pattern' already exists on $env_name"
-		return
-	fi
-	local policy_file="$WORKDIR/new-policy-$env_name.json"
-	jq -n --arg name "$pattern" --arg type "$type" '{name: $name, type: $type}' >"$policy_file"
-	request POST "repos/$REPO/environments/$env_name/deployment-branch-policies" "$policy_file" >/dev/null
-}
-
-echo "== Environments =="
-echo "  (Staging doesn't exist yet — PUT creates it. Preview and Production already do.)"
-
-echo "-- Production: required reviewer $login (self-review allowed), branch policy 'prod' --"
-production_file="$WORKDIR/env-production.json"
-jq -n --argjson id "$user_id" '{
-	reviewers: [{ type: "User", id: $id }],
-	prevent_self_review: false,
-	deployment_branch_policy: { protected_branches: false, custom_branch_policies: true }
-}' >"$production_file"
-request PUT "repos/$REPO/environments/Production" "$production_file" >/dev/null
-ensure_branch_policy Production prod branch
-
-echo "-- Staging: branch policy 'main' --"
-staging_file="$WORKDIR/env-staging.json"
-jq -n '{
-	deployment_branch_policy: { protected_branches: false, custom_branch_policies: true }
-}' >"$staging_file"
-request PUT "repos/$REPO/environments/Staging" "$staging_file" >/dev/null
-ensure_branch_policy Staging main branch
-
-echo "-- Preview: branch policy 'refs/pull/*/merge' --"
-echo "     (the documented pattern for letting pull_request-triggered runs satisfy a"
-echo "     deployment branch policy — GITHUB_REF for those runs is refs/pull/<n>/merge,"
-echo "     not a real branch name; source: GitHub's deployments-and-environments doc)"
-preview_file="$WORKDIR/env-preview.json"
-jq -n '{
-	deployment_branch_policy: { protected_branches: false, custom_branch_policies: true }
-}' >"$preview_file"
-request PUT "repos/$REPO/environments/Preview" "$preview_file" >/dev/null
-ensure_branch_policy Preview 'refs/pull/*/merge' branch
 echo
 
 # Fields that make up a ruleset's desired state — everything in
