@@ -576,14 +576,14 @@ describe("CodeBlock", () => {
 				props: { code: "const answer = 42;", lang: "ts", file: "answer.ts" },
 			}),
 		);
-		const figure = doc.querySelector("figure[data-codeblock]");
-		expect(figure?.querySelector("[data-codeblock-file]")?.textContent).toBe(
+		const frame = doc.querySelector("[data-codeblock]");
+		expect(frame?.querySelector("[data-codeblock-file]")?.textContent).toBe(
 			"answer.ts",
 		);
-		expect(figure?.querySelector("[data-codeblock-lang]")?.textContent).toBe(
+		expect(frame?.querySelector("[data-codeblock-lang]")?.textContent).toBe(
 			"ts",
 		);
-		const html = figure?.querySelector("pre")?.outerHTML ?? "";
+		const html = frame?.querySelector("pre")?.outerHTML ?? "";
 		expect(html).toContain("var(--color-syntax-keyword)");
 		expect(html).toContain("font-weight:600");
 		expect(html).not.toContain("font-weight:bold");
@@ -600,7 +600,7 @@ describe("CodeBlock", () => {
 		expect(pre?.getAttribute("aria-label")).toBe("Code: build.sh, sh");
 	});
 
-	it("puts a caption below the code and only when given one", async () => {
+	it("puts a caption below the code and only when given one, framed as a figure", async () => {
 		const withCaption = parse(
 			await render(CodeBlock, {
 				props: { code: "x", lang: "ts", caption: 'Say "hi".' },
@@ -615,6 +615,25 @@ describe("CodeBlock", () => {
 		);
 		expect(without.querySelector("figcaption")).toBeNull();
 		expect(without.querySelector("[data-codeblock-file]")).toBeNull();
+	});
+
+	it("frames a block without a caption as a div, so screen readers don't announce an empty figure", async () => {
+		const doc = parse(
+			await render(CodeBlock, { props: { code: "x", lang: "ts" } }),
+		);
+		expect(doc.querySelector("figure[data-codeblock]")).toBeNull();
+		expect(doc.querySelector("div[data-codeblock]")).not.toBeNull();
+	});
+
+	it("hides the header from assistive technology", async () => {
+		const doc = parse(
+			await render(CodeBlock, {
+				props: { code: "x", lang: "ts", file: "x.ts" },
+			}),
+		);
+		expect(
+			doc.querySelector("[data-codeblock-header]")?.getAttribute("aria-hidden"),
+		).toBe("true");
 	});
 });
 
