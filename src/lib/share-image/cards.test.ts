@@ -155,4 +155,26 @@ describe("article card", () => {
 			format: "png",
 		});
 	});
+
+	it("drops the unused alpha channel: RGB, not RGBA", async () => {
+		const { svg } = await articleCardSvg({ title: "On restraint" });
+		const { channels, hasAlpha, isPalette } = await sharp(
+			await toPng(svg),
+		).metadata();
+		expect(channels).toBe(3);
+		expect(hasAlpha).toBe(false);
+		// A palette PNG would also read 3 channels and no alpha, so check this
+		// too: it's what effort, quality, colours or dither would switch on.
+		expect(isPalette).toBe(false);
+	});
+
+	it("stays lossless: the shipped PNG decodes to the same pixels as a plain, unoptimized render", async () => {
+		const { svg } = await articleCardSvg({ title: "On restraint" });
+		const plain = await sharp(Buffer.from(svg)).png().toBuffer();
+		const plainRgb = await sharp(plain).removeAlpha().raw().toBuffer();
+		const shippedRgb = await sharp(await toPng(svg))
+			.raw()
+			.toBuffer();
+		expect(Buffer.compare(shippedRgb, plainRgb)).toBe(0);
+	});
 });
