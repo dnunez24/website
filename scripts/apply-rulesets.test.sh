@@ -79,12 +79,22 @@ case "$path" in
 		if [ -f "$file" ]; then cat "$file"; else echo '{"total_count":0,"check_runs":[]}'; fi
 		;;
 	*/pulls)
+		# `gh api` sends -f fields as a POST body unless told otherwise, and
+		# POST /pulls creates a PR. Refuse anything but an explicit GET.
+		method=""
+		prev=""
 		base=""
 		for arg in "$@"; do
+			[ "$prev" = "--method" ] && method="$arg"
 			case "$arg" in
 				base=*) base="${arg#base=}" ;;
 			esac
+			prev="$arg"
 		done
+		if [ "$method" != "GET" ]; then
+			echo "fake gh: /pulls called without --method GET: $*" >&2
+			exit 1
+		fi
 		file="$FAKE_GH_PRS_DIR/$(printf '%s' "$base" | tr -c 'a-zA-Z0-9' '-').json"
 		if [ -f "$file" ]; then cat "$file"; else echo '[]'; fi
 		;;
