@@ -148,9 +148,9 @@ spacing: { space-1: 2px, space-2: 4px, space-3-min: 8px, space-3-max: 12px, spac
 components:
   button-filled: { typography: "{typography.label}", textColor: "{colors.color-on-brand}", backgroundColor: "{colors.color-brand}", rounded: "{rounded.radius-sm}", height: 44px }
   button-filled-hover: { backgroundColor: "{colors.color-brand-hover}" }
-  button-outline: { typography: "{typography.label}", textColor: "{colors.color-brand}", rounded: "{rounded.radius-sm}" }
+  button-outline: { typography: "{typography.label}", textColor: "{colors.color-brand}", rounded: "{rounded.radius-sm}", height: 44px }
   button-outline-hover: { backgroundColor: "{colors.color-brand-tint}", textColor: "{colors.color-brand-hover}" }
-  button-ghost: { typography: "{typography.label}", textColor: "{colors.color-ink}", rounded: "{rounded.radius-sm}" }
+  button-ghost: { typography: "{typography.label}", textColor: "{colors.color-ink}", rounded: "{rounded.radius-sm}", height: 44px }
   button-ghost-hover: { backgroundColor: "{colors.color-surface-hover}" }
   button-ghost-current: { textColor: "{colors.color-brand}" }
   link: { textColor: "{colors.color-link}" }
@@ -172,14 +172,14 @@ components:
   callout-caution: { textColor: "{colors.color-callout-caution}", backgroundColor: "{colors.color-callout-caution-ground}", rounded: "{rounded.radius-md}" }
   page: { textColor: "{colors.color-ink}", backgroundColor: "{colors.color-surface}" }
   selection: { textColor: "{colors.color-ink}", backgroundColor: "{colors.color-selection}" }
-  syntax-plain: { textColor: "{colors.color-syntax-plain}" }
-  syntax-comment: { textColor: "{colors.color-syntax-comment}" }
-  syntax-punctuation: { textColor: "{colors.color-syntax-punctuation}" }
-  syntax-keyword: { textColor: "{colors.color-syntax-keyword}" }
-  syntax-string: { textColor: "{colors.color-syntax-string}" }
-  syntax-number: { textColor: "{colors.color-syntax-number}" }
-  syntax-function: { textColor: "{colors.color-syntax-function}" }
-  syntax-type: { textColor: "{colors.color-syntax-type}" }
+  syntax-plain: { textColor: "{colors.color-syntax-plain}", backgroundColor: "{colors.color-codeblock-ground}" }
+  syntax-comment: { textColor: "{colors.color-syntax-comment}", backgroundColor: "{colors.color-codeblock-ground}" }
+  syntax-punctuation: { textColor: "{colors.color-syntax-punctuation}", backgroundColor: "{colors.color-codeblock-ground}" }
+  syntax-keyword: { textColor: "{colors.color-syntax-keyword}", backgroundColor: "{colors.color-codeblock-ground}" }
+  syntax-string: { textColor: "{colors.color-syntax-string}", backgroundColor: "{colors.color-codeblock-ground}" }
+  syntax-number: { textColor: "{colors.color-syntax-number}", backgroundColor: "{colors.color-codeblock-ground}" }
+  syntax-function: { textColor: "{colors.color-syntax-function}", backgroundColor: "{colors.color-codeblock-ground}" }
+  syntax-type: { textColor: "{colors.color-syntax-type}", backgroundColor: "{colors.color-codeblock-ground}" }
 ---
 
 # Dave Nuñez
@@ -188,7 +188,7 @@ Generated from the approved design system (version 98, https://claude.ai/artifac
 
 ## Overview
 
-A personal publishing site for long-form writing, with a short bio. Minimal, understated, balanced, pragmatic, tasteful, timeless. The reference is mid-century modern architecture: open space, economy of means, warmth placed on purpose: wood against steel, concrete and glass.
+A personal publishing site for long-form writing, with a short bio. Minimal, understated, balanced, pragmatic, tasteful, timeless. The reference is mid-century modern architecture: open space, economy of means, warmth placed on purpose (wood against steel, concrete and glass).
 
 First person singular. Past tense and specific for what I did; present tense and modest for what I do. Clear, direct, honest. Short declarative sentences. No superlatives, no marketing words, no exclamation marks, no emoji. Sentence case everywhere: titles, headings, buttons, nav.
 
@@ -214,9 +214,9 @@ Light theme, one inverse surface: CodeBlock sits on dark concrete (`color-codebl
 
 ## Typography
 
-- `sans` = Afacad Flux (weight 400 to 600, italics from its `slnt` axis at −12) for headings and text; `mono` = JetBrains Mono (weight 400 to 700, separate italic file) for structure: dates, nav, labels, topics, code. Both fallback stacks end in `system-ui`, so Astro builds its size-matched fallback faces from it.
+- `sans` = Afacad Flux (weight 400 to 600, italics from its `slnt` axis at −12) for headings and text; `mono` = JetBrains Mono (weight 400 to 700, separate italic file) for structure: dates, nav, labels, topics, code. The sans stack ends in `system-ui`, so Astro builds its size-matched fallback faces from it; the mono stack ends in `monospace`.
 - OpenType features for sans: `calt`, `pnum`, `zero`, `ss02`. A sans style set in capitals takes the full list plus `case`; nothing needs that today, since the two styles set in capitals (`h6`, `label`) are mono instead.
-- Every size is fluid between 320px and 1024px; the tokens above give the 1024px maximum, carried in this codebase by the `text-<style>` and `text-<style>--line-height` utilities. At 320px: `display` 36/40, `h1` 30/36, `h2` 26/32, `h3` 22/28, `h4` 18/24, `h5` 16/24, `h6` 12/16, `prose` 18/28, `body` 16/24, `small` 14/20, `label` 12/16, `code` 14/24.
+- Every size is fluid between 320px and 1024px; the tokens above give the 1024px maximum, carried in this codebase by `text-<style>`, which sets the font size and its paired line height (`--text-<style>--line-height`) together. At 320px: `display` 36/40, `h1` 30/36, `h2` 26/32, `h3` 22/28, `h4` 18/24, `h5` 16/24, `h6` 12/16, `prose` 18/28, `body` 16/24, `small` 14/20, `label` 12/16, `code` 14/24.
 - Vertical rhythm: every line height is a multiple of 4px (`space-2`) at both ends. Inside Prose, block spacing is one prose line; two lines before a heading, half a line after.
 - Heading scale: quarter-octave steps from `prose` (`h4` n=0 to `display` n=4), so four steps make one doubling and `display` is exactly twice `prose`. Article body uses `prose` (20/32 at max); everything else uses `body` (18/28).
 - Weights: 400 text, 500 `display` to `h2` and list titles, 600 `h3` to `h5`, `strong` and the WordMark.
@@ -224,7 +224,7 @@ Light theme, one inverse surface: CodeBlock sits on dark concrete (`color-codebl
 ## Layout & Spacing
 
 - Base 2: step n is `2^n` px at 320px and `1.5 × 2^n` px at 1024px and up. `space-1` (2px) and `space-2` (4px) are fixed at every width: Tailwind's own `0.5` and `1` steps (`p-0.5`, `gap-1`).
-- `space-3` through `space-7` are fluid, between their `-min` and `-max` tokens above. This codebase's `fluidity-tailwind` plugin carries the clamp through `f6y-*` utilities: `f6y-p-2` is `space-3`, `f6y-p-4` is `space-4`, `f6y-p-8` is `space-5`, `f6y-p-16` is `space-6`, `f6y-p-32` is `space-7`, for any property root (`p`, `m`, `gap`, and so on). No arbitrary values; `conformance.test.ts` enforces it.
+- `space-3` through `space-7` are fluid, between their `-min` and `-max` tokens above. This codebase's `fluidity-tailwind` plugin carries the clamp through `f6y-*` utilities: `f6y-p-2` is `space-3`, `f6y-p-4` is `space-4`, `f6y-p-8` is `space-5`, `f6y-p-16` is `space-6`, `f6y-p-32` is `space-7`, for any property root: `p`, `m`, `gap`. No arbitrary values; `conformance.test.ts` enforces it.
 - Prose rhythm uses named steps instead: `*-line`, `*-line-half`, `*-line-quarter`, `*-line-double` (for example `mt-line`).
 - Page: `container-site` (64rem) centered, gutter `space-4`. `container-portrait` (12rem) bounds the largest Portrait diameter.
 - Main content's reading column is `container-prose` (40rem, about 64 characters of `prose` at 1024px). This codebase compiles it to the `max-w-measure` utility and the `measure:` variant, not Tailwind's own `max-w-prose` (a different value, 65ch) or a literal `container-prose` class.
@@ -237,7 +237,7 @@ Lines, not elevation. No shadows, no elevation, no blur, no gradients.
 
 - Separate with space first, then a `stroke-hairline` (1px, the `border` utility) in `color-line`, then a ground change (`color-surface-inset`). CodeBlock is the one dark ground: a slate panel set into the page, no border.
 - A callout tints its ground with its type's hue (the 200 step), also with no border.
-- Link underlines and the rule under a current nav item use `stroke-rule` (2px, `decoration-2`); the focus ring uses `stroke-focus` (4px, `outline-4`) at `stroke-focus-offset` (2px, `outline-offset-2`).
+- Link underlines use `stroke-rule` (2px, `decoration-2`). The rule under a current nav item is the same 2px value, drawn as an `after:h-0.5` bar rather than a text decoration. The focus ring uses `stroke-focus` (4px, `outline-4`) at `stroke-focus-offset` (2px, `outline-offset-2`).
 
 ## Shapes
 
@@ -253,7 +253,7 @@ Buttons have three variants: `button-filled` for the one primary action per view
 
 **Topic**: a `#`-prefixed label; the `#` is CSS (`content: "#" / ""`), so screen readers say only the name. `topic` and `topic-hover` set the name chip; `topic-count` and `topic-count-hover` set the article-count chip, one step darker. Lowercase, one or two words, hyphenated; one to three per article, `space-3` apart.
 
-**Callout**: five types (`callout-note`, `-tip`, `-important`, `-warning`, `-caution`), from GitHub alert syntax. Each is a mono label-caps title row over prose-size content. Links inside take `color-ink`, not `color-link`; inline code takes the page ground, `color-surface`. `> [!NOTE]-` or `+` makes it a collapsible `<details>`, with a `+` or `−` glyph; a collapsible callout needs a title.
+**Callout**: five types (`callout-note`, `-tip`, `-important`, `-warning`, `-caution`), from GitHub alert syntax. Each entry's `textColor` is the mono label-caps title row's color; the content below stays `color-ink` (11.1 to 11.2:1 on the tints), not the title color. Links inside take `color-ink`, not `color-link`; inline code takes the page ground, `color-surface`. `> [!NOTE]-` or `+` makes it a collapsible `<details>`, with a `+` or `−` glyph; a collapsible callout needs a title.
 
 **BlockQuote**: no rules, no background; indent and italic set it apart. `blockquote` sets the quote text at `h3` size but weight 400, not `h3`'s own 600. `blockquote-citation` sets the `<footer>`.
 
@@ -293,7 +293,7 @@ Targets: buttons are 32px tall at 320px and 44px at 1024px; topics 24px and 28px
 
 One `h1` per page. Home shows no title, so its `h1` is visually hidden.
 
-Forced colors (Windows contrast themes): frames, focus rings, the current rule and the task check stay visible; grounds do not. Callout, CodeBlock and plain `pre` frames carry a transparent 1px outline, which forced colors paint as an edge. The external-link mark, the current rule and the task check take system colors. Hover grounds, topic chips and inline code grounds give way to the user's colors. MermaidDiagram keeps its own colors (`forced-color-adjust: none`).
+Forced colors (Windows contrast themes): frames, focus rings, the current rule and the task check stay visible; grounds don't. Callout, CodeBlock and plain `pre` frames carry a transparent 1px outline, which forced colors paint as an edge. The external-link mark, the current rule and the task check take system colors. Hover grounds, topic chips and inline code grounds give way to the user's colors. MermaidDiagram keeps its own colors (`forced-color-adjust: none`).
 
 Every page has a skip link to `#main`.
 
@@ -306,13 +306,15 @@ Every page has a skip link to `#main`.
   | Token | Utility in this codebase |
   | --- | --- |
   | `space-1`, `space-2` | `*-0.5`, `*-1` |
-  | `space-3` through `space-7` | `f6y-*-2`, `-4`, `-8`, `-16`, `-32` |
+  | `space-3` through `space-7` | `f6y-p-2`, `f6y-p-4`, `f6y-p-8`, `f6y-p-16`, `f6y-p-32` (any property root) |
   | Prose rhythm | `*-line`, `*-line-half`, `*-line-double` |
   | `container-prose`, its breakpoint | `max-w-measure`, `measure:` |
   | `duration-*` | a bare number: `duration-64`, `duration-128` (the default) |
-  | `stroke-hairline`, `-rule`, `-focus`, `-focus-offset` | `border`, `decoration-2`, `outline-4`, `outline-offset-2` |
+  | `stroke-hairline` | `border` |
+  | `stroke-rule` | `decoration-2` (link underlines) or `after:h-0.5` (the current-nav rule; same 2px, not a text decoration) |
+  | `stroke-focus`, `-focus-offset` | `outline-4`, `outline-offset-2` |
 
   No arbitrary values anywhere in this table; `conformance.test.ts` enforces it.
-- Self-host fonts from `fonts/`, `font-display: swap`. Preload Afacad Flux and JetBrains Mono upright only; the mono italic stays unpreloaded, since it only sets code comments.
+- Self-host fonts from `src/assets/fonts/`, loaded through Astro's local font provider, `font-display: swap`. Preload Afacad Flux and JetBrains Mono upright only; the mono italic stays unpreloaded, since it only sets code comments.
 - Favicon: link `/favicon.svg` (the ñ mark), plus the build-generated `favicon.ico` (32px) and `apple-touch-icon.png` (180px).
-- Markdown renders through satteri, this codebase's Markdown pipeline (not remark-gfm, which the design system's own README names, but this repo doesn't depend on): footnotes and callouts from its GFM support, code from Shiki using the `color-syntax-*` tokens, Mermaid diagrams rendered to inline SVG at build.
+- Markdown renders through satteri, this codebase's Markdown pipeline (not remark-gfm, which the design system's own README names, but this repo doesn't depend on): footnotes from its GFM support, callouts from the separate `satteri-callouts` package, code from Shiki using the `color-syntax-*` tokens, Mermaid diagrams rendered to inline SVG at build.
