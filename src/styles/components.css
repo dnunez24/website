@@ -12,11 +12,10 @@
 		@apply mx-0 overflow-hidden rounded-md bg-codeblock-ground scheme-dark;
 	}
 	[data-codeblock-header] {
-		@apply m-0 flex items-baseline justify-between f6y-gap-2 border-b border-codeblock-line f6y-px-4 f6y-py-2 font-mono text-label text-ink-muted;
+		@apply m-0 flex items-baseline justify-between f6y-gap-2 border-b border-codeblock-line f6y-px-4 f6y-py-2 font-mono text-label text-syntax-comment;
 	}
 	[data-codeblock-file] {
-		@apply min-w-0 text-syntax-plain;
-		overflow-wrap: anywhere;
+		@apply min-w-0 wrap-anywhere text-syntax-plain;
 	}
 	/* syntax-comment, not ink-muted: ink-muted fails contrast on the dark panel. */
 	[data-codeblock-lang] {

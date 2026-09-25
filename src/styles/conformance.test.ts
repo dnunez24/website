@@ -138,10 +138,48 @@ describe("class conformance", () => {
 		);
 	});
 
-	it("lets the ArticleList date column grow past 12ch instead of clipping wider text-spacing dates", async () => {
-		const theme = await readFile(join(ROOT, "src/styles/theme.css"), "utf8");
-		expect(theme).toContain(
-			"--grid-template-columns-log: minmax(12ch, max-content) minmax(0, 1fr);",
+	it("lets the ArticleList date column grow past 12ch instead of clipping wider text-spacing dates", () => {
+		// theme.get resolves the value Tailwind actually uses, not just the first
+		// declaration: a later redeclaration of the same variable would win at
+		// runtime and this catches it, unlike a source-text search would.
+		const value = system.theme.get(["--grid-template-columns-log"]) ?? "";
+		expect(value.replace(/\s+/g, "")).toBe(
+			"minmax(12ch,max-content)minmax(0,1fr)",
 		);
+	});
+
+	it("renders ArticleList rows on the log column token", async () => {
+		const source = await readFile(
+			join(ROOT, "src/components/ArticleList.astro"),
+			"utf8",
+		);
+		expect(source).toMatch(/<li class="[^"]*\bgrid-cols-log\b/);
+	});
+});
+
+describe("DS-2 sync guards", () => {
+	it("wraps CodeBlock file names and rules off the caption (DS-2 v98)", async () => {
+		const css = await readFile(join(ROOT, "src/styles/components.css"), "utf8");
+		const rule = (selector: string) => {
+			const start = css.indexOf(`${selector} {`);
+			return css.slice(start, css.indexOf("}", start));
+		};
+		const file = rule("[data-codeblock-file]");
+		expect(file).toMatch(/overflow-wrap:\s*anywhere|\bwrap-anywhere\b/);
+		expect(file).not.toMatch(/\btruncate\b|text-overflow|nowrap/);
+		const caption = rule("[data-codeblock] > figcaption");
+		expect(caption).toMatch(/\bborder-t\b/);
+		expect(caption).toMatch(/\bborder-codeblock-line\b/);
+		expect(caption).toMatch(/\bf6y-py-2\b/);
+	});
+
+	it("ends the Afacad Flux fallbacks in system-ui, so Astro emits all five metric-matched faces", async () => {
+		// Astro builds its size-adjusted fallback faces from only the LAST entry
+		// in `fallbacks` (BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue and
+		// Arial for system-ui; Arial alone for sans-serif, and Android has no
+		// Arial). Reordering silently reduces coverage without erroring.
+		const config = await readFile(join(ROOT, "astro.config.ts"), "utf8");
+		const afacad = config.slice(config.indexOf('name: "Afacad Flux"'));
+		expect(afacad).toMatch(/fallbacks:\s*\[[^\]]*"system-ui"\s*\]/);
 	});
 });

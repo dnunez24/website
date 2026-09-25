@@ -174,6 +174,19 @@ describe("Topic", () => {
 		expect(link?.textContent).toBe("#systems");
 	});
 
+	it("keeps the # at the name's full color, not dimmed or recolored", async () => {
+		const doc = parse(
+			await render(Topic, {
+				props: { name: "systems", href: "/topics/systems" },
+			}),
+		);
+		// No class at all: neither an opacity utility nor a different text color
+		// than the inherited `text-topic` the link sets.
+		expect(
+			doc.querySelector('[aria-hidden="true"]')?.getAttribute("class"),
+		).toBeNull();
+	});
+
 	it("shows only the count's number and reads it as articles", async () => {
 		const link = async (count: number) =>
 			parse(
@@ -639,6 +652,19 @@ describe("CodeBlock", () => {
 		const pre = doc.querySelector("pre");
 		expect(pre?.getAttribute("role")).toBe("group");
 		expect(pre?.getAttribute("aria-label")).toBe("Code: build.sh, sh");
+	});
+
+	it("wraps a Windows-style path at each backslash", async () => {
+		// The component's `file` prop round-trips through fenceMeta/parseFenceMeta
+		// only, not Markdown's own info-string unescaping, so backslashes survive.
+		const doc = parse(
+			await render(CodeBlock, {
+				props: { code: "x", lang: "ts", file: "C:\\Users\\dave\\app.ts" },
+			}),
+		);
+		const file = doc.querySelector("[data-codeblock-file]");
+		expect(file?.innerHTML).toBe("C:\\<wbr>Users\\<wbr>dave\\<wbr>app.ts");
+		expect(file?.textContent).toBe("C:\\Users\\dave\\app.ts");
 	});
 
 	it("puts a caption below the code and only when given one, framed as a figure", async () => {

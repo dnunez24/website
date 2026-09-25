@@ -45,11 +45,14 @@ const element = (
 });
 
 /**
- * Splits a file name into text nodes with a `<wbr>` after each `/`, so a long
- * path wraps at a directory boundary first instead of truncating.
+ * Splits a file name into text nodes with a `<wbr>` after each `/` or `\`, so
+ * a long path wraps at a directory boundary first instead of truncating. The
+ * lookbehind/lookahead require a non-separator on both sides, so a leading
+ * separator, a run of separators (`//` in `https://`), and a trailing one
+ * never split — only a separator between two real segments does.
  */
 const wrapFileName = (title: string): Element["children"] => {
-	const segments = title.split(/(?<=\/)/);
+	const segments = title.split(/(?<=[^/\\][/\\])(?=[^/\\])/);
 	const nodes: Element["children"] = [];
 	for (const [index, segment] of segments.entries()) {
 		nodes.push({ type: "text", value: segment });

@@ -96,6 +96,24 @@ describe("code fences in Markdown", () => {
 		expect(file?.innerHTML).toBe("answer.ts");
 	});
 
+	it("never splits a leading separator or a run of separators alone", async () => {
+		const doc = await render(
+			'```ts title="/etc/nginx/nginx.conf"\nconst a = 1;\n```\n',
+		);
+		const file = doc.querySelector("[data-codeblock-file]");
+		// A leading "/" has nothing before it to wrap away from, and the two
+		// slashes in "https://" never separate from each other.
+		expect(file?.innerHTML).toBe("/etc/<wbr>nginx/<wbr>nginx.conf");
+	});
+
+	it("escapes markup in a file name and still breaks it at each slash", async () => {
+		const doc = await render('```ts title="a<b>/c&d.ts"\nconst a = 1;\n```\n');
+		const file = doc.querySelector("[data-codeblock-file]");
+		expect(file?.querySelector("b")).toBeNull();
+		expect(file?.querySelectorAll("wbr")).toHaveLength(1);
+		expect(file?.textContent).toBe("a<b>/c&d.ts");
+	});
+
 	it("names a fence without a language plain text and shows no file", async () => {
 		const doc = await render("```\nplain words\n```\n");
 		expect(doc.querySelector("[data-codeblock-file]")).toBeNull();
