@@ -59,6 +59,22 @@
 	 */
 	[data-diagram] {
 		@apply mx-0 overflow-x-auto rounded-md border border-line bg-surface-inset f6y-p-4;
+
+		/*
+		 * Keeps its token colors as one island under forced colors: without
+		 * this, the frame repaints (border, background) but the SVG's inline
+		 * styles don't, leaving unforced strokes on a forced ground.
+		 */
+		forced-color-adjust: none;
+
+		@media (forced-colors: active) {
+			border-color: CanvasText;
+		}
+	}
+	[data-diagram]:focus-visible {
+		@media (forced-colors: active) {
+			outline-color: Highlight;
+		}
 	}
 
 	/*
