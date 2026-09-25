@@ -22,6 +22,16 @@ const EPSILON = 1e-9;
  * means merge order doesn't matter: if the PR lands before this file does,
  * these tokens are simply already at their "after" value and stop being
  * treated as different, with no edit to this file required.
+ *
+ * What this can't catch once #30 has actually landed: reverting a token
+ * back to its `themeValueBefore` on purpose or by accident still passes (it
+ * matches the documented "before" state), and deleting a themeValueBefore-
+ * less entry (`color-quote-link`, `color-quote-link-hover`) from theme.css
+ * also still passes (absence still matches "not synced yet"), even though
+ * by then it means the token was removed after #30 added it. Both keep
+ * passing silently until this list is cleaned up.
+ *
+ * TODO(#30): delete these four entries once #30 merges, closing this gap.
  */
 const PENDING_DIFFERENCES: Record<
 	string,

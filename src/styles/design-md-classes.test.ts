@@ -250,4 +250,46 @@ describe("DESIGN.md's Building and Layout guidance matches main's real utilities
 		);
 		expect(badSteps).toContain("f6y-p-3");
 	});
+
+	// The three checks above only scan Layout & Spacing, Elevation & Depth
+	// and the Building table: a class taught anywhere else in the document
+	// (Building's own prose, Typography, Motion) went unchecked, so B1's
+	// original `p-(--space-4)` text could come back in its original spot, or
+	// the whole Building table could be replaced by a regeneration from the
+	// design system's still-stale README, and nothing here would fail. These
+	// two scan the whole document body instead of specific sections.
+	it("teaches no arbitrary-value class anywhere in DESIGN.md", () => {
+		const body = designMdSource.slice(designMdSource.indexOf("\n---\n", 4));
+		const arbitrary = backtickSpans(body).filter((token) =>
+			/-\(--|-\[/.test(token),
+		);
+		expect(arbitrary).toEqual([]);
+	});
+
+	it("keeps the Building table's key mappings", () => {
+		expect(buildingTableUtilities(designMdSource)).toEqual(
+			expect.arrayContaining([
+				"max-w-measure",
+				"f6y-p-2",
+				"duration-128",
+				"after:h-0.5",
+			]),
+		);
+	});
+
+	it("fails on a reintroduced arbitrary-value class, by mutation", () => {
+		// p-(--space-4) is B1's original, since-corrected Building text: an
+		// arbitrary value referencing a custom property main doesn't define.
+		const mutated = designMdSource.replace(
+			"- Astro static site, Tailwind CSS 4, no client JavaScript.",
+			"- Set `p-(--space-4)` for this token. Astro static site, Tailwind CSS 4, no client JavaScript.",
+		);
+		expect(mutated).not.toBe(designMdSource);
+
+		const body = mutated.slice(mutated.indexOf("\n---\n", 4));
+		const arbitrary = backtickSpans(body).filter((token) =>
+			/-\(--|-\[/.test(token),
+		);
+		expect(arbitrary).toContain("p-(--space-4)");
+	});
 });
