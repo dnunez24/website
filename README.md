@@ -84,8 +84,8 @@ Releases are a pull request from `main` to `prod`, merged with a merge commit.
 
 ### Cloudflare Web Analytics
 
-- `PUBLIC_CF_WEB_ANALYTICS_TOKEN` is the Cloudflare Web Analytics site token. Set it as a build variable on the Production tab only, never on Previews Base — it's not secret (it ends up in page HTML), but every other branch, `main` included, must ship without the beacon.
-- A `prod` branch build fails immediately if the token is missing or malformed, instead of shipping a page without it.
+- `PUBLIC_CF_WEB_ANALYTICS_TOKEN` is the Cloudflare Web Analytics site token. Set it as a build variable on the Production tab only, never on Previews Base: it's not secret (it ends up in page HTML), but every other branch, `main` included, must ship without the beacon.
+- Workers Builds sets `WORKERS_CI=1` and `WORKERS_CI_BRANCH=prod` on a Production tab build. A `prod` build under those conditions fails immediately if the token is missing or malformed, instead of shipping a page without it.
 
 ### Every branch build holds a production-capable token (accepted risk)
 

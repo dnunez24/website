@@ -66,77 +66,124 @@ describe("PROD_BRANCH", () => {
 });
 
 describe("resolveBeaconToken", () => {
-	it("returns the token for a production build of prod with a valid token", () => {
+	it("returns the token for a Workers Builds production build of prod with a valid token", () => {
 		expect(
-			resolveBeaconToken({ prod: true, branch: "prod", token: VALID_TOKEN }),
+			resolveBeaconToken({
+				prod: true,
+				ci: "1",
+				branch: "prod",
+				token: VALID_TOKEN,
+			}),
 		).toBe(VALID_TOKEN);
 	});
 
-	it("returns undefined for a production build of prod without a token", () => {
+	it("returns undefined for a Workers Builds production build of prod without a token", () => {
 		expect(
-			resolveBeaconToken({ prod: true, branch: "prod", token: undefined }),
+			resolveBeaconToken({
+				prod: true,
+				ci: "1",
+				branch: "prod",
+				token: undefined,
+			}),
 		).toBeUndefined();
 	});
 
-	it("returns undefined for a production build of prod with a malformed token", () => {
+	it("returns undefined for a Workers Builds production build of prod with a malformed token", () => {
 		expect(
-			resolveBeaconToken({ prod: true, branch: "prod", token: "not-a-token" }),
+			resolveBeaconToken({
+				prod: true,
+				ci: "1",
+				branch: "prod",
+				token: "not-a-token",
+			}),
 		).toBeUndefined();
 	});
 
-	it("returns undefined on main, even in production with a valid token", () => {
+	it("returns undefined on main, even in production with WORKERS_CI and a valid token", () => {
 		expect(
-			resolveBeaconToken({ prod: true, branch: "main", token: VALID_TOKEN }),
+			resolveBeaconToken({
+				prod: true,
+				ci: "1",
+				branch: "main",
+				token: VALID_TOKEN,
+			}),
 		).toBeUndefined();
 	});
 
-	it("returns undefined when the branch is unset, even in production with a valid token", () => {
+	it("returns undefined when the branch is unset, even in production with WORKERS_CI and a valid token", () => {
 		expect(
-			resolveBeaconToken({ prod: true, branch: undefined, token: VALID_TOKEN }),
+			resolveBeaconToken({
+				prod: true,
+				ci: "1",
+				branch: undefined,
+				token: VALID_TOKEN,
+			}),
 		).toBeUndefined();
 	});
 
-	it("returns undefined outside production, even on prod with a valid token", () => {
+	it("returns undefined outside production, even with WORKERS_CI, prod and a valid token", () => {
 		expect(
-			resolveBeaconToken({ prod: false, branch: "prod", token: VALID_TOKEN }),
+			resolveBeaconToken({
+				prod: false,
+				ci: "1",
+				branch: "prod",
+				token: VALID_TOKEN,
+			}),
+		).toBeUndefined();
+	});
+
+	it("returns undefined in production on prod with a valid token when WORKERS_CI is unset (a local build)", () => {
+		expect(
+			resolveBeaconToken({
+				prod: true,
+				ci: undefined,
+				branch: "prod",
+				token: VALID_TOKEN,
+			}),
 		).toBeUndefined();
 	});
 });
 
 describe("assertValidProdToken", () => {
-	it("does not throw on prod with a valid token", () => {
+	it("does not throw for a Workers Builds prod build with a valid token", () => {
 		expect(() =>
-			assertValidProdToken({ branch: "prod", token: VALID_TOKEN }),
+			assertValidProdToken({ ci: "1", branch: "prod", token: VALID_TOKEN }),
 		).not.toThrow();
 	});
 
-	it("throws on prod without a token", () => {
+	it("throws for a Workers Builds prod build without a token", () => {
 		expect(() =>
-			assertValidProdToken({ branch: "prod", token: undefined }),
+			assertValidProdToken({ ci: "1", branch: "prod", token: undefined }),
 		).toThrow(/PUBLIC_CF_WEB_ANALYTICS_TOKEN is required/);
 	});
 
-	it("throws on prod with an empty token", () => {
-		expect(() => assertValidProdToken({ branch: "prod", token: "" })).toThrow(
-			/PUBLIC_CF_WEB_ANALYTICS_TOKEN is required/,
-		);
+	it("throws for a Workers Builds prod build with an empty token", () => {
+		expect(() =>
+			assertValidProdToken({ ci: "1", branch: "prod", token: "" }),
+		).toThrow(/PUBLIC_CF_WEB_ANALYTICS_TOKEN is required/);
 	});
 
-	it("throws on prod with a malformed token", () => {
+	it("throws for a Workers Builds prod build with a malformed token", () => {
 		expect(() =>
-			assertValidProdToken({ branch: "prod", token: "not-a-token" }),
+			assertValidProdToken({ ci: "1", branch: "prod", token: "not-a-token" }),
 		).toThrow(/32 lowercase hex characters/);
 	});
 
 	it("does not throw on main without a token", () => {
 		expect(() =>
-			assertValidProdToken({ branch: "main", token: undefined }),
+			assertValidProdToken({ ci: "1", branch: "main", token: undefined }),
 		).not.toThrow();
 	});
 
 	it("does not throw when the branch is unset", () => {
 		expect(() =>
-			assertValidProdToken({ branch: undefined, token: undefined }),
+			assertValidProdToken({ ci: "1", branch: undefined, token: undefined }),
+		).not.toThrow();
+	});
+
+	it("is a no-op for a local build on prod without a token, since WORKERS_CI is unset", () => {
+		expect(() =>
+			assertValidProdToken({ ci: undefined, branch: "prod", token: undefined }),
 		).not.toThrow();
 	});
 });

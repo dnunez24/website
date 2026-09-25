@@ -22,14 +22,20 @@ import { syntaxTheme, syntaxTransformers } from "./src/lib/syntax.ts";
 const projectRoot = new URL(".", import.meta.url);
 
 // Config files don't load .env files on their own, unlike application code's
-// import.meta.env. loadEnv does, so this is the one place DN_DEV_PAGES is
-// read, and the integration and the Vite plugin below share the result: a
-// shell var and a .env entry now behave the same, and so does the photo
-// import in design-system.astro, which reads the app-code side of the same
-// variable.
-const keepDevPages =
-	loadEnv(process.env.NODE_ENV ?? "production", process.cwd(), "")
-		.DN_DEV_PAGES === "1";
+// import.meta.env. loadEnv does, so this is the one place DN_DEV_PAGES and
+// the Cloudflare Web Analytics build guard's inputs are read, letting a
+// shell var and a .env entry behave the same: excludeDevPages and the Vite
+// plugin below share the DN_DEV_PAGES result with the photo import in
+// design-system.astro, and failProdBuildWithoutToken below shares this same
+// merged environment with astro:env/server (BaseHead.astro), rather than
+// calling loadEnv a second time or reading process.env directly and missing
+// a .env-only value.
+const loadedEnv = loadEnv(
+	process.env.NODE_ENV ?? "production",
+	process.cwd(),
+	"",
+);
+const keepDevPages = loadedEnv.DN_DEV_PAGES === "1";
 
 /**
  * Keeps src/pages/dev/ out of a production build's CSS: appending the
@@ -77,13 +83,15 @@ function excludeDevPages(): AstroIntegration {
 }
 
 /**
- * Fails a `prod` branch build immediately when it's missing a valid
+ * Fails a Workers Builds production build (`WORKERS_CI=1`,
+ * `WORKERS_CI_BRANCH=prod`) immediately when it's missing a valid
  * Cloudflare Web Analytics token, instead of shipping a page without the
  * beacon. `astro:build:start` only runs in the `astro build` pipeline, so
- * this never touches `astro dev`, `pnpm test` or `astro check`; reading
- * `branch`/`token` off `process.env` rather than `astro:env/server` works
- * here because Workers Builds sets real process environment variables, and
- * no `.env` file needs loading.
+ * this never touches `astro dev`, `pnpm test` or `astro check`. Reads
+ * `loadedEnv` (defined above, alongside `keepDevPages`) rather than
+ * `process.env` directly or `astro:env/server`, so a value set only in a
+ * `.env.production` file is seen the same way BaseHead.astro sees it
+ * through `astro:env/server`, which merges those files too.
  */
 function failProdBuildWithoutToken(): AstroIntegration {
 	return {
@@ -91,8 +99,9 @@ function failProdBuildWithoutToken(): AstroIntegration {
 		hooks: {
 			"astro:build:start": () => {
 				assertValidProdToken({
-					branch: process.env.WORKERS_CI_BRANCH,
-					token: process.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN,
+					ci: loadedEnv.WORKERS_CI,
+					branch: loadedEnv.WORKERS_CI_BRANCH,
+					token: loadedEnv.PUBLIC_CF_WEB_ANALYTICS_TOKEN,
 				});
 			},
 		},
@@ -137,8 +146,8 @@ export default defineConfig({
 
 	env: {
 		schema: {
-			// A build variable, set only on the Workers Builds Production tab —
-			// never on Previews Base — so every preview (main's included), CI
+			// A build variable, set only on the Workers Builds Production tab,
+			// never on Previews Base, so every preview (main's included), CI
 			// and local build all ship without the beacon. Read at build time
 			// in frontmatter only (BaseHead.astro), never by client code, so
 			// "server" keeps it out of the client bundle. `length` catches a
@@ -150,10 +159,21 @@ export default defineConfig({
 				optional: true,
 				length: 32,
 			}),
+			// Set to "1" by Workers Builds on every build it runs; unset for a
+			// plain local `astro build`. BaseHead.astro checks it alongside
+			// WORKERS_CI_BRANCH below, so a developer exporting
+			// WORKERS_CI_BRANCH=prod plus a token locally still can't ship the
+			// beacon from their own machine.
+			WORKERS_CI: envField.string({
+				context: "server",
+				access: "public",
+				optional: true,
+			}),
 			// Set by Workers Builds to the branch being built (e.g. "prod",
 			// "main", a PR branch). BaseHead.astro reads it alongside the token
-			// above to gate the beacon to a production build of "prod"; unset
-			// in astro dev, pnpm test, and any build Workers Builds didn't run.
+			// and WORKERS_CI above to gate the beacon to a Workers Builds
+			// production build of "prod"; unset in astro dev, pnpm test, and
+			// any build Workers Builds didn't run.
 			WORKERS_CI_BRANCH: envField.string({
 				context: "server",
 				access: "public",
