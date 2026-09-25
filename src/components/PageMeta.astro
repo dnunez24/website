@@ -16,24 +16,35 @@ interface Props {
 		| undefined;
 	/** Articles bring their own card; other pages share the default. */
 	image?: ShareImage | undefined;
+	/** Keeps the page out of search results, e.g. the 404 page. */
+	noindex?: boolean | undefined;
 }
 
-const { title, description, article, image = SHARE_IMAGE } = Astro.props;
+const {
+	title,
+	description,
+	article,
+	image = SHARE_IMAGE,
+	noindex = false,
+} = Astro.props;
 // `site` makes every URL absolute to production; without it, to the request.
 const site = Astro.site ?? Astro.url;
+// A noindex page (e.g. 404) has no URL of its own: every missing path serves
+// it, so a canonical link or og:url would point to a URL that doesn't exist.
 const canonicalURL = new URL(Astro.url.pathname, site);
 const imageURL = new URL(image.path, site);
 ---
 
-<link rel="canonical" href={canonicalURL} />
+{!noindex && <link rel="canonical" href={canonicalURL} />}
 <title>{pageTitle(title)}</title>
 <meta name="description" content={description} />
+{noindex && <meta name="robots" content="noindex" />}
 
 <!-- Open Graph. og:title leaves out the site name: og:site_name carries it. -->
 <meta property="og:type" content={article ? "article" : "website"} />
 <meta property="og:site_name" content={SITE_TITLE} />
 <meta property="og:locale" content="en_US" />
-<meta property="og:url" content={canonicalURL} />
+{!noindex && <meta property="og:url" content={canonicalURL} />}
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
 <meta property="og:image" content={imageURL} />

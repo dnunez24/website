@@ -8,8 +8,14 @@ import { SUBSETS } from "./scripts/fonts.config.ts";
 import { callouts } from "./src/lib/markdown/callouts.ts";
 import { mermaidDiagrams } from "./src/lib/markdown/mermaid.ts";
 import { quoteAttribution } from "./src/lib/markdown/quote-attribution.ts";
-import { isDevRoute, isPublicPage } from "./src/lib/routes.ts";
+import { dropsDevPages, isDevRoute, isPublicPage } from "./src/lib/routes.ts";
 import { syntaxTheme, syntaxTransformers } from "./src/lib/syntax.ts";
+
+// This file's own directory is the project root, so the Mermaid plugin can
+// match a dev-page file below without assuming `process.cwd()` is the
+// root too: `astro build --root <path>` points Astro at the project
+// without moving the working directory.
+const projectRoot = new URL(".", import.meta.url);
 
 function excludeDevPages(): AstroIntegration {
 	const ansiBlue = "\x1b[34m";
@@ -19,7 +25,7 @@ function excludeDevPages(): AstroIntegration {
 		name: "exclude-dev-pages",
 		hooks: {
 			"astro:build:setup": ({ pages, logger }) => {
-				if (import.meta.env.PROD) {
+				if (dropsDevPages()) {
 					for (const [page, data] of pages.entries()) {
 						if (data.route.route && isDevRoute(data.route.route)) {
 							logger.info(`page: ${ansiBlue}${data.component}${ansiReset}`);
@@ -57,7 +63,11 @@ export default defineConfig({
 			features: {
 				smartPunctuation: true,
 			},
-			hastPlugins: [...callouts(), quoteAttribution(), mermaidDiagrams()],
+			hastPlugins: [
+				...callouts(),
+				quoteAttribution(),
+				mermaidDiagrams(projectRoot),
+			],
 		}),
 	},
 
@@ -71,7 +81,11 @@ export default defineConfig({
 			provider: fontProviders.local(),
 			name: "Afacad Flux",
 			cssVariable: "--font-afacad-flux",
-			fallbacks: ["ui-sans-serif", "system-ui", "sans-serif"],
+			// Keep system-ui last: Astro builds metric-matched fallback faces from
+			// the last entry only. system-ui gives BlinkMacSystemFont, Segoe UI,
+			// Roboto, Helvetica Neue and Arial; sans-serif gives Arial alone, and
+			// Android has no Arial.
+			fallbacks: ["ui-sans-serif", "sans-serif", "system-ui"],
 			options: {
 				variants: [
 					{
