@@ -365,6 +365,14 @@ Light theme, one inverse surface: CodeBlock sits on dark concrete (`color-codebl
 | Earth | Tertiary: warmth | Sparingly: blockquote (`color-quote-ink`, `color-quote-cite`), caution callouts, `color-selection`, types in code. |
 | Pine, Lake | Support | Syntax roles, data series, tip (Pine) and note (Lake) callouts. No other interface chrome. |
 
+What each hue means:
+
+- **Evergreen** is the primary brand color: growth, reliability and tranquility. It ties the design to my home in the Pacific Northwest, among the evergreen backdrop.
+- **Fungus** is the secondary color: the hidden networks and systems that connect most things in the natural world, and the people and technology I manage. It reflects how interconnected things are in a complex world, and why understanding systems matters.
+- **Earth** is the warm tertiary color: creativity, warmth and being grounded. Use it sparingly, to bring warmth and balance.
+- **Concrete** evokes the materials of modern architecture, concrete and steel. It is the broad base for the whole palette: stability, foundation, order and simplicity among the chaos of the natural systems around it.
+- **Pine** and **Lake** are support colors with no brand meaning: data series, extra colors in the syntax highlighting theme, and the tip and note callouts.
+
 - Text on `color-surface`: `color-ink` 13.1:1, `color-ink-heading` 12.0:1, `color-ink-muted` 6.1:1, `color-link` 6.4:1, `color-quote-ink` 6.5:1, `color-quote-cite` 4.8:1, `color-quote-link` 6.4:1. All palette steps 500 and darker pass 4.5:1 on concrete-50 and concrete-100.
 - Steps 300 and 400 are under 3:1 on the page. Use them for hairlines, or as grounds under text measured on them; never for text or borders that carry meaning. On `color-surface-hover` (concrete-200), step 500 text fails. Use 600 or darker.
 - The five hues sit at the same lightness and low chroma. In charts and diagrams, label every series directly; never encode meaning in hue alone.
@@ -382,7 +390,8 @@ Light theme, one inverse surface: CodeBlock sits on dark concrete (`color-codebl
 
 ## Layout & Spacing
 
-- Base 2: step n is `2^n` px at 320px and `1.5 × 2^n` px at 1024px and up. `space-1` (2px) and `space-2` (4px) are fixed at every width: Tailwind's own `0.5` and `1` steps (`p-0.5`, `gap-1`).
+- Base 2, because software counts in binary. The scale ties the layout to my identity as a software engineer: like Concrete under the natural hues, the order under the page is built the way software is, in powers of two. Motion durations follow the same rule.
+- Step n is `2^n` px at 320px and `1.5 × 2^n` px at 1024px and up. `space-1` (2px) and `space-2` (4px) are fixed at every width: Tailwind's own `0.5` and `1` steps (`p-0.5`, `gap-1`).
 - `space-3` through `space-7` are fluid, between their `-min` and `-max` tokens above. This codebase's `fluidity-tailwind` plugin carries the clamp through `f6y-*` utilities: `f6y-p-2` is `space-3`, `f6y-p-4` is `space-4`, `f6y-p-8` is `space-5`, `f6y-p-16` is `space-6`, `f6y-p-32` is `space-7`, for any property root: `p`, `m`, `gap`. No arbitrary values; `conformance.test.ts` enforces it.
 - Prose rhythm uses named steps instead: `*-line`, `*-line-half`, `*-line-quarter`, `*-line-double` (for example `mt-line`).
 - Page: `container-site` (64rem) centered, gutter `space-4`. `container-portrait` (12rem) bounds the largest Portrait diameter.
