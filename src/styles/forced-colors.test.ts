@@ -9,11 +9,14 @@ import { compileGlobalCss, ruleBody } from "../test/classes";
  * `@apply` of the same utility inside `.prose`, where relevant).
  */
 describe("forced colors (compiled)", () => {
-	it("m7: gives Callout, CodeBlock and plain pre a transparent inset outline, at zero specificity", async () => {
+	it("m7: gives Callout, CodeBlock and plain pre a transparent inset outline, at zero specificity, only under forced colors", async () => {
 		const css = await compileGlobalCss();
+		// Anchored on the @media wrapper, not just the :where() selector: the
+		// whole rule must exist only under forced colors, not merely have the
+		// right declarations wherever it happens to compile.
 		const rule = ruleBody(
 			css,
-			/:where\(\s*\.prose \[data-callout\],\s*\[data-codeblock\],\s*\.prose pre:not\(\[data-codeblock\] pre\)\s*\)\s*\{/,
+			/@media \(forced-colors: active\)\s*\{\s*:where\(\s*\.prose \[data-callout\],\s*\[data-codeblock\],\s*\.prose pre:not\(\[data-codeblock\] pre\)\s*\)\s*\{/,
 		);
 		expect(rule).toMatch(/outline:\s*1px solid transparent/);
 		expect(rule).toMatch(/outline-offset:\s*-1px/);
@@ -41,13 +44,26 @@ describe("forced colors (compiled)", () => {
 		expect(proseForced).toMatch(/background-color:\s*LinkText/);
 	});
 
-	it("m6: takes LinkText for the current nav/pagination rule, matching the ghost button's own forced label color", async () => {
+	it("m6: takes LinkText for a current ghost Button rendered as <a>, ButtonText for one rendered as <button>", async () => {
 		const css = await compileGlobalCss();
-		const rule = ruleBody(
+		// Each selector is unique in the compiled output (declared nowhere
+		// else), so finding either one at all means it compiled inside
+		// forced-colors.css's @media (forced-colors: active) block - the only
+		// place either is written.
+		const aRule = ruleBody(
 			css,
 			/@media \(forced-colors: active\)\s*\{\s*a\[data-button\]:is\(\[aria-current="page"\],\s*\[aria-current="true"\]\)::after\s*\{/,
 		);
-		expect(rule).toMatch(/background-color:\s*LinkText/);
+		expect(aRule).toMatch(/background-color:\s*LinkText/);
+
+		// Anchored on the <a> rule's own closing brace, so this also proves
+		// the two sit together as siblings, not in separate rules that
+		// happen to compile the same values.
+		const buttonRule = ruleBody(
+			css,
+			/a\[data-button\]:is\(\[aria-current="page"\],\s*\[aria-current="true"\]\)::after\s*\{\s*background-color:\s*LinkText;\s*\}\s*button\[data-button\]:is\(\[aria-current="page"\],\s*\[aria-current="true"\]\)::after\s*\{/,
+		);
+		expect(buttonRule).toMatch(/background-color:\s*ButtonText/);
 	});
 
 	it("m5: fills the checked task checkbox with SelectedItem/CanvasText and draws the check in SelectedItemText", async () => {

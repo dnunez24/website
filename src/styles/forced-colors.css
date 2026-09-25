@@ -18,13 +18,17 @@
  * focus-ring fade-in, not forced colors.)
  */
 @media (forced-colors: active) {
-	/*
-	 * Ghost buttons are links, so LinkText is the label's forced color, and
-	 * the rule keeps matching it. Scoped to `a`: `current` only ever renders
-	 * as a link today, but Button's Props allow a `<button aria-current>`
-	 * too, and that label is forced to ButtonText, not LinkText.
-	 */
+	/* A ghost Button is usually a link, so LinkText is the label's forced color, and the rule keeps matching it. */
 	a[data-button]:is([aria-current="page"], [aria-current="true"])::after {
 		background-color: LinkText;
+	}
+	/*
+	 * Button's Props allow `current` without `href`, rendering a `<button
+	 * aria-current>` instead - no page does this today, but the type allows
+	 * it. Its label forces to ButtonText, not LinkText, so it needs its own
+	 * rule rather than a tag-agnostic `[data-button]` selector.
+	 */
+	button[data-button]:is([aria-current="page"], [aria-current="true"])::after {
+		background-color: ButtonText;
 	}
 }

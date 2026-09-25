@@ -41,10 +41,12 @@ describe("prose.css and components.css (compiled)", () => {
 		const ref = ruleBody(css, /&\s*a\[data-footnote-ref\]\s*\{/);
 		const before = ruleBody(ref, /&::before\s*\{/);
 		const after = ruleBody(ref, /&::after\s*\{/);
-		// One assertion per side, order-sensitive: a browser that doesn't
-		// understand the alternative-text syntax discards that whole
-		// declaration and keeps whichever `content` came first, so the plain
-		// string must be the one written first, not merely present somewhere.
+		// One assertion per side, order-sensitive: a browser without
+		// alternative-text support discards that whole second declaration and
+		// keeps the plain one regardless of where it sits, but a supporting
+		// browser applies whichever declaration comes last. So the plain
+		// string must be written first and the alternative-text form last, or
+		// a supporting browser reads the reference as "[1]" again.
 		expect(before).toMatch(
 			/content:\s*"\[";\s*(\/\*[\s\S]*?\*\/\s*)?content:\s*"\["\s*\/\s*"";/,
 		);

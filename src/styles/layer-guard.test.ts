@@ -36,18 +36,11 @@ describe("G1c overrides sit in the layer that lets them win", () => {
 		expect(at).toBeGreaterThan(-1);
 		expect(layersAt(css, at)).toEqual(["base"]);
 	});
-});
 
-describe("footnote reference brackets", () => {
-	it("render the plain string first, the alternative text last", async () => {
+	it("m6's button variant is unlayered too: button[data-button] lives beside the a[data-button] rule", async () => {
 		const css = await compileGlobalCss();
-		// A reversed order would still contain both declarations; only their
-		// sequence tells a fallback-first pair from a fallback-last one.
-		expect(css).toMatch(
-			/content:\s*"\[";\s*(\/\*[\s\S]*?\*\/\s*)?content:\s*"\["\s*\/\s*"";/,
-		);
-		expect(css).toMatch(
-			/content:\s*"\]";\s*(\/\*[\s\S]*?\*\/\s*)?content:\s*"\]"\s*\/\s*"";/,
-		);
+		const at = css.search(/button\[data-button\]:is\(\[aria-current="page"\]/);
+		expect(at).toBeGreaterThan(-1);
+		expect(layersAt(css, at)).toEqual([]);
 	});
 });

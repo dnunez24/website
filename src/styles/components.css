@@ -35,17 +35,6 @@
 	}
 	[data-codeblock]:has(pre:focus-visible) {
 		@apply outline-4 outline-offset-2 outline-focus;
-
-		/*
-		 * :has() puts the ring on a wrapper that isn't itself focused, so
-		 * forced colors treats it as a plain border and forces CanvasText,
-		 * not the Highlight it gives an actually-focused element's own ring.
-		 * Matches the Mermaid frame's ring below and the elements that are
-		 * focused directly (links, buttons, plain pre).
-		 */
-		@media (forced-colors: active) {
-			outline-color: Highlight;
-		}
 	}
 
 	/*
