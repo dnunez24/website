@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { Window } from "happy-dom";
 import { markdownToHtml } from "satteri";
 import { describe, expect, it } from "vitest";
@@ -114,7 +115,7 @@ describe("mermaid fences in Markdown", { timeout: 60_000 }, () => {
 	it("become diagrams, and other code fences stay code", async () => {
 		const { html } = await markdownToHtml(
 			`\`\`\`mermaid\n${flowchart}\n\`\`\`\n\n\`\`\`ts\nconst a = 1;\n\`\`\`\n`,
-			{ hastPlugins: [mermaidDiagrams()] },
+			{ hastPlugins: [mermaidDiagrams(pathToFileURL(`${process.cwd()}/`))] },
 		);
 		// Strings, not a DOM: happy-dom nests whatever follows an inline SVG's
 		// self-closing tags inside the SVG.

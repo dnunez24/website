@@ -1,12 +1,22 @@
 import { defineHastPlugin } from "satteri";
 import { renderMermaidFigure } from "../mermaid";
+import { dropsDevPages, isDevPageFile } from "../routes";
 
 /**
  * Renders ```mermaid fences to SVG at build, in the MermaidDiagram figure.
  * Shiki runs before user plugins, so `markdown.syntaxHighlight.excludeLangs`
  * must leave these fences unhighlighted.
+ *
+ * A build that drops `/dev/*` pages (`dropsDevPages`) never reaches the
+ * renderer for one of their fences either, so it never launches headless
+ * Chromium: Cloudflare Workers Builds can't install it, and no dev-page
+ * diagram ships to production anyway. `astro dev`, vitest, and a build that
+ * keeps dev pages still render them.
+ *
+ * @param root The project root, passed through to `isDevPageFile` — see
+ *   there for why it can't just read `process.cwd()`.
  */
-export const mermaidDiagrams = () =>
+export const mermaidDiagrams = (root: URL) =>
 	defineHastPlugin({
 		name: "mermaid-diagrams",
 		element: {
@@ -19,6 +29,7 @@ export const mermaidDiagrams = () =>
 				// Sätteri keeps the fence's language in `data`, as Astro's highlighter reads it.
 				const lang = (code.data as { lang?: string } | undefined)?.lang;
 				if (lang !== "mermaid") return;
+				if (dropsDevPages() && isDevPageFile(ctx.fileURL, root)) return;
 
 				try {
 					return {

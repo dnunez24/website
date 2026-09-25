@@ -3,7 +3,7 @@
 	"type": "module",
 	"version": "0.0.1",
 	"engines": {
-		"node": ">=24.21.0"
+		"node": ">=26"
 	},
 	"packageManager": "pnpm@12.6.0",
 	"scripts": {
@@ -43,7 +43,7 @@
 		"@astrojs/ts-plugin": "^1.10.12",
 		"@biomejs/biome": "2.5.12",
 		"@google/design.md": "^0.4.0",
-		"@types/node": "^22.20.4",
+		"@types/node": "^26.6.2",
 		"happy-dom": "^20.14.5",
 		"schema-dts": "^2.0.0",
 		"subset-font": "^2.9.0",
