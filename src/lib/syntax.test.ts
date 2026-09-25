@@ -77,6 +77,43 @@ describe("code fences in Markdown", () => {
 		expect(pre?.getAttribute("tabindex")).toBe("0");
 	});
 
+	it("wraps a long file name at each slash with <wbr>, keeping the text intact", async () => {
+		const doc = await render(
+			'```ts title="src/components/navigation/PrimaryNavigation.astro"\nconst a = 1;\n```\n',
+		);
+		const file = doc.querySelector("[data-codeblock-file]");
+		expect(file?.innerHTML).toBe(
+			"src/<wbr>components/<wbr>navigation/<wbr>PrimaryNavigation.astro",
+		);
+		expect(file?.textContent).toBe(
+			"src/components/navigation/PrimaryNavigation.astro",
+		);
+	});
+
+	it("adds no <wbr> to a file name without a slash", async () => {
+		const doc = await render('```ts title="answer.ts"\nconst a = 1;\n```\n');
+		const file = doc.querySelector("[data-codeblock-file]");
+		expect(file?.innerHTML).toBe("answer.ts");
+	});
+
+	it("never splits a leading separator or a run of separators alone", async () => {
+		const doc = await render(
+			'```ts title="/etc/nginx/nginx.conf"\nconst a = 1;\n```\n',
+		);
+		const file = doc.querySelector("[data-codeblock-file]");
+		// A leading "/" has nothing before it to wrap away from, and the two
+		// slashes in "https://" never separate from each other.
+		expect(file?.innerHTML).toBe("/etc/<wbr>nginx/<wbr>nginx.conf");
+	});
+
+	it("escapes markup in a file name and still breaks it at each slash", async () => {
+		const doc = await render('```ts title="a<b>/c&d.ts"\nconst a = 1;\n```\n');
+		const file = doc.querySelector("[data-codeblock-file]");
+		expect(file?.querySelector("b")).toBeNull();
+		expect(file?.querySelectorAll("wbr")).toHaveLength(1);
+		expect(file?.textContent).toBe("a<b>/c&d.ts");
+	});
+
 	it("names a fence without a language plain text and shows no file", async () => {
 		const doc = await render("```\nplain words\n```\n");
 		expect(doc.querySelector("[data-codeblock-file]")).toBeNull();

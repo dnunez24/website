@@ -218,7 +218,7 @@
 	--spacing-line-quarter: calc(var(--text-prose--line-height) / 4);
 	--spacing-line-double: calc(var(--text-prose--line-height) * 2);
 
-	--grid-template-columns-log: 12ch minmax(0, 1fr);
+	--grid-template-columns-log: minmax(12ch, max-content) minmax(0, 1fr);
 	--grid-template-columns-pagination: 1fr auto 1fr;
 
 	/* One label line: a Topic's count chip is at least as wide as it is tall. */

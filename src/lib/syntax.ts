@@ -45,6 +45,23 @@ const element = (
 });
 
 /**
+ * Splits a file name into text nodes with a `<wbr>` after each `/` or `\`, so
+ * a long path wraps at a directory boundary first instead of truncating. The
+ * lookbehind/lookahead require a non-separator on both sides, so a leading
+ * separator, a run of separators (`//` in `https://`), and a trailing one
+ * never split — only a separator between two real segments does.
+ */
+const wrapFileName = (title: string): Element["children"] => {
+	const segments = title.split(/(?<=[^/\\][/\\])(?=[^/\\])/);
+	const nodes: Element["children"] = [];
+	for (const [index, segment] of segments.entries()) {
+		nodes.push({ type: "text", value: segment });
+		if (index < segments.length - 1) nodes.push(element("wbr", {}));
+	}
+	return nodes;
+};
+
+/**
  * Frames a highlighted block as the design system's CodeBlock: a header with
  * the file name (`title` in the fence meta) and the language, the code, then
  * an optional `caption`. Markdown fences and the CodeBlock component both run
@@ -72,7 +89,9 @@ const codeFrame: Transformer = {
 			ariaHidden: "true",
 		});
 		if (title) {
-			header.children.push(element("span", { dataCodeblockFile: "" }, title));
+			const file = element("span", { dataCodeblockFile: "" });
+			file.children = wrapFileName(title);
+			header.children.push(file);
 		}
 		header.children.push(element("span", { dataCodeblockLang: "" }, lang));
 		// Without a caption, a figure would announce an unnamed figure; a plain

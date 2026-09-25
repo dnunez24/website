@@ -76,7 +76,11 @@ export default defineConfig({
 			provider: fontProviders.local(),
 			name: "Afacad Flux",
 			cssVariable: "--font-afacad-flux",
-			fallbacks: ["ui-sans-serif", "system-ui", "sans-serif"],
+			// Keep system-ui last: Astro builds metric-matched fallback faces from
+			// the last entry only. system-ui gives BlinkMacSystemFont, Segoe UI,
+			// Roboto, Helvetica Neue and Arial; sans-serif gives Arial alone, and
+			// Android has no Arial.
+			fallbacks: ["ui-sans-serif", "sans-serif", "system-ui"],
 			options: {
 				variants: [
 					{
