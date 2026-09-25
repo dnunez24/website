@@ -12,37 +12,6 @@ const ROOT = resolve(import.meta.dirname, "..", "..");
  */
 const EPSILON = 1e-9;
 
-/**
- * Color tokens that differ from theme.css today because an open PR hasn't
- * landed yet. One place, one PR number each, with the exact value theme.css
- * holds right now (`themeValueBefore`, omitted if the token doesn't exist in
- * theme.css yet). The main comparison below accepts a pending token at
- * EITHER its documented "before" value or DESIGN.md's ("after") value; any
- * third value is real, unrelated drift and fails immediately. That also
- * means merge order doesn't matter: if the PR lands before this file does,
- * these tokens are simply already at their "after" value and stop being
- * treated as different, with no edit to this file required.
- *
- * What this can't catch once #30 has actually landed: reverting a token
- * back to its `themeValueBefore` on purpose or by accident still passes (it
- * matches the documented "before" state), and deleting a themeValueBefore-
- * less entry (`color-quote-link`, `color-quote-link-hover`) from theme.css
- * also still passes (absence still matches "not synced yet"), even though
- * by then it means the token was removed after #30 added it. Both keep
- * passing silently until this list is cleaned up.
- *
- * TODO(#30): delete these four entries once #30 merges, closing this gap.
- */
-const PENDING_DIFFERENCES: Record<
-	string,
-	{ pr: string; themeValueBefore?: string }
-> = {
-	"color-quote-ink": { pr: "#30", themeValueBefore: "oklch(40.0% 0.031 78.5)" }, // earth-800
-	"color-quote-cite": { pr: "#30", themeValueBefore: "oklch(48.1% 0.044 77)" }, // earth-600
-	"color-quote-link": { pr: "#30" }, // new token, not yet in theme.css
-	"color-quote-link-hover": { pr: "#30" }, // new token, not yet in theme.css
-};
-
 /** Matches a whole value of the form `oklch(L% C H)` and captures its three numeric components. */
 const OKLCH_RE = /^oklch\(\s*([\d.]+)%\s+([\d.]+)\s+([\d.]+)\s*\)$/;
 
@@ -166,37 +135,7 @@ describe("DESIGN.md color tokens", () => {
 		const problems: string[] = [];
 
 		for (const [name, designValue] of designMdColors) {
-			const pending = Object.hasOwn(PENDING_DIFFERENCES, name)
-				? PENDING_DIFFERENCES[name]
-				: undefined;
 			const themeValue = themeCssColors.get(name);
-
-			if (pending) {
-				if (themeValue === undefined) {
-					if (pending.themeValueBefore !== undefined) {
-						problems.push(
-							`${name}: expected in theme.css (as ${pending.themeValueBefore}, pending ${pending.pr}) but missing entirely`,
-						);
-					}
-					// else: documented as not-yet-added by pending.pr. Expected.
-					continue;
-				}
-				const matchesBefore =
-					pending.themeValueBefore !== undefined &&
-					sameOklch(themeValue, pending.themeValueBefore);
-				const matchesAfter = sameOklch(themeValue, designValue);
-				if (!matchesBefore && !matchesAfter) {
-					problems.push(
-						`${name}: theme.css "${themeValue}" is neither the documented pre-${pending.pr} value` +
-							(pending.themeValueBefore !== undefined
-								? ` ("${pending.themeValueBefore}")`
-								: "") +
-							` nor DESIGN.md's ("${designValue}"). Real drift: update PENDING_DIFFERENCES.`,
-					);
-				}
-				// else: still at the documented "before" value, or #30 already landed. Expected either way.
-				continue;
-			}
 
 			if (themeValue === undefined) {
 				problems.push(`${name}: in DESIGN.md but not in theme.css`);
@@ -216,7 +155,6 @@ describe("DESIGN.md color tokens", () => {
 		}
 
 		for (const name of themeCssColors.keys()) {
-			if (Object.hasOwn(PENDING_DIFFERENCES, name)) continue;
 			if (name === "color-media-ground") continue; // checked on its own below
 			if (!designMdColors.has(name)) {
 				problems.push(`${name}: in theme.css but not in DESIGN.md`);
