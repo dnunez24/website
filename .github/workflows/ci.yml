@@ -17,19 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      # Installs the version pinned by packageManager in package.json, same as local.
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      # Mermaid diagrams render in headless Chromium, in tests and in the build.
-      - uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm diagrams:browser --with-deps
+      - uses: ./.github/actions/setup
       - run: pnpm lint
       - run: pnpm check
       - run: pnpm test

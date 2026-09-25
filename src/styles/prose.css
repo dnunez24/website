@@ -55,7 +55,7 @@
 		}
 
 		& a:not([data-button]) {
-			@apply rounded-sm text-link underline decoration-current decoration-2 underline-offset-2 transition-colors;
+			@apply rounded-sm text-link underline decoration-current decoration-2 underline-offset-2 transition-colors-no-outline;
 
 			&:is(:hover, :focus-visible) {
 				@apply text-link-hover decoration-transparent;
@@ -105,6 +105,16 @@
 
 			&:checked {
 				@apply border-brand bg-brand;
+
+				/*
+				 * The fill is a background, so it gives way to Canvas without this.
+				 * The border already forces to CanvasText on its own; restated here
+				 * to match bundle.css and keep both declarations together.
+				 */
+				@media (forced-colors: active) {
+					background-color: SelectedItem;
+					border-color: CanvasText;
+				}
 			}
 			&:checked::before {
 				@apply bg-on-brand;
@@ -114,11 +124,28 @@
 				mask:
 					url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='square'%3E%3Cpath d='M3 8.5l3 3 7-7'/%3E%3C/svg%3E")
 					center / contain no-repeat;
+
+				@media (forced-colors: active) {
+					background-color: SelectedItemText;
+				}
 			}
 		}
 
 		& blockquote {
 			@apply f6y-px-8 text-quote-ink slant;
+			/*
+			 * Scopes the base link rule's `--color-link`/`-hover` instead of adding
+			 * a selector to beat it. `text-link` is a utility class, which Tailwind
+			 * always puts in the utilities layer even when a component (BlockQuote,
+			 * Link) applies it directly to an element - that layer outranks any
+			 * selector we write here in @layer components, regardless of
+			 * specificity. A custom property's resolved value isn't layer-bound, so
+			 * this reaches the base rule, footnote references and the Link
+			 * component alike, in Markdown and in BlockQuote.astro alike (see
+			 * components.css's matching rule for the non-prose case).
+			 */
+			--color-link: var(--color-quote-link);
+			--color-link-hover: var(--color-quote-link-hover);
 
 			& > * + * {
 				@apply mt-line-half;
@@ -152,6 +179,17 @@
 			& a:not([data-button]):is(:hover, :focus-visible) {
 				@apply text-ink;
 			}
+			/*
+			 * quote-cite falls to 4.1:1 or less on these five 200-step tints;
+			 * quote-ink clears 5.5:1 on all of them. A variable, not a `blockquote
+			 * footer` selector, so it also reaches BlockQuote.astro's footer, whose
+			 * own `text-quote-cite` utility class lives in the utilities layer and
+			 * would otherwise win over any selector this rule could write (see the
+			 * blockquote rule above for the same reasoning applied to links). This
+			 * rule wins the cascade for links (`color-ink`) because it's more
+			 * specific than the base link rule at equal layer; that's unchanged.
+			 */
+			--color-quote-cite: var(--color-quote-ink);
 		}
 		& [data-callout="tip"] {
 			--callout-ink: var(--color-callout-tip);
@@ -212,7 +250,7 @@
 			@apply outline-4 outline-offset-2 outline-focus;
 		}
 		& .callout-fold-icon {
-			@apply ms-auto font-mono text-label text-ink-muted transition-colors;
+			@apply ms-auto font-mono text-label text-ink-muted transition-colors-no-outline;
 
 			&::before {
 				content: "+";
@@ -226,7 +264,45 @@
 			@apply my-line-double h-0 border-0 border-t border-line;
 		}
 
-		/* Table: no frame. A strong hairline under the header, light hairlines between rows. */
+		/*
+		 * Table: no frame. A strong hairline under the header, light hairlines
+		 * between rows. `table-scroll.ts` wraps every table in
+		 * `[data-table-scroll]`, so a table wider than the column scrolls inside
+		 * it instead of scrolling the page. The wrapper carries no border or
+		 * background, and `table` keeps `w-full`, so a table that fits looks
+		 * exactly as before.
+		 *
+		 * The padding below gives a focused link inside the table (first
+		 * column, last column, or last row) room for its ring before the
+		 * scrollport clips it: 4px stroke plus 2px offset, the ring
+		 * `:focus-visible` (base.css) draws everywhere. A matching negative
+		 * margin cancels it on every side it's added, so the table's own edges
+		 * land where they would with no padding at all (the wrapper has no
+		 * border, so the two exactly offset). `margin-block-start` is left
+		 * alone, on purpose: it's how every context above already spaces this
+		 * element from the one before it (a paragraph, a heading, inside a
+		 * blockquote or a callout), and an earlier version of this fix reduced
+		 * it by the padding amount, repeated per context — every one it missed
+		 * moved a table away from where it renders today. A link in a header
+		 * cell loses the top of its ring; keep links out of header cells.
+		 */
+		& [data-table-scroll] {
+			@apply overflow-x-auto rounded-sm;
+			padding-inline: calc(4px + 2px);
+			margin-inline: calc(-1 * (4px + 2px));
+			padding-block-end: calc(4px + 2px);
+			margin-block-end: calc(-1 * (4px + 2px));
+
+			/* The wrapper's own ring (focused to scroll it) draws inside its
+			   padding: offset by the stroke width alone, so the remaining gap
+			   to the table is the padding minus the stroke (6px − 4px = 2px).
+			   That holds on the inline sides and the bottom, where there's
+			   padding to sit in. There's none at the top (see above), so the
+			   ring overlaps the header row's top edge by the same 4px there. */
+			&:focus-visible {
+				outline-offset: calc(-1 * 4px);
+			}
+		}
 		& table {
 			@apply w-full border-collapse text-small tabular-nums;
 		}
@@ -267,11 +343,13 @@
 
 		& :not(pre) > code {
 			@apply rounded-sm bg-code-ground font-mono text-ink;
+			font-feature-settings: normal;
 			font-size: 0.875em;
 			padding: 0.1em 0.3em;
 		}
 		& pre {
 			@apply f6y-p-4 mx-0 overflow-x-auto rounded-md bg-codeblock-ground font-mono text-code scheme-dark text-syntax-plain;
+			font-feature-settings: normal;
 			tab-size: 2;
 
 			& code {
@@ -284,25 +362,51 @@
 		}
 
 		/* Footnote references and the footnotes section. */
+		/*
+		 * Preflight sets every `sup` to `position: relative; top: -0.5em`. The
+		 * old `vertical-align: super` stacked its own raise on top of that,
+		 * leaving references ~0.65em above the ascenders. `position: static`
+		 * cancels preflight's `top` (which only moves positioned elements), so
+		 * this `vertical-align` is the one raise applied.
+		 */
 		& sup:has(> a[data-footnote-ref]) {
+			position: static;
 			font-size: 0.7em;
 			line-height: 0;
-			vertical-align: super;
+			vertical-align: 0.3em;
 		}
 		& a[data-footnote-ref] {
 			@apply px-0.5 font-mono no-underline;
+			/*
+			 * The plain string is a fallback for browsers that don't support the
+			 * alternative-text content syntax; they treat the second declaration as
+			 * invalid and keep the first. Screen readers that do support it read
+			 * "1", not "left bracket 1 right bracket".
+			 */
 			&::before {
 				content: "[";
+				/* biome-ignore lint/suspicious/noDuplicateProperties: intentional fallback for browsers without alternative-text content. */
+				content: "[" / "";
 			}
 			&::after {
 				content: "]";
+				/* biome-ignore lint/suspicious/noDuplicateProperties: intentional fallback for browsers without alternative-text content. */
+				content: "]" / "";
 			}
 		}
 		& .footnotes {
 			@apply f6y-pt-4 mt-line-double border-t border-line text-small text-ink-muted;
 
+			/*
+			 * remark's default footnotes heading is visually hidden (`sr-only`),
+			 * not this uppercase label style: `uppercase` would only affect its
+			 * rendered text, but Chromium reads that rendered, transformed text
+			 * for accessible names, so it would still turn the accessible
+			 * description every footnote reference carries ("Footnotes", via
+			 * `aria-describedby`) into "FOOTNOTES".
+			 */
 			& h2 {
-				@apply f6y-mb-2 mt-0 font-mono text-label font-medium tracking-caps text-ink-muted uppercase;
+				@apply f6y-mb-2 mt-0 font-mono text-label font-medium tracking-caps text-ink-muted;
 			}
 			& ol {
 				@apply m-0;
