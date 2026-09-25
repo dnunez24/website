@@ -82,6 +82,11 @@ Previews Base settings apply to new Previews only — an existing branch's Previ
 
 Releases are a pull request from `main` to `prod`, merged with a merge commit.
 
+### Cloudflare Web Analytics
+
+- `PUBLIC_CF_WEB_ANALYTICS_TOKEN` is the Cloudflare Web Analytics site token. Set it as a build variable on the Production tab only, never on Previews Base: it's not secret (it ends up in page HTML), but every other branch, `main` included, must ship without the beacon.
+- Workers Builds sets `WORKERS_CI=1` and `WORKERS_CI_BRANCH=prod` on a Production tab build. A `prod` build under those conditions fails immediately if the token is missing or malformed, instead of shipping a page without it.
+
 ### Every branch build holds a production-capable token (accepted risk)
 
 Both dashboard tabs currently point at the same Cloudflare-generated API token (account-wide Workers Scripts edit, enough to deploy `website`, plus KV, R2 and Workers Routes edit). Workers Builds runs that token in every branch's build, not just `prod`'s — Dependabot's dependency-bump branches included — because `pnpm build` executes whatever code a branch's dependencies import, before `wrangler preview` or `wrangler deploy` ever runs. The old GitHub Actions stack skipped preview deploys for `dependabot[bot]`; this stack doesn't. Workers Builds' branch filters (Settings → Build → Branch control) take exact names or `*`, not prefix patterns: a `dependabot/*`-style carve-out is reportedly rejected ([workers-sdk#15722](https://github.com/cloudflare/workers-sdk/issues/15722)), and each Dependabot bump gets its own branch name (the bumped package and version baked in), so there's no fixed set of exact names to list either. Its build watch paths filter by changed file path only, not by branch, so that's not a way around it.

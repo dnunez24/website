@@ -1,11 +1,31 @@
 ---
 import "@styles/global.css";
 import { Font } from "astro:assets";
+import {
+	PUBLIC_CF_WEB_ANALYTICS_TOKEN,
+	WORKERS_CI,
+	WORKERS_CI_BRANCH,
+} from "astro:env/server";
+import CloudflareAnalytics from "@components/CloudflareAnalytics.astro";
 import PageMeta from "@components/PageMeta.astro";
 import { SITE_TITLE } from "@constants";
+import { resolveBeaconToken } from "@lib/cloudflare-analytics";
 import type { ComponentProps } from "astro/types";
 
 type Props = ComponentProps<typeof PageMeta>;
+
+// The one exception to no client JS (design system v93): Cloudflare Web
+// Analytics' beacon. Ships only from a Workers Builds production build of
+// the "prod" branch (WORKERS_CI=1, WORKERS_CI_BRANCH=prod), so `astro dev`,
+// a plain local `astro build`, CI and every preview (main's included)
+// render nothing, even if a token ends up in a local .env file: WORKERS_CI
+// is what Workers Builds sets and a local build doesn't.
+const beaconToken = resolveBeaconToken({
+	prod: import.meta.env.PROD,
+	ci: WORKERS_CI,
+	branch: WORKERS_CI_BRANCH,
+	token: PUBLIC_CF_WEB_ANALYTICS_TOKEN,
+});
 ---
 
 <!-- Global Metadata -->
@@ -34,3 +54,4 @@ type Props = ComponentProps<typeof PageMeta>;
 <Font cssVariable="--font-jetbrains-mono" preload={[{ style: "normal" }]} />
 
 <PageMeta {...Astro.props} />
+<CloudflareAnalytics token={beaconToken} />
