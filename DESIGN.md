@@ -131,55 +131,214 @@ colors:
   color-series-4: "{colors.color-lake-500}"
   color-series-5: "{colors.color-pine-500}"
 typography:
-  display: { fontFamily: &sans '"Afacad Flux", ui-sans-serif, sans-serif, system-ui', fontSize: 40px, lineHeight: 44px, fontWeight: 500, letterSpacing: -0.02em, fontFeature: &sansFeature '"calt", "pnum", "zero", "ss02"' }
-  h1: { fontFamily: *sans, fontSize: 34px, lineHeight: 40px, fontWeight: 500, letterSpacing: -0.015em, fontFeature: *sansFeature }
-  h2: { fontFamily: *sans, fontSize: 28px, lineHeight: 36px, fontWeight: 500, letterSpacing: -0.01em, fontFeature: *sansFeature }
-  h3: { fontFamily: *sans, fontSize: 24px, lineHeight: 32px, fontWeight: 600, fontFeature: *sansFeature }
-  h4: { fontFamily: *sans, fontSize: 20px, lineHeight: 28px, fontWeight: 600, fontFeature: *sansFeature }
-  h5: { fontFamily: *sans, fontSize: 18px, lineHeight: 28px, fontWeight: 600, fontFeature: *sansFeature }
-  h6: { fontFamily: &mono '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace', fontSize: 14px, lineHeight: 20px, fontWeight: 500, letterSpacing: 0.04em }
-  prose: { fontFamily: *sans, fontSize: 20px, lineHeight: 32px, fontWeight: 400, fontFeature: *sansFeature }
-  body: { fontFamily: *sans, fontSize: 18px, lineHeight: 28px, fontWeight: 400, fontFeature: *sansFeature }
-  small: { fontFamily: *sans, fontSize: 16px, lineHeight: 24px, fontWeight: 400, fontFeature: *sansFeature }
-  label: { fontFamily: *mono, fontSize: 14px, lineHeight: 20px, fontWeight: 400 }
-  code: { fontFamily: *mono, fontSize: 16px, lineHeight: 28px, fontWeight: 400 }
-rounded: { radius-none: 0px, radius-sm: 2px, radius-md: 4px }
-spacing: { space-1: 2px, space-2: 4px, space-3-min: 8px, space-3-max: 12px, space-4-min: 16px, space-4-max: 24px, space-5-min: 32px, space-5-max: 48px, space-6-min: 64px, space-6-max: 96px, space-7-min: 128px, space-7-max: 192px, container-prose: 40rem, container-site: 64rem, container-portrait: 12rem, stroke-hairline: 1px, stroke-rule: 2px, stroke-focus: 4px, stroke-focus-offset: 2px }
+  display:
+    fontFamily: &sans '"Afacad Flux", ui-sans-serif, sans-serif, system-ui'
+    fontSize: 40px
+    lineHeight: 44px
+    fontWeight: 500
+    letterSpacing: -0.02em
+    fontFeature: &sansFeature '"calt", "pnum", "zero", "ss02"'
+  h1:
+    fontFamily: *sans
+    fontSize: 34px
+    lineHeight: 40px
+    fontWeight: 500
+    letterSpacing: -0.015em
+    fontFeature: *sansFeature
+  h2:
+    fontFamily: *sans
+    fontSize: 28px
+    lineHeight: 36px
+    fontWeight: 500
+    letterSpacing: -0.01em
+    fontFeature: *sansFeature
+  h3:
+    fontFamily: *sans
+    fontSize: 24px
+    lineHeight: 32px
+    fontWeight: 600
+    fontFeature: *sansFeature
+  h4:
+    fontFamily: *sans
+    fontSize: 20px
+    lineHeight: 28px
+    fontWeight: 600
+    fontFeature: *sansFeature
+  h5:
+    fontFamily: *sans
+    fontSize: 18px
+    lineHeight: 28px
+    fontWeight: 600
+    fontFeature: *sansFeature
+  h6:
+    fontFamily: &mono '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace'
+    fontSize: 14px
+    lineHeight: 20px
+    fontWeight: 500
+    letterSpacing: 0.04em
+  prose:
+    fontFamily: *sans
+    fontSize: 20px
+    lineHeight: 32px
+    fontWeight: 400
+    fontFeature: *sansFeature
+  body:
+    fontFamily: *sans
+    fontSize: 18px
+    lineHeight: 28px
+    fontWeight: 400
+    fontFeature: *sansFeature
+  small:
+    fontFamily: *sans
+    fontSize: 16px
+    lineHeight: 24px
+    fontWeight: 400
+    fontFeature: *sansFeature
+  label:
+    fontFamily: *mono
+    fontSize: 14px
+    lineHeight: 20px
+    fontWeight: 400
+  code:
+    fontFamily: *mono
+    fontSize: 16px
+    lineHeight: 28px
+    fontWeight: 400
+rounded:
+  radius-none: 0px
+  radius-sm: 2px
+  radius-md: 4px
+spacing:
+  space-1: 2px
+  space-2: 4px
+  space-3-min: 8px
+  space-3-max: 12px
+  space-4-min: 16px
+  space-4-max: 24px
+  space-5-min: 32px
+  space-5-max: 48px
+  space-6-min: 64px
+  space-6-max: 96px
+  space-7-min: 128px
+  space-7-max: 192px
+  container-prose: 40rem
+  container-site: 64rem
+  container-portrait: 12rem
+  stroke-hairline: 1px
+  stroke-rule: 2px
+  stroke-focus: 4px
+  stroke-focus-offset: 2px
 components:
-  button-filled: { typography: "{typography.label}", textColor: "{colors.color-on-brand}", backgroundColor: "{colors.color-brand}", rounded: "{rounded.radius-sm}", height: 44px }
-  button-filled-hover: { backgroundColor: "{colors.color-brand-hover}" }
-  button-outline: { typography: "{typography.label}", textColor: "{colors.color-brand}", rounded: "{rounded.radius-sm}", height: 44px }
-  button-outline-hover: { backgroundColor: "{colors.color-brand-tint}", textColor: "{colors.color-brand-hover}" }
-  button-ghost: { typography: "{typography.label}", textColor: "{colors.color-ink}", rounded: "{rounded.radius-sm}", height: 44px }
-  button-ghost-hover: { backgroundColor: "{colors.color-surface-hover}" }
-  button-ghost-current: { textColor: "{colors.color-brand}" }
-  link: { textColor: "{colors.color-link}" }
-  link-hover: { textColor: "{colors.color-link-hover}" }
-  code-inline: { textColor: "{colors.color-ink}", backgroundColor: "{colors.color-code-ground}", rounded: "{rounded.radius-sm}" }
-  code-block: { typography: "{typography.code}", textColor: "{colors.color-syntax-plain}", backgroundColor: "{colors.color-codeblock-ground}", rounded: "{rounded.radius-md}" }
-  topic: { typography: "{typography.label}", textColor: "{colors.color-topic}", backgroundColor: "{colors.color-topic-ground}", rounded: "{rounded.radius-sm}" }
-  topic-hover: { backgroundColor: "{colors.color-topic-ground-hover}" }
-  topic-count: { textColor: "{colors.color-topic}", backgroundColor: "{colors.color-topic-count-ground}", rounded: "{rounded.radius-sm}" }
-  topic-count-hover: { textColor: "{colors.color-topic-count-hover}", backgroundColor: "{colors.color-topic-count-ground-hover}" }
-  blockquote: { textColor: "{colors.color-quote-ink}" }
-  blockquote-citation: { textColor: "{colors.color-quote-cite}" }
-  blockquote-link: { textColor: "{colors.color-quote-link}" }
-  blockquote-link-hover: { textColor: "{colors.color-quote-link-hover}" }
-  callout-note: { textColor: "{colors.color-callout-note}", backgroundColor: "{colors.color-callout-note-ground}", rounded: "{rounded.radius-md}" }
-  callout-tip: { textColor: "{colors.color-callout-tip}", backgroundColor: "{colors.color-callout-tip-ground}", rounded: "{rounded.radius-md}" }
-  callout-important: { textColor: "{colors.color-callout-important}", backgroundColor: "{colors.color-callout-important-ground}", rounded: "{rounded.radius-md}" }
-  callout-warning: { textColor: "{colors.color-callout-warning}", backgroundColor: "{colors.color-callout-warning-ground}", rounded: "{rounded.radius-md}" }
-  callout-caution: { textColor: "{colors.color-callout-caution}", backgroundColor: "{colors.color-callout-caution-ground}", rounded: "{rounded.radius-md}" }
-  page: { textColor: "{colors.color-ink}", backgroundColor: "{colors.color-surface}" }
-  selection: { textColor: "{colors.color-ink}", backgroundColor: "{colors.color-selection}" }
-  syntax-plain: { textColor: "{colors.color-syntax-plain}", backgroundColor: "{colors.color-codeblock-ground}" }
-  syntax-comment: { textColor: "{colors.color-syntax-comment}", backgroundColor: "{colors.color-codeblock-ground}" }
-  syntax-punctuation: { textColor: "{colors.color-syntax-punctuation}", backgroundColor: "{colors.color-codeblock-ground}" }
-  syntax-keyword: { textColor: "{colors.color-syntax-keyword}", backgroundColor: "{colors.color-codeblock-ground}" }
-  syntax-string: { textColor: "{colors.color-syntax-string}", backgroundColor: "{colors.color-codeblock-ground}" }
-  syntax-number: { textColor: "{colors.color-syntax-number}", backgroundColor: "{colors.color-codeblock-ground}" }
-  syntax-function: { textColor: "{colors.color-syntax-function}", backgroundColor: "{colors.color-codeblock-ground}" }
-  syntax-type: { textColor: "{colors.color-syntax-type}", backgroundColor: "{colors.color-codeblock-ground}" }
+  button-filled:
+    typography: "{typography.label}"
+    textColor: "{colors.color-on-brand}"
+    backgroundColor: "{colors.color-brand}"
+    rounded: "{rounded.radius-sm}"
+    height: 44px
+  button-filled-hover:
+    backgroundColor: "{colors.color-brand-hover}"
+  button-outline:
+    typography: "{typography.label}"
+    textColor: "{colors.color-brand}"
+    rounded: "{rounded.radius-sm}"
+    height: 44px
+  button-outline-hover:
+    backgroundColor: "{colors.color-brand-tint}"
+    textColor: "{colors.color-brand-hover}"
+  button-ghost:
+    typography: "{typography.label}"
+    textColor: "{colors.color-ink}"
+    rounded: "{rounded.radius-sm}"
+    height: 44px
+  button-ghost-hover:
+    backgroundColor: "{colors.color-surface-hover}"
+  button-ghost-current:
+    textColor: "{colors.color-brand}"
+  link:
+    textColor: "{colors.color-link}"
+  link-hover:
+    textColor: "{colors.color-link-hover}"
+  code-inline:
+    textColor: "{colors.color-ink}"
+    backgroundColor: "{colors.color-code-ground}"
+    rounded: "{rounded.radius-sm}"
+  code-block:
+    typography: "{typography.code}"
+    textColor: "{colors.color-syntax-plain}"
+    backgroundColor: "{colors.color-codeblock-ground}"
+    rounded: "{rounded.radius-md}"
+  topic:
+    typography: "{typography.label}"
+    textColor: "{colors.color-topic}"
+    backgroundColor: "{colors.color-topic-ground}"
+    rounded: "{rounded.radius-sm}"
+  topic-hover:
+    backgroundColor: "{colors.color-topic-ground-hover}"
+  topic-count:
+    textColor: "{colors.color-topic}"
+    backgroundColor: "{colors.color-topic-count-ground}"
+    rounded: "{rounded.radius-sm}"
+  topic-count-hover:
+    textColor: "{colors.color-topic-count-hover}"
+    backgroundColor: "{colors.color-topic-count-ground-hover}"
+  blockquote:
+    textColor: "{colors.color-quote-ink}"
+  blockquote-citation:
+    textColor: "{colors.color-quote-cite}"
+  blockquote-link:
+    textColor: "{colors.color-quote-link}"
+  blockquote-link-hover:
+    textColor: "{colors.color-quote-link-hover}"
+  callout-note:
+    textColor: "{colors.color-callout-note}"
+    backgroundColor: "{colors.color-callout-note-ground}"
+    rounded: "{rounded.radius-md}"
+  callout-tip:
+    textColor: "{colors.color-callout-tip}"
+    backgroundColor: "{colors.color-callout-tip-ground}"
+    rounded: "{rounded.radius-md}"
+  callout-important:
+    textColor: "{colors.color-callout-important}"
+    backgroundColor: "{colors.color-callout-important-ground}"
+    rounded: "{rounded.radius-md}"
+  callout-warning:
+    textColor: "{colors.color-callout-warning}"
+    backgroundColor: "{colors.color-callout-warning-ground}"
+    rounded: "{rounded.radius-md}"
+  callout-caution:
+    textColor: "{colors.color-callout-caution}"
+    backgroundColor: "{colors.color-callout-caution-ground}"
+    rounded: "{rounded.radius-md}"
+  page:
+    textColor: "{colors.color-ink}"
+    backgroundColor: "{colors.color-surface}"
+  selection:
+    textColor: "{colors.color-ink}"
+    backgroundColor: "{colors.color-selection}"
+  syntax-plain:
+    textColor: "{colors.color-syntax-plain}"
+    backgroundColor: "{colors.color-codeblock-ground}"
+  syntax-comment:
+    textColor: "{colors.color-syntax-comment}"
+    backgroundColor: "{colors.color-codeblock-ground}"
+  syntax-punctuation:
+    textColor: "{colors.color-syntax-punctuation}"
+    backgroundColor: "{colors.color-codeblock-ground}"
+  syntax-keyword:
+    textColor: "{colors.color-syntax-keyword}"
+    backgroundColor: "{colors.color-codeblock-ground}"
+  syntax-string:
+    textColor: "{colors.color-syntax-string}"
+    backgroundColor: "{colors.color-codeblock-ground}"
+  syntax-number:
+    textColor: "{colors.color-syntax-number}"
+    backgroundColor: "{colors.color-codeblock-ground}"
+  syntax-function:
+    textColor: "{colors.color-syntax-function}"
+    backgroundColor: "{colors.color-codeblock-ground}"
+  syntax-type:
+    textColor: "{colors.color-syntax-type}"
+    backgroundColor: "{colors.color-codeblock-ground}"
 ---
 
 # Dave Nuñez

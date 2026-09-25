@@ -56,8 +56,8 @@ describe("DESIGN.md lint (design.md)", () => {
 		const source = await readFile(resolve(ROOT, "DESIGN.md"), "utf8");
 		// evergreen-300 on evergreen-200 is a real pair from the palette, well under 4.5:1.
 		const broken = source.replace(
-			'button-filled: { typography: "{typography.label}", textColor: "{colors.color-on-brand}", backgroundColor: "{colors.color-brand}"',
-			'button-filled: { typography: "{typography.label}", textColor: "{colors.color-evergreen-300}", backgroundColor: "{colors.color-evergreen-200}"',
+			'  button-filled:\n    typography: "{typography.label}"\n    textColor: "{colors.color-on-brand}"\n    backgroundColor: "{colors.color-brand}"\n',
+			'  button-filled:\n    typography: "{typography.label}"\n    textColor: "{colors.color-evergreen-300}"\n    backgroundColor: "{colors.color-evergreen-200}"\n',
 		);
 		expect(broken).not.toBe(source);
 		const { findings } = lint(broken);
