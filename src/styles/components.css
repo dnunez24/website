@@ -12,10 +12,10 @@
 		@apply mx-0 overflow-hidden rounded-md bg-codeblock-ground scheme-dark;
 	}
 	[data-codeblock-header] {
-		@apply m-0 flex items-baseline justify-between f6y-gap-2 border-b border-codeblock-line f6y-px-4 f6y-py-2 font-mono text-label text-ink-muted;
+		@apply m-0 flex items-baseline justify-between f6y-gap-2 border-b border-codeblock-line f6y-px-4 f6y-py-2 font-mono text-label text-syntax-comment;
 	}
 	[data-codeblock-file] {
-		@apply truncate text-syntax-plain;
+		@apply min-w-0 wrap-anywhere text-syntax-plain;
 	}
 	/* syntax-comment, not ink-muted: ink-muted fails contrast on the dark panel. */
 	[data-codeblock-lang] {
@@ -24,9 +24,10 @@
 	/* The frame carries the corners; a bare `.prose pre` keeps its own. */
 	[data-codeblock] pre {
 		@apply m-0 overflow-x-auto rounded-none f6y-p-4 font-mono text-code;
+		font-feature-settings: normal;
 	}
 	[data-codeblock] > figcaption {
-		@apply m-0 f6y-px-4 f6y-pb-2 font-mono text-label text-syntax-comment;
+		@apply m-0 border-t border-codeblock-line f6y-px-4 f6y-py-2 wrap-anywhere font-mono text-label text-syntax-comment;
 	}
 
 	/* The <pre> scrolls inside a clipped frame, so the frame carries its focus ring. */
@@ -38,6 +39,20 @@
 	}
 
 	/*
+	 * BlockQuote: scopes the same --color-link/-hover variables prose.css's
+	 * blockquote rule does, for quotes rendered outside `.prose`. A selector
+	 * here (e.g. `[data-quote] a`) can't reach the Link component or a plain
+	 * `<a>` styled by a utility class applied directly in markup: Tailwind
+	 * puts those in the utilities layer, which always beats a components-
+	 * layer selector regardless of specificity. The custom property's
+	 * resolved value isn't layer-bound, so it reaches them.
+	 */
+	[data-quote] {
+		--color-link: var(--color-quote-link);
+		--color-link-hover: var(--color-quote-link-hover);
+	}
+
+	/*
 	 * MermaidDiagram: the figure src/lib/mermaid.ts renders, in Markdown and in
 	 * the component. The SVG keeps its rendered size so labels stay 13px; a
 	 * diagram wider than the column scrolls inside the frame, which is focusable
@@ -45,6 +60,22 @@
 	 */
 	[data-diagram] {
 		@apply mx-0 overflow-x-auto rounded-md border border-line bg-surface-inset f6y-p-4;
+
+		/*
+		 * Keeps its token colors as one island under forced colors: without
+		 * this, the frame repaints (border, background) but the SVG's inline
+		 * styles don't, leaving unforced strokes on a forced ground.
+		 */
+		forced-color-adjust: none;
+
+		@media (forced-colors: active) {
+			border-color: CanvasText;
+		}
+	}
+	[data-diagram]:focus-visible {
+		@media (forced-colors: active) {
+			outline-color: Highlight;
+		}
 	}
 
 	/*
@@ -55,6 +86,7 @@
 	[data-diagram] svg {
 		@apply mx-auto block h-auto max-w-none;
 		font-family: var(--font-mono) !important;
+		font-feature-settings: "zero" !important;
 		fill: var(--color-ink) !important;
 
 		& .node :is(rect, circle, ellipse, polygon, path) {

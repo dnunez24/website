@@ -5,3 +5,6 @@
 @import "./utilities.css";
 @import "./prose.css";
 @import "./components.css";
+@import "./forced-colors.css";
+@source not "../../DESIGN.md";
+@source not "./design-md-*.test.ts";
