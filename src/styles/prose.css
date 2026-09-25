@@ -264,7 +264,45 @@
 			@apply my-line-double h-0 border-0 border-t border-line;
 		}
 
-		/* Table: no frame. A strong hairline under the header, light hairlines between rows. */
+		/*
+		 * Table: no frame. A strong hairline under the header, light hairlines
+		 * between rows. `table-scroll.ts` wraps every table in
+		 * `[data-table-scroll]`, so a table wider than the column scrolls inside
+		 * it instead of scrolling the page. The wrapper carries no border or
+		 * background, and `table` keeps `w-full`, so a table that fits looks
+		 * exactly as before.
+		 *
+		 * The padding below gives a focused link inside the table (first
+		 * column, last column, or last row) room for its ring before the
+		 * scrollport clips it: 4px stroke plus 2px offset, the ring
+		 * `:focus-visible` (base.css) draws everywhere. A matching negative
+		 * margin cancels it on every side it's added, so the table's own edges
+		 * land where they would with no padding at all (the wrapper has no
+		 * border, so the two exactly offset). `margin-block-start` is left
+		 * alone, on purpose: it's how every context above already spaces this
+		 * element from the one before it (a paragraph, a heading, inside a
+		 * blockquote or a callout), and an earlier version of this fix reduced
+		 * it by the padding amount, repeated per context — every one it missed
+		 * moved a table away from where it renders today. A link in a header
+		 * cell loses the top of its ring; keep links out of header cells.
+		 */
+		& [data-table-scroll] {
+			@apply overflow-x-auto rounded-sm;
+			padding-inline: calc(4px + 2px);
+			margin-inline: calc(-1 * (4px + 2px));
+			padding-block-end: calc(4px + 2px);
+			margin-block-end: calc(-1 * (4px + 2px));
+
+			/* The wrapper's own ring (focused to scroll it) draws inside its
+			   padding: offset by the stroke width alone, so the remaining gap
+			   to the table is the padding minus the stroke (6px − 4px = 2px).
+			   That holds on the inline sides and the bottom, where there's
+			   padding to sit in. There's none at the top (see above), so the
+			   ring overlaps the header row's top edge by the same 4px there. */
+			&:focus-visible {
+				outline-offset: calc(-1 * 4px);
+			}
+		}
 		& table {
 			@apply w-full border-collapse text-small tabular-nums;
 		}
