@@ -3,14 +3,21 @@ import BaseHead from "@components/BaseHead.astro";
 import Container from "@components/Container.astro";
 import Footer from "@components/Footer.astro";
 import Header from "@components/Header.astro";
+import { isDevRoute } from "@lib/routes";
 import type { ComponentProps } from "astro/types";
 
 type Props = ComponentProps<typeof BaseHead>;
+
+// Every /dev/* specimen, regardless of what builds it: the sitemap filter
+// already excludes them, but a stray DN_DEV_PAGES=1 build should still ship
+// them unindexable, not just unlisted.
+const noindex = isDevRoute(Astro.url.pathname);
 ---
 
 <html lang="en">
 	<head>
 		<BaseHead {...Astro.props} />
+		{noindex && <meta name="robots" content="noindex" />}
 		<!-- Structured data (JsonLd) from the page. -->
 		<slot name="head" />
 	</head>

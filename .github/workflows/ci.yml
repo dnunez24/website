@@ -21,4 +21,83 @@ jobs:
       - run: pnpm lint
       - run: pnpm check
       - run: pnpm test
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
       - run: pnpm build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  structured-data:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Validates already-built HTML; doesn't render Mermaid, so no Chromium.
+      - uses: ./.github/actions/setup
+        with:
+          browser: "false"
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      # The schema.org vocabulary is vendored (scripts/vendor/), not
+      # downloaded, so there's nothing here to cache.
+      - run: pnpm validate:structured-data
+
+  a11y:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Runs axe in real Chromium against the built pages, so (unlike
+      # structured-data) this job needs the browser the setup action installs
+      # by default.
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - run: pnpm test:a11y
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: a11y-report
+          path: reports/a11y/
+          retention-days: 14
+
+  perf:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Lighthouse uses ubuntu-latest's preinstalled google-chrome-stable, not
+      # Chromium: the headless shell fails to test back/forward cache and
+      # reads LCP differently, so no browser install is needed here.
+      - uses: ./.github/actions/setup
+        with:
+          browser: "false"
+      - run: google-chrome --version
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      # Static check for a <script> or inline event handler that the
+      # resource-summary budget below can't see (it only counts network
+      # requests, not inline script content). Runs first, and on its own
+      # exit code: a step after a failed pnpm test:perf is skipped by
+      # default, which would silently stop this from ever running.
+      - run: pnpm test:no-js
+      - run: pnpm test:perf
+      - if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lhci-report
+          path: reports/lhci/
+          retention-days: 14

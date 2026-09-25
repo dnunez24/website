@@ -2,6 +2,14 @@
 dist/
 # generated types
 .astro/
+# wrangler local state
+.wrangler/
+# wrangler local secrets (never committed; `wrangler dev` reads these)
+.dev.vars*
+# check reports (e.g. reports/a11y/, reports/lhci/)
+reports/
+# Lighthouse CI's own scratch directory (reports/lhci/ is the real output)
+.lighthouseci/
 
 # dependencies
 node_modules/
@@ -13,9 +21,8 @@ yarn-error.log*
 pnpm-debug.log*
 
 
-# environment variables
-.env
-.env.production
+# environment variables (.env, .env.local, .env.production, .env.production.local, ...)
+.env*
 
 # macOS-specific files
 .DS_Store

@@ -13,8 +13,7 @@ Here is a sample of some basic Markdown syntax that can be used when writing Mar
 
 The following HTML `<h1>`–`<h6>` elements represent six levels of section headings.
 `<h1>` is the highest section level while `<h6>` is the lowest.
-
-# H1 <!-- rumdl-disable-line single-title -->
+This article's title above is already an `<h1>`, so the demo below starts at `<h2>`.
 
 ## H2
 
@@ -48,7 +47,7 @@ Quiatae cullecum rem ent aut odis in re eossequodi nonsequ idebis ne sapicia is 
 
 ### Output
 
-![blog placeholder](../../assets/blog-placeholder-about.jpg)
+![A tilted, dark rounded rectangle with a smiling face and a teal-blue-violet gradient border, glowing purple against a dark, faintly gridded background](../../assets/blog-placeholder-about.jpg)
 
 ## Blockquotes
 
@@ -70,17 +69,22 @@ The blockquote element represents content that is quoted from another source, op
 
 ### Blockquote with attribution
 
+End the quote with a paragraph that starts with an em dash; it renders as the quote's `footer`.
+Wrap a work title in `<cite>`, never a person's name.
+
 #### Syntax
 
 ```markdown
-> "Don't communicate by sharing memory, share memory by communicating."
-> <cite>Rob Pike[^1]</cite>
+> Don't communicate by sharing memory, share memory by communicating.
+>
+> — Rob Pike, <cite>Go Proverbs</cite>[^1]
 ```
 
 #### Output
 
-> "Don't communicate by sharing memory, share memory by communicating."
-> <cite>Rob Pike[^1]</cite>
+> Don't communicate by sharing memory, share memory by communicating.
+>
+> — Rob Pike, <cite>Go Proverbs</cite>[^1]
 
 [^1]: The above quote is excerpted from Rob Pike's [talk](https://www.youtube.com/watch?v=PAAkCSZUG1c) during Gopherfest, November 18, 2015.
 

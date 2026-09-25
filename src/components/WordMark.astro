@@ -10,7 +10,8 @@ const { name, tagline, href = "/", class: className } = Astro.props;
 ---
 
 <a href={href} class:list={["group inline-flex flex-col rounded-sm text-ink-heading no-underline", className]}>
-	<span class="text-h4 tracking-tight transition-colors group-hover:text-brand-hover">{name}</span>
+	<span class="text-h4 tracking-tight transition-colors-no-outline group-hover:text-brand-hover">{name}</span>
 	<!-- Below the measure breakpoint the name stands alone, so the header links fit beside it on every phone. -->
-	{tagline && <span class="hidden font-mono text-label text-ink-muted measure:block">{tagline}</span>}
+	<!-- The tagline describes the site, not the link, so the link's name stays "Dave Nuñez" (WCAG 2.5.3). -->
+	{tagline && <span aria-hidden="true" class="hidden font-mono text-label text-ink-muted measure:block">{tagline}</span>}
 </a>
