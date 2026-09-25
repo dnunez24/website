@@ -17,6 +17,7 @@
 		"lint": "biome check .",
 		"lint:design": "design.md lint DESIGN.md",
 		"preview": "astro preview",
+		"preview:edge": "wrangler dev",
 		"serve:dist": "node scripts/serve-dist.ts",
 		"test": "vitest run",
 		"test:a11y": "node scripts/check-a11y.ts",
@@ -61,6 +62,7 @@
 		"subset-font": "^2.9.0",
 		"typescript": "^6.0.3",
 		"vite": "^8.3.0",
-		"vitest": "^5.0.1"
+		"vitest": "^5.0.1",
+		"wrangler": "^4.136.3"
 	}
 }

@@ -78,8 +78,10 @@ function excludeDevPages(): AstroIntegration {
 // https://astro.build/config
 export default defineConfig({
 	site: "https://davidanunez.com",
-	// One URL form for the sitemap, canonical links and internal links. GitHub
-	// Pages redirects `/about` to `/about/`, so slashless links cost a hop.
+	// One URL form for the sitemap, canonical links and internal links.
+	// Workers static assets 307-redirects `/about` to `/about/` under the
+	// default `html_handling: "auto-trailing-slash"` (wrangler.jsonc), so
+	// slashless links cost a hop.
 	trailingSlash: "always",
 
 	// An article id starting with "page/" (e.g. content file writing/page/2.md)
