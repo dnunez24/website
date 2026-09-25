@@ -65,6 +65,21 @@ All commands are run from the root of the project, from a terminal:
 | `pnpm astro ...`                | Run CLI commands like `astro add`, `astro check`                                                       |
 | `pnpm astro -- --help`          | Get help using the Astro CLI                                                                           |
 
+## Deploys
+
+Cloudflare Workers Builds (Cloudflare's GitHub app, not GitHub Actions) builds and deploys the `website` Worker straight from this repo. The dashboard has two tabs, each with its own build command and its own Cloudflare API token:
+
+| Tab            | Build command | Deploy/preview command       |
+| :------------- | :------------ | :---------------------------- |
+| Production     | `pnpm build`  | `pnpm exec wrangler deploy`   |
+| Previews Base  | `pnpm build`  | `pnpm exec wrangler preview`  |
+
+The production branch is set to `prod`: a push there runs the Production tab's commands, which deploys `website` to the `davidanunez.com` custom domain. Every other branch, including `main`, runs the Previews Base tab's commands instead, which creates a Worker Preview at `<branch-slug>-website.dnunez24.workers.dev`, behind Cloudflare Access. `main`'s Preview is staging. Workers Builds comments the Preview URL on the pull request and posts a `Workers Builds: website` check run.
+
+Previews Base settings apply to new Previews only — an existing branch's Preview keeps whatever settings were live when it was first built, so a Previews Base change needs a new branch (or that branch's Preview reset) to take effect.
+
+Releases are a pull request from `main` to `prod`, merged with a merge commit.
+
 ## 👀 Want to learn more?
 
 Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
