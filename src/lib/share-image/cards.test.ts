@@ -9,7 +9,7 @@ import {
 	defaultCardSvg,
 	toPng,
 } from "./cards";
-import { loadFaces, sansFeatures, shapeLine } from "./fonts";
+import { fontFeatures, loadFaces, shapeLine } from "./fonts";
 
 /** The `d` of every path in a card, in drawing order: the wedge's three bands, then each line of text. */
 const paths = (svg: string) =>
@@ -74,14 +74,19 @@ describe("share card colors", () => {
 });
 
 describe("share card type", () => {
-	it("reads the site's sans features from the token", async () => {
-		const css = await readFile("src/styles/theme.css", "utf8");
-		for (const feature of await sansFeatures()) {
-			expect(css).toMatch(
-				new RegExp(`--font-sans--font-feature-settings:[^;]*"${feature}"`),
+	it.each(["sans", "mono"] as const)(
+		"reads the site's %s features from the token",
+		async (family) => {
+			const css = await readFile("src/styles/theme.css", "utf8");
+			const token = new RegExp(
+				`--font-${family}--font-feature-settings:([^;]+);`,
+			).exec(css)?.[1];
+			// Item for item, so one the cards can't read (`"calt" 0`, say) fails here instead of drifting.
+			expect((await fontFeatures(family)).map((tag) => `"${tag}"`)).toEqual(
+				token?.split(",").map((item) => item.trim()),
 			);
-		}
-	});
+		},
+	);
 
 	it("sets the two-story a the site uses", async () => {
 		const { sans } = await loadFaces();
@@ -89,6 +94,14 @@ describe("share card type", () => {
 		const [siteA] = shapeLine(sans, "a", 100).glyphs;
 		const [defaultA] = shapeLine(plain, "a", 100).glyphs;
 		expect(siteA?.id).not.toBe(defaultA?.id);
+	});
+
+	it("sets the slashed zero the site uses in mono", async () => {
+		const { mono } = await loadFaces();
+		const plain = { ...mono, features: [] };
+		const [siteZero] = shapeLine(mono, "0", 100).glyphs;
+		const [defaultZero] = shapeLine(plain, "0", 100).glyphs;
+		expect(siteZero?.id).not.toBe(defaultZero?.id);
 	});
 });
 

@@ -24,18 +24,17 @@ const feature = (tag: string) => {
 	return parsed;
 };
 
+type Family = "sans" | "mono";
+
 /**
- * The OpenType features `theme.css` turns on for sans text. The cards read
- * the token itself, so their type can't drift from the page's.
+ * The OpenType features `theme.css` turns on for a family's text. The cards
+ * read the token itself, so their type can't drift from the page's.
  */
-export async function sansFeatures(): Promise<string[]> {
+export async function fontFeatures(family: Family): Promise<string[]> {
 	const css = await readFile("src/styles/theme.css", "utf8");
-	const value = /--font-sans--font-feature-settings:\s*([^;]+);/.exec(css)?.[1];
-	if (!value) {
-		throw new Error(
-			"theme.css no longer sets --font-sans--font-feature-settings",
-		);
-	}
+	const token = `--font-${family}--font-feature-settings`;
+	const value = new RegExp(`${token}:\\s*([^;]+);`).exec(css)?.[1];
+	if (!value) throw new Error(`theme.css no longer sets ${token}`);
 	return [...value.matchAll(/"([a-z0-9]{4})"/g)].flatMap(([, tag]) =>
 		tag ? [tag] : [],
 	);
@@ -44,7 +43,7 @@ export async function sansFeatures(): Promise<string[]> {
 async function load(
 	file: string,
 	weight: number,
-	features: string[],
+	family: Family,
 ): Promise<TypeFace> {
 	// HarfBuzz reads TrueType, not WOFF2: unwrap the same files the site serves.
 	const sfnt = await decompress(await readFile(`src/assets/fonts/${file}`));
@@ -55,7 +54,7 @@ async function load(
 		font,
 		upem: face.upem,
 		capHeight: font.getMetricPositionWithFallback(hb.MetricsTag.CAP_HEIGHT),
-		features: features.map(feature),
+		features: (await fontFeatures(family)).map(feature),
 		outlines: new Map(),
 	};
 }
@@ -66,9 +65,9 @@ let faces: Promise<{ sans: TypeFace; mono: TypeFace }> | undefined;
 export function loadFaces() {
 	faces ??= (async () => {
 		const [sans, mono] = await Promise.all([
-			load("afacad-flux-latin-wght-normal.woff2", 600, await sansFeatures()),
-			// The site sets no features on mono, so it shapes with the defaults, as browsers do.
-			load("jetbrains-mono-latin-wght-normal.woff2", 400, []),
+			load("afacad-flux-latin-wght-normal.woff2", 600, "sans"),
+			// Mono sets the tagline and subtitles: font-mono text, so the token applies, not code's reset.
+			load("jetbrains-mono-latin-wght-normal.woff2", 400, "mono"),
 		]);
 		return { sans, mono };
 	})();
