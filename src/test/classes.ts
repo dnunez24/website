@@ -1,3 +1,4 @@
+import { realpathSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
@@ -37,6 +38,45 @@ export async function compileGlobalCss(candidates: string[] = []) {
 		loadStylesheet,
 	});
 	return build(candidates);
+}
+
+type SourceEntry = { base: string; pattern: string; negated: boolean };
+
+/** The part of @tailwindcss/oxide's scanner that scannedFiles uses. */
+interface OxideScanner {
+	scan(): string[];
+	readonly files: string[];
+}
+
+/**
+ * The files Tailwind reads for class names when it builds global.css, found
+ * the way @tailwindcss/vite finds them: the project root, unless global.css
+ * sets its own with `source()`, plus global.css's `@source` rules. Omits the
+ * dev-page exclusion astro.config.ts adds to production builds. `css`
+ * replaces global.css's contents, for mutation tests.
+ */
+export async function scannedFiles(css?: string): Promise<string[]> {
+	const entry = join(ROOT, "src/styles/global.css");
+	const { root, sources } = await compile(
+		css ?? (await readFile(entry, "utf8")),
+		{ base: dirname(entry), loadStylesheet },
+	);
+	// Not a direct dependency: loaded through @tailwindcss/vite's own
+	// dependencies, so the scan runs on the same scanner build as `astro build`.
+	const { Scanner } = createRequire(
+		realpathSync(join(ROOT, "node_modules/@tailwindcss/vite/package.json")),
+	)("@tailwindcss/oxide") as {
+		Scanner: new (options: { sources: SourceEntry[] }) => OxideScanner;
+	};
+	const rootSources: SourceEntry[] =
+		root === "none"
+			? []
+			: root === null
+				? [{ base: ROOT, pattern: "**/*", negated: false }]
+				: [{ ...root, negated: false }];
+	const scanner = new Scanner({ sources: [...rootSources, ...sources] });
+	scanner.scan();
+	return scanner.files;
 }
 
 /**

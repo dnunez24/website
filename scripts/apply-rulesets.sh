@@ -358,7 +358,7 @@ fetch_open_pr_check_run_names() {
 	fi
 	prs_file="$WORKDIR/open-prs-$(echo "$base" | tr -c 'a-zA-Z0-9' '-').json"
 	echo '[]' >"$cache_file"
-	if ! gh api --hostname "$HOST" "repos/$REPO/pulls" -f base="$base" -f state=open --paginate >"$prs_file" 2>/dev/null; then
+	if ! gh api --hostname "$HOST" "repos/$REPO/pulls" --method GET -f base="$base" -f state=open --paginate >"$prs_file" 2>/dev/null; then
 		echo "::warning::couldn't list open PRs into $base" >&2
 		echo "$cache_file"
 		return
