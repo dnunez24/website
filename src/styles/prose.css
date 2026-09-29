@@ -169,27 +169,28 @@
 			--callout-ground: var(--color-callout-note-ground);
 			@apply rounded-md;
 			background: var(--callout-ground);
+			/*
+			 * These remap the link and quote tokens instead of setting `color`:
+			 * the Link component and BlockQuote.astro's footer carry their colors
+			 * as utility classes, and the utilities layer outranks any selector in
+			 * this one (see the blockquote rule above).
+			 *
+			 * The brand and quote hues read as stray colors on the tints, so links
+			 * take the text color and the underline alone marks them. A nested
+			 * quote sets --color-link from --color-quote-link on its own element,
+			 * closer to its links than this one, so that pair is remapped too.
+			 */
+			--color-link: var(--color-ink);
+			--color-link-hover: var(--color-ink);
+			--color-quote-link: var(--color-ink);
+			--color-quote-link-hover: var(--color-ink);
+			/* quote-cite falls to 4.1:1 or less on these five 200-step tints; quote-ink clears 5.5:1 on all of them. */
+			--color-quote-cite: var(--color-quote-ink);
 
 			/* Inline code's own ground matches the tints, so it takes the page ground. */
 			& :not(pre) > code {
 				@apply bg-surface;
 			}
-			/* The brand hue reads as a stray color on the tints: links take the text color, and the underline alone marks them. */
-			& a:not([data-button]),
-			& a:not([data-button]):is(:hover, :focus-visible) {
-				@apply text-ink;
-			}
-			/*
-			 * quote-cite falls to 4.1:1 or less on these five 200-step tints;
-			 * quote-ink clears 5.5:1 on all of them. A variable, not a `blockquote
-			 * footer` selector, so it also reaches BlockQuote.astro's footer, whose
-			 * own `text-quote-cite` utility class lives in the utilities layer and
-			 * would otherwise win over any selector this rule could write (see the
-			 * blockquote rule above for the same reasoning applied to links). This
-			 * rule wins the cascade for links (`color-ink`) because it's more
-			 * specific than the base link rule at equal layer; that's unchanged.
-			 */
-			--color-quote-cite: var(--color-quote-ink);
 		}
 		& [data-callout="tip"] {
 			--callout-ink: var(--color-callout-tip);

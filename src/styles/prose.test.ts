@@ -1,4 +1,8 @@
+import { experimental_AstroContainer as AstroContainer } from "astro/container";
+import { chromium } from "playwright";
 import { describe, expect, it } from "vitest";
+import BlockQuote from "../components/BlockQuote.astro";
+import Link from "../components/Link.astro";
 import { compileGlobalCss, ruleBody } from "../test/classes";
 
 describe("prose.css and components.css (compiled)", () => {
@@ -71,5 +75,101 @@ describe("prose.css and components.css (compiled)", () => {
 		const foldIcon = ruleBody(css, /&\s*\.callout-fold-icon\s*\{/);
 		expect(foldIcon).toMatch(/transition-property:[^;]*color/);
 		expect(foldIcon).not.toMatch(/transition-property:[^;]*outline-color/);
+	});
+});
+
+/*
+ * Layer order, specificity and custom-property inheritance all decide these
+ * colors, so they're read from a real cascade, not the compiled text. Plain
+ * `<a>` and `<blockquote>` stand in for Markdown output.
+ */
+describe("links in a Callout (Chromium)", { timeout: 60_000 }, () => {
+	it("stay ink from Markdown or the Link component, quoted or not", async () => {
+		const container = await AstroContainer.create();
+		const md = (href: string) => `<a href="${href}">link</a>`;
+		const link = (href: string) =>
+			container.renderToString(Link, {
+				props: { href },
+				slots: { default: "link" },
+			});
+		const quote = async (href: string) =>
+			container.renderToString(BlockQuote, {
+				props: { author: "Author" },
+				slots: { default: `<p>${await link(href)}</p>` },
+			});
+		const html = `<div class="prose">
+			<p>${md("#md")} ${await link("#link")}</p>
+			<blockquote><p>${md("#quote-md")} ${await link("#quote-link")}</p></blockquote>
+			${await quote("#blockquote-link")}
+			<div class="callout" data-callout="note"><div class="callout-content">
+				<p>${md("#callout-md")} ${await link("#callout-link")}</p>
+				<blockquote><p>${md("#callout-quote-md")} ${await link("#callout-quote-link")}</p></blockquote>
+				${await quote("#callout-blockquote-link")}
+			</div></div>
+		</div>`;
+		const css = await compileGlobalCss(
+			[...html.matchAll(/class="([^"]*)"/g)].flatMap(([, names = ""]) =>
+				names.split(/\s+/),
+			),
+		);
+
+		const browser = await chromium.launch();
+		try {
+			const page = await browser.newPage();
+			// A color read mid-transition would match neither state.
+			await page.setContent(
+				`<style>${css}*{transition:none!important}</style>${html}`,
+			);
+			const tokenByColor = new Map(
+				await page.evaluate(
+					(tokens) =>
+						tokens.map((token) => {
+							const probe = document.createElement("i");
+							probe.style.color = `var(--color-${token})`;
+							document.body.append(probe);
+							return [getComputedStyle(probe).color, token] as const;
+						}),
+					["ink", "link", "link-hover", "quote-link", "quote-link-hover"],
+				),
+			);
+			/** The link's token at rest, then hovered. */
+			const tokensOf = async (href: string) => {
+				const selector = `a[href="${href}"]`;
+				const read = async () => {
+					const color = await page.$eval(
+						selector,
+						(a) => getComputedStyle(a).color,
+					);
+					return tokenByColor.get(color) ?? color;
+				};
+				const rest = await read();
+				await page.hover(selector);
+				return [rest, await read()];
+			};
+
+			// Outside a Callout: the page and quote hues, so the Callout's scope doesn't leak.
+			for (const [href, token] of [
+				["#md", "link"],
+				["#link", "link"],
+				["#quote-md", "quote-link"],
+				["#quote-link", "quote-link"],
+				["#blockquote-link", "quote-link"],
+			] as const) {
+				expect
+					.soft(await tokensOf(href), href)
+					.toEqual([token, `${token}-hover`]);
+			}
+			for (const href of [
+				"#callout-md",
+				"#callout-link",
+				"#callout-quote-md",
+				"#callout-quote-link",
+				"#callout-blockquote-link",
+			]) {
+				expect.soft(await tokensOf(href), href).toEqual(["ink", "ink"]);
+			}
+		} finally {
+			await browser.close();
+		}
 	});
 });
