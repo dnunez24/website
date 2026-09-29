@@ -16,5 +16,10 @@
 @import "./components.css";
 @import "./forced-colors.css";
 @source not "../../DESIGN.md";
-@source not "./design-md-*.test.ts";
-@source not "./layer-guard.test.ts";
+/*
+ * Tailwind reads tests' fixtures, mutations and prose ("transform", "grow")
+ * as classes too. Any that no page uses would ship as dead CSS inlined into
+ * every page. Same files as vitest.config.ts's `include` (see
+ * source-guard.test.ts).
+ */
+@source not "../**/*.test.ts";
