@@ -1,3 +1,12 @@
+/*
+ * Astro's <Image> styles (`height: auto`, width, object-fit, object-position)
+ * live in an `astro.images` layer. Layers rank by first declaration, and a
+ * built page's inlined stylesheet (`build.inlineStylesheets`) declares
+ * Astro's last, above utilities. Naming it first here keeps utilities above
+ * it, so `h-*`, `w-*` or `object-*` on an <Image> still wins (see
+ * layer-guard.test.ts).
+ */
+@layer astro.images, theme, base, components, utilities;
 @import "tailwindcss";
 @import "fluidity-tailwind";
 @import "./theme.css";
@@ -8,3 +17,4 @@
 @import "./forced-colors.css";
 @source not "../../DESIGN.md";
 @source not "./design-md-*.test.ts";
+@source not "./layer-guard.test.ts";
