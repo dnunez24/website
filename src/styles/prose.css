@@ -399,15 +399,18 @@
 			@apply f6y-pt-4 mt-line-double border-t border-line text-small text-ink-muted;
 
 			/*
-			 * remark's default footnotes heading is visually hidden (`sr-only`),
-			 * not this uppercase label style: `uppercase` would only affect its
-			 * rendered text, but Chromium reads that rendered, transformed text
-			 * for accessible names, so it would still turn the accessible
-			 * description every footnote reference carries ("Footnotes", via
-			 * `aria-describedby`) into "FOOTNOTES".
+			 * satteri emits `<h2 class="sr-only" id="footnote-label">`, and every
+			 * footnote reference points at it with `aria-describedby`. Tailwind
+			 * generates `.sr-only` only while some scanned file uses the class
+			 * (today Topic.astro, index.astro and the callout and task-list
+			 * plugins do), so `@apply` here keeps the heading hidden even if
+			 * those go. It is hidden, not `display: none`, so it stays in the
+			 * accessibility tree. No visible label style (`uppercase` included):
+			 * Chromium reads rendered, transformed text for accessible names, so
+			 * it would turn the description "Footnotes" into "FOOTNOTES".
 			 */
 			& h2 {
-				@apply f6y-mb-2 mt-0 font-mono text-label font-medium tracking-caps text-ink-muted;
+				@apply sr-only;
 			}
 			& ol {
 				@apply m-0;
