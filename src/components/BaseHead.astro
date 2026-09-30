@@ -1,17 +1,43 @@
 ---
 import "@styles/global.css";
 import { Font } from "astro:assets";
+import {
+	PUBLIC_CF_WEB_ANALYTICS_TOKEN,
+	WORKERS_CI,
+	WORKERS_CI_BRANCH,
+} from "astro:env/server";
+import CloudflareAnalytics from "@components/CloudflareAnalytics.astro";
 import PageMeta from "@components/PageMeta.astro";
 import { SITE_TITLE } from "@constants";
+import { resolveBeaconToken } from "@lib/cloudflare-analytics";
 import type { ComponentProps } from "astro/types";
 
 type Props = ComponentProps<typeof PageMeta>;
+
+// The one exception to no client JS (design system v93): Cloudflare Web
+// Analytics' beacon. Ships only from a Workers Builds production build of
+// the "prod" branch (WORKERS_CI=1, WORKERS_CI_BRANCH=prod), so `astro dev`,
+// a plain local `astro build`, CI and every preview (main's included)
+// render nothing, even if a token ends up in a local .env file: WORKERS_CI
+// is what Workers Builds sets and a local build doesn't.
+const beaconToken = resolveBeaconToken({
+	prod: import.meta.env.PROD,
+	ci: WORKERS_CI,
+	branch: WORKERS_CI_BRANCH,
+	token: PUBLIC_CF_WEB_ANALYTICS_TOKEN,
+});
 ---
 
 <!-- Global Metadata -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<!-- `sizes="32x32"` on the .ico keeps Chrome from picking it over the SVG
+     below, a long-standing Chrome bug; every other current browser, and
+     Windows itself since Vista, can still use this ICO as a fallback. -->
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<!-- iOS reads this only for home-screen/bookmark icons, never as the tab favicon. -->
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="sitemap" href="/sitemap-index.xml" />
 <link
 	rel="alternate"
@@ -28,3 +54,4 @@ type Props = ComponentProps<typeof PageMeta>;
 <Font cssVariable="--font-jetbrains-mono" preload={[{ style: "normal" }]} />
 
 <PageMeta {...Astro.props} />
+<CloudflareAnalytics token={beaconToken} />

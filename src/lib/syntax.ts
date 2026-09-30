@@ -45,6 +45,23 @@ const element = (
 });
 
 /**
+ * Splits a file name into text nodes with a `<wbr>` after each `/` or `\`, so
+ * a long path wraps at a directory boundary first instead of truncating. The
+ * lookbehind/lookahead require a non-separator on both sides, so a leading
+ * separator, a run of separators (`//` in `https://`), and a trailing one
+ * never split — only a separator between two real segments does.
+ */
+const wrapFileName = (title: string): Element["children"] => {
+	const segments = title.split(/(?<=[^/\\][/\\])(?=[^/\\])/);
+	const nodes: Element["children"] = [];
+	for (const [index, segment] of segments.entries()) {
+		nodes.push({ type: "text", value: segment });
+		if (index < segments.length - 1) nodes.push(element("wbr", {}));
+	}
+	return nodes;
+};
+
+/**
  * Frames a highlighted block as the design system's CodeBlock: a header with
  * the file name (`title` in the fence meta) and the language, the code, then
  * an optional `caption`. Markdown fences and the CodeBlock component both run
@@ -66,15 +83,23 @@ const codeFrame: Transformer = {
 		pre.properties.role = "group";
 		pre.properties.ariaLabel = `Code: ${title ? `${title}, ` : ""}${lang}`;
 
-		const header = element("div", { dataCodeblockHeader: "" });
+		// aria-hidden: the pre's own label (above) already names the file and language.
+		const header = element("div", {
+			dataCodeblockHeader: "",
+			ariaHidden: "true",
+		});
 		if (title) {
-			header.children.push(element("span", { dataCodeblockFile: "" }, title));
+			const file = element("span", { dataCodeblockFile: "" });
+			file.children = wrapFileName(title);
+			header.children.push(file);
 		}
 		header.children.push(element("span", { dataCodeblockLang: "" }, lang));
-		const figure = element("figure", { dataCodeblock: "" });
-		figure.children.push(header, pre);
-		if (caption) figure.children.push(element("figcaption", {}, caption));
-		root.children = [figure];
+		// Without a caption, a figure would announce an unnamed figure; a plain
+		// div frame stays silent and leaves the naming to the pre's own label.
+		const frame = element(caption ? "figure" : "div", { dataCodeblock: "" });
+		frame.children.push(header, pre);
+		if (caption) frame.children.push(element("figcaption", {}, caption));
+		root.children = [frame];
 	},
 };
 

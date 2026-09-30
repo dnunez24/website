@@ -7,9 +7,11 @@ interface Props {
 	alt: string;
 	/** Float right inside the column; text wraps the circle. */
 	float?: boolean;
+	/** Eager for a portrait in the first viewport, as About's is. Lazy otherwise. */
+	loading?: "eager" | "lazy";
 }
 
-const { src, alt, float = false } = Astro.props;
+const { src, alt, float = false, loading = "lazy" } = Astro.props;
 const circle =
 	"block aspect-square w-full rounded-full bg-media-ground object-cover";
 ---
@@ -22,7 +24,7 @@ const circle =
 >
 	{
 		src ? (
-			<Image src={src} alt={alt} widths={[192, 384]} sizes="12rem" class={circle} />
+			<Image src={src} alt={alt} widths={[192, 384]} sizes="12rem" loading={loading} class={circle} />
 		) : (
 			<div role="img" aria-label={alt} class:list={[circle, "grid place-items-center font-mono text-label text-ink-muted"]}>
 				Portrait

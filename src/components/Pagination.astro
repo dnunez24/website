@@ -64,7 +64,7 @@ const cell = "f6y-min-w-8 tabular-nums";
 						<Button
 							variant="ghost"
 							href={href(entry.page)}
-							current={entry.page === current}
+							current={entry.page === current ? "page" : undefined}
 							aria-label={`Page ${entry.page}`}
 							class={cell}
 						>

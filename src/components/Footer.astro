@@ -3,7 +3,7 @@ import Button from "@components/Button.astro";
 import Container from "@components/Container.astro";
 import Copyright from "@components/Copyright.astro";
 import { FOOTER_NAV_ITEMS, SITE_SINCE, SITE_TITLE } from "@constants";
-import { isCurrentSection } from "@lib/routes";
+import { currentNavState } from "@lib/routes";
 
 const pathname = Astro.url.pathname;
 ---
@@ -20,7 +20,7 @@ const pathname = Astro.url.pathname;
 				{
 					FOOTER_NAV_ITEMS.map((item) => (
 						<li>
-							<Button variant="ghost" href={item.href} rel={"rel" in item ? item.rel : undefined} current={isCurrentSection(pathname, item.href)}>
+							<Button variant="ghost" href={item.href} rel={"rel" in item ? item.rel : undefined} current={currentNavState(pathname, item.href)}>
 								{item.label}
 							</Button>
 						</li>

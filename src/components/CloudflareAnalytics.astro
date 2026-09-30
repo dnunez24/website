@@ -1,0 +1,20 @@
+---
+import { CF_BEACON_SRC } from "@lib/cloudflare-analytics";
+
+interface Props {
+	/** A validated Cloudflare site token. Omit to render nothing: local dev, CI and previews ship without the beacon. */
+	token?: string | undefined;
+}
+
+const { token } = Astro.props;
+---
+
+{
+	token && (
+		<script
+			type="module"
+			src={CF_BEACON_SRC}
+			data-cf-beacon={JSON.stringify({ token })}
+		/>
+	)
+}

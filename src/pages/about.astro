@@ -12,7 +12,7 @@ import { profileGraph } from "@lib/seo";
 	<JsonLd slot="head" data={profileGraph(Astro.site ?? Astro.url, Astro.url.pathname)} />
 	<PageTitle>About</PageTitle>
 	<div class="flow-root">
-		<Portrait src={portrait} alt="Dave Nuñez" float />
+		<Portrait src={portrait} alt="Dave Nuñez" float loading="eager" />
 		<Prose>
 			<p>
 				I lead software engineering teams and write about systems, people and craft.

@@ -44,6 +44,7 @@
 	   sits on a lighter one with a heavier bottom edge. No shadow. */
 	kbd {
 		@apply inline-block rounded-sm border border-b-2 border-line-strong bg-surface-inset text-center font-mono text-ink;
+		font-feature-settings: normal;
 		min-width: 1.6em;
 		padding: 0.05em 0.45em;
 		margin-inline: 0.05em;
@@ -57,6 +58,32 @@
 
 	:focus-visible {
 		@apply outline-4 outline-offset-2 outline-focus;
+	}
+
+	/*
+	 * Forced colors (Windows contrast themes): Callout, CodeBlock and plain
+	 * `pre` draw their frame with a background tint alone, which forced
+	 * colors flattens to Canvas. A transparent inset outline is invisible
+	 * normally and repainted as an edge once forced colors takes over the
+	 * outline color, even though the outline itself only exists in that mode:
+	 * the media query gates the whole rule, not just the repaint, so normal
+	 * mode never allocates the outline at all. `:where()` keeps this at zero
+	 * specificity, and the base layer keeps it below every layer Tailwind
+	 * ranks higher (components, utilities) so it can never beat a real
+	 * focus-ring rule, in this layer or above it. Keep this rule in `base`:
+	 * moving it into `components` or into the unlayered forced-colors.css
+	 * both let it beat a real focus ring regardless of `:where()`, since
+	 * cascade layers outrank specificity (see layer-guard.test.ts).
+	 */
+	@media (forced-colors: active) {
+		:where(
+				.prose [data-callout],
+				[data-codeblock],
+				.prose pre:not([data-codeblock] pre)
+			) {
+			outline: 1px solid transparent;
+			outline-offset: -1px;
+		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {

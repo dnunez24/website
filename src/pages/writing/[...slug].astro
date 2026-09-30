@@ -13,6 +13,22 @@ export async function getStaticPaths() {
 type Props = CollectionEntry<"writing">;
 
 const article = Astro.props;
+// A hast-plugin error while rendering a .md entry (a Mermaid link, a
+// missing accTitle, an untitled folding callout) is caught inside Astro's
+// content glob loader, which logs it and leaves `rendered` unset instead of
+// failing the build. Without this check the build exits 0 and publishes the
+// article with an empty body. MDX entries render through a different,
+// deferred path (`deferredRender`, set by the loader per entry) that has no
+// `rendered` field even when they're fine, and already fails the build on
+// their own render errors. The generated CollectionEntry type doesn't
+// declare `deferredRender` since it isn't part of the schema, so it's read
+// off the entry's own surface instead of widening that type.
+const { deferredRender } = article as { deferredRender?: boolean };
+if (article.rendered === undefined && !deferredRender) {
+	throw new Error(
+		`${article.filePath ?? article.id} failed to render. See the build log above for the underlying error.`,
+	);
+}
 const { Content } = await render(article);
 ---
 

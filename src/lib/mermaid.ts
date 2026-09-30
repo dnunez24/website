@@ -64,10 +64,24 @@ const escapeAttribute = (value: string) =>
 		.replaceAll('"', "&quot;")
 		.replaceAll("<", "&lt;");
 
+// A diagram takes no links (Mermaid's `click`): inside role="img" a link is
+// out of screen readers' reach, and its keyboard stop lands in the
+// aria-hidden SVG. Detected from the rendered SVG only, never the source: a
+// source-text scan for "click" also matches prose (an accDescr sentence, a
+// label, a journey task) that Mermaid renders with no link at all. Mermaid
+// marks every clickable node with both an <a> (for click ... href forms)
+// and a "clickable" class (also for a callback-only click, which has no
+// href and renders no <a>), so either signal alone is reliable.
+const RENDERED_SVG_LINK = /<a[\s/>]/;
+const RENDERED_SVG_CLICKABLE = /class="[^"]*\bclickable\b/;
+
 /**
- * Pins the SVG to its rendered size. Mermaid emits `width="100%"` with a
- * `max-width`, which scales a wide diagram down until its labels are
- * unreadable; the frame scrolls instead.
+ * Pins the SVG to its rendered size and hides it from assistive technology.
+ * Mermaid emits `width="100%"` with a `max-width`, which scales a wide
+ * diagram down until its labels are unreadable; the frame scrolls instead.
+ * Without `aria-hidden`, Chromium still exposes an image's SVG children:
+ * Mermaid's own title and description a second time, its `aria-roledescription`
+ * and every label in pieces. The figure's `aria-label` already carries them.
  */
 function atRenderedSize(svg: string, width: number, height: number): string {
 	return svg.replace(/^<svg\b[^>]*>/, (tag) =>
@@ -76,7 +90,7 @@ function atRenderedSize(svg: string, width: number, height: number): string {
 			.replace(/\sstyle="max-width:[^"]*"/, "")
 			.replace(
 				"<svg",
-				`<svg width="${Math.ceil(width)}" height="${Math.ceil(height)}"`,
+				`<svg aria-hidden="true" width="${Math.ceil(width)}" height="${Math.ceil(height)}"`,
 			),
 	);
 }
@@ -110,6 +124,11 @@ export async function renderMermaidFigure(source: string): Promise<string> {
 	}
 
 	const { svg, width, height, title, description } = result.value;
+	if (RENDERED_SVG_LINK.test(svg) || RENDERED_SVG_CLICKABLE.test(svg)) {
+		throw new Error(
+			`A Mermaid diagram is one image; it can't carry its own link (\`click\`). Link from the caption or the text around the diagram instead:\n${source}`,
+		);
+	}
 	const label = [title, description].filter(Boolean).join(": ");
 	if (label === "") {
 		throw new Error(

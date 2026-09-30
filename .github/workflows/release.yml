@@ -1,0 +1,36 @@
+name: Release
+
+# prod.json requires this job to pass before a PR into prod can merge, but
+# the check itself is a mistake-catcher, not the security boundary: the
+# workflow files a PR runs come from that PR's own merge ref, so a PR into
+# prod could edit this file, or add a same-named job elsewhere, and still
+# post a "release-source" status from the same GitHub Actions app the
+# ruleset's integration_id pins to. What actually stands in the way is that
+# only Dave can merge (no other collaborators, 0 required approvals aside):
+# the merge click, not this check, is the real barrier. This job exists so
+# an accidental PR from the wrong branch fails loudly instead of quietly
+# waiting for a merge nobody meant to make.
+on:
+  pull_request:
+    branches: [prod]
+
+permissions: {}
+
+jobs:
+  release-source:
+    runs-on: ubuntu-latest
+    steps:
+      # No checkout needed — this only reads pull_request event context.
+      - name: Require the PR to come from this repo's main branch
+        env:
+          # github.head_ref (and the repo full_name below) come from the PR
+          # author and can contain arbitrary text on a fork, so both are
+          # passed through env and compared in the shell, never interpolated
+          # directly into the script body, to avoid script injection.
+          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          if [ "$HEAD_REPO" != "$GITHUB_REPOSITORY" ] || [ "$HEAD_REF" != "main" ]; then
+            echo "::error::prod only accepts PRs from ${GITHUB_REPOSITORY}'s main branch. This PR's head is ${HEAD_REPO}:${HEAD_REF}."
+            exit 1
+          fi

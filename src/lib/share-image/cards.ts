@@ -188,7 +188,18 @@ export async function articleCardSvg(
 	return { svg: document(body.join("")), fit };
 }
 
-/** Rasterizes a card at its own 1200 × 630. */
+/**
+ * Rasterizes a card at its own 1200 × 630. Every card is fully opaque, so
+ * drop the alpha channel: RGB instead of RGBA, lossless. `compressionLevel`
+ * maxes out zlib's effort, free at build time. `effort`, `quality`, `colours`
+ * and `dither` are left unset: each one switches sharp to lossy palette
+ * output (`isPalette: true`), at any value.
+ */
 export async function toPng(svg: string): Promise<Uint8Array<ArrayBuffer>> {
-	return new Uint8Array(await sharp(Buffer.from(svg)).png().toBuffer());
+	return new Uint8Array(
+		await sharp(Buffer.from(svg))
+			.removeAlpha()
+			.png({ compressionLevel: 9 })
+			.toBuffer(),
+	);
 }

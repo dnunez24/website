@@ -1,5 +1,6 @@
 import { markdownToHtml } from "satteri";
 import { describe, expect, it } from "vitest";
+import { callouts } from "./callouts";
 import { quoteAttribution } from "./quote-attribution";
 
 const render = (markdown: string) =>
@@ -39,5 +40,19 @@ describe("quoteAttribution", () => {
 	it("ignores a dash that doesn't open the last paragraph", () => {
 		const html = render("> Quote — with an aside.\n>\n> Rob Pike\n");
 		expect(html).not.toContain("<footer>");
+	});
+
+	it("still finds the attribution when the quote is nested in a callout", async () => {
+		// satteri-callouts runs first (astro.config.ts), turning the outer
+		// blockquote into a `[data-callout]` div before this plugin sees the
+		// document, so only the inner blockquote is left to match `filter`.
+		const { html } = await markdownToHtml(
+			"> [!NOTE]\n> A quotation can appear inside a callout.\n>\n> > Less, but better.\n> >\n> > — Dieter Rams, <cite>Ten principles for good design</cite>\n",
+			{ hastPlugins: [...callouts(), quoteAttribution()] },
+		);
+		expect(html).toContain('data-callout="note"');
+		expect(html).toContain(
+			"<footer>Dieter Rams, <cite>Ten principles for good design</cite></footer>",
+		);
 	});
 });

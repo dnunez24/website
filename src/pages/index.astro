@@ -17,6 +17,7 @@ const articles = (await getArticles()).slice(0, 5).map((article) => ({
 
 <Base title={SITE_TITLE} description={SITE_DESCRIPTION}>
 	<JsonLd slot="head" data={homeGraph(Astro.site ?? Astro.url)} />
+	<h1 class="sr-only">{SITE_TITLE}</h1>
 	<Intro>{SITE_DESCRIPTION}</Intro>
 	<section aria-labelledby="recent">
 		<SectionTitle id="recent">Recent writing</SectionTitle>

@@ -1,0 +1,44 @@
+---
+import JsonLd from "@components/JsonLd.astro";
+import PageTitle from "@components/PageTitle.astro";
+import WritingList from "@components/WritingList.astro";
+import Base from "@layouts/Base.astro";
+import { collectionGraph } from "@lib/seo";
+import {
+	articleHref,
+	getArticles,
+	paginateArticles,
+	WRITING_PAGE_SIZE,
+} from "@lib/writing";
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+
+export const getStaticPaths = (async () => {
+	const pages = paginateArticles(await getArticles(), WRITING_PAGE_SIZE);
+	// Page 1 lives at /writing/ (src/pages/writing/index.astro). Starting this
+	// route at page 2 keeps /writing/page/1/ from ever building.
+	return pages
+		.filter((writingPage) => writingPage.pageNumber > 1)
+		.map((writingPage) => ({
+			params: { page: String(writingPage.pageNumber) },
+			props: { page: writingPage },
+		}));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { page } = Astro.props;
+const articles = page.articles.map((article) => ({
+	title: article.data.title,
+	href: articleHref(article.id),
+	date: article.data.publishedDate,
+	summary: article.data.description,
+}));
+const title = `Writing, page ${page.pageNumber} of ${page.total}`;
+const description = `Everything I have written, newest first. Page ${page.pageNumber} of ${page.total}.`;
+---
+
+<Base title={title} description={description}>
+	<JsonLd slot="head" data={collectionGraph(Astro.site ?? Astro.url, Astro.url.pathname, title, description)} />
+	<PageTitle>Writing</PageTitle>
+	<WritingList articles={articles} current={page.pageNumber} total={page.total} />
+</Base>
