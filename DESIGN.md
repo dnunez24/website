@@ -176,6 +176,7 @@ typography:
     lineHeight: 20px
     fontWeight: 500
     letterSpacing: 0.04em
+    fontFeature: &monoFeature '"zero"'
   prose:
     fontFamily: *sans
     fontSize: 20px
@@ -199,11 +200,13 @@ typography:
     fontSize: 14px
     lineHeight: 20px
     fontWeight: 400
+    fontFeature: *monoFeature
   code:
     fontFamily: *mono
     fontSize: 16px
     lineHeight: 28px
     fontWeight: 400
+    fontFeature: normal
 rounded:
   radius-none: 0px
   radius-sm: 2px
@@ -343,7 +346,7 @@ components:
 
 # Dave Nuñez
 
-Generated from the approved design system (version 98, https://claude.ai/artifact/HGenCcmvmT561N7M1LGBrw). Checked against `src/styles/theme.css`; previewed at `/dev/design-system`.
+Generated from the approved design system as of 2026-09-30 (https://claude.ai/artifact/HGenCcmvmT561N7M1LGBrw). Checked against `src/styles/theme.css`; previewed at `/dev/design-system`.
 
 ## Overview
 
@@ -382,7 +385,8 @@ What each hue means:
 ## Typography
 
 - `sans` = Afacad Flux (weight 400 to 600, italics from its `slnt` axis at −12) for headings and text; `mono` = JetBrains Mono (weight 400 to 700, separate italic file) for structure: dates, nav, labels, topics, code. The sans stack ends in `system-ui`, so Astro builds its size-matched fallback faces from it; the mono stack ends in `monospace`.
-- OpenType features for sans: `calt`, `pnum`, `zero`, `ss02`. A sans style set in capitals takes the full list plus `case`; nothing needs that today, since the two styles set in capitals (`h6`, `label`) are mono instead.
+- OpenType features for sans: `calt`, `pnum`, `zero`, `ss02`. Mono never inherits them: mono text takes `zero` alone (the `fontFeature` on `h6` and `label`), and `code`, `kbd`, `samp` and `pre` reset to `normal`, JetBrains Mono's own defaults. Mono text in Mermaid diagrams takes `zero`. JetBrains Mono 2.3 and later swaps the `l` for a curled form under `ss02`, and a reader's local copy of the font would apply it; the self-hosted files keep `zero` and no stylistic sets.
+- `case` raises hyphens, dashes, colons and guillemets to cap height, so it is for sans text set in capitals only. A sans style set in capitals takes the full list plus `case`, since `font-feature-settings` replaces the whole list. Nothing needs that today: the two styles set in capitals (`h6`, `label`) are mono instead.
 - Every size is fluid between 320px and 1024px; the tokens above give the 1024px maximum, carried in this codebase by `text-<style>`, which sets the font size and its paired line height (`--text-<style>--line-height`) together. At 320px: `display` 36/40, `h1` 30/36, `h2` 26/32, `h3` 22/28, `h4` 18/24, `h5` 16/24, `h6` 12/16, `prose` 18/28, `body` 16/24, `small` 14/20, `label` 12/16, `code` 14/24.
 - Vertical rhythm: every line height is a multiple of 4px (`space-2`) at both ends. Inside Prose, block spacing is one prose line; two lines before a heading, half a line after.
 - Heading scale: quarter-octave steps from `prose` (`h4` n=0 to `display` n=4), so four steps make one doubling and `display` is exactly twice `prose`. Article body uses `prose` (20/32 at max); everything else uses `body` (18/28).
@@ -413,15 +417,19 @@ Corners are architectural: `radius-none` for layout and media, `radius-sm` for b
 
 ## Components
 
-Buttons have three variants: `button-filled` for the one primary action per view; `button-outline` for secondary actions outside navigation, with a 1px `color-brand` border; `button-ghost` for navigation rows (header, footer, Pagination), always an `<a>`, with a `button-ghost-current` state (weight 700, a `stroke-rule` beneath in the same color) for the current page or section. Padding `space-3` by `space-4`; height 32px at 320px, 44px at 1024px, shared by all three. Label text only: sentence case, verb first for actions (nav labels are nouns instead). No disabled state: when an action isn't available, don't render its button.
+Buttons have three variants: `button-filled` for the one primary action per view; `button-outline` for secondary actions outside navigation, with a 1px `color-brand` border; `button-ghost` for navigation rows (header, footer, Pagination), always an `<a>`, with a `button-ghost-current` state (weight 700, a `stroke-rule` beneath in the same color) for the current page or section. Hovering the current link adds the hover ground and fades the rule out; weight 700 still marks it. Padding `space-3` by `space-4`; height 32px at 320px, 44px at 1024px, shared by all three. Label text only: sentence case, verb first for actions (nav labels are nouns instead). No disabled state: when an action isn't available, don't render its button.
 
 `link` sits at rest with an underline, and shifts to `link-hover` on hover and focus, fading the underline; the underline marks it, not the color. Its typography follows the surrounding text (`prose` in articles, `body` elsewhere), not one fixed size. Inside a callout, links take `color-ink` instead. Inside a blockquote, they take `blockquote-link` and `blockquote-link-hover`.
 
-`code-inline` sits at 0.875em of the surrounding text (not the `code` token, which sizes CodeBlock), with no syntax color. `code-block` is the one inverse surface, never wrapped; its header always names the language (lowercase, top right), with an optional file name (left, wrapping at `/`).
+`code-inline` sits at 0.875em of the surrounding text (not the `code` token, which sizes CodeBlock), with no syntax color. `code-block` is the one inverse surface. Code never wraps; it scrolls sideways. The header always names the language (lowercase, top right, `color-syntax-comment`), with an optional file name on the left (`color-syntax-plain`), ruled off from the code by a 1px `color-codeblock-line` hairline. A long file name wraps at a `/` or `\` first, so the whole path stays visible: the build adds break points only between two ordinary characters, not after a leading separator or inside a run like `//`, and a segment with none still wraps anywhere. An optional caption sits below the code in mono `label` and `color-syntax-comment`, ruled off by the same hairline. It wraps anywhere, so a long unbroken caption, such as a URL, never clips at narrow widths.
 
 **Topic**: a `#`-prefixed label; the `#` is CSS (`content: "#" / ""`), so screen readers say only the name. `topic` and `topic-hover` set the name chip; `topic-count` and `topic-count-hover` set the article-count chip, one step darker. Lowercase, one or two words, hyphenated; one to three per article, `space-3` apart.
 
 **Callout**: five types (`callout-note`, `-tip`, `-important`, `-warning`, `-caution`), from GitHub alert syntax. Each entry's `textColor` is the mono label-caps title row's color; the content below stays `color-ink` (11.1 to 11.2:1 on the tints), not the title color. Links inside take `color-ink`, not `color-link`; inline code takes the page ground, `color-surface`. `> [!NOTE]-` or `+` makes it a collapsible `<details>`, with a `+` or `−` glyph; a collapsible callout needs a title.
+
+**Footnote**: a reference is a mono number in brackets, raised once (`vertical-align: 0.3em`) at 0.7em, in `color-link` (`color-quote-link` inside a blockquote), with no underline. The brackets are CSS content with empty alternative text, so screen readers say only the number. The notes follow the body under a `stroke-hairline` in `color-line`, in `small` type and `color-ink-muted`, with no visible heading: the hairline and the smaller muted text set them apart. A visually hidden `h2` (`id="footnote-label"`, "Footnotes") stays for screen readers, and each reference points at it with `aria-describedby`. Each note ends with a `↩` link back to its reference.
+
+**Kbd**: a keyboard key within a sentence, in mono at 0.8125em, `color-ink` on `color-surface-inset` (a step lighter than the page), `radius-sm`, with a `stroke-hairline` border on all sides and `stroke-rule` on the bottom edge. It is a raised keycap, not a recess like `code-inline`; no shadow. Write a shortcut as separate `<kbd>` elements joined by a literal `+`, not one `<kbd>` around the whole shortcut.
 
 **BlockQuote**: no rules, no background; indent and italic set it apart. `blockquote` sets the quote text at `h3` size but weight 400, not `h3`'s own 600. `blockquote-citation` sets the `<footer>`.
 
@@ -434,6 +442,7 @@ Buttons have three variants: `button-filled` for the one primary action per view
 - Do underline every link in running text; the underline marks it, not the color alone.
 - Don't give a button a disabled state; omit the action instead.
 - Don't rely on color alone for the current page or section; pair it with `aria-current` and a rule beneath the label.
+- Don't carry the sans OpenType features into mono: `ss02` curls the `l`. Mono takes `zero` alone; code resets to `normal`.
 
 ## Motion
 
@@ -461,7 +470,7 @@ Targets: buttons are 32px tall at 320px and 44px at 1024px; topics 24px and 28px
 
 One `h1` per page. Home shows no title, so its `h1` is visually hidden.
 
-Forced colors (Windows contrast themes): frames, focus rings, the current rule and the task check stay visible; grounds don't. Callout, CodeBlock and plain `pre` frames carry a transparent 1px outline, which forced colors paint as an edge. The external-link mark, the current rule and the task check take system colors. Hover grounds, topic chips and inline code grounds give way to the user's colors. MermaidDiagram keeps its own colors (`forced-color-adjust: none`).
+Forced colors (Windows contrast themes): frames, focus rings, the current rule and the task check stay visible; grounds don't. Callout and plain `pre` frames in Prose, and every CodeBlock, carry a transparent 1px inset outline under forced colors only, which forced colors paint as an edge where the tint or ground disappears. Outside forced colors they have no outline. The external-link mark, the current rule and the task check take system colors: the mark and the current rule take `LinkText` (the rule on a `<button>` takes `ButtonText`, its label's color), and a checked task box fills with `SelectedItem` and draws its check in `SelectedItemText`. Hover grounds, topic chips and inline code grounds give way to the user's colors. MermaidDiagram keeps its own colors (`forced-color-adjust: none`), with a `CanvasText` border and a `Highlight` focus ring.
 
 Every page has a skip link to `#main`.
 
