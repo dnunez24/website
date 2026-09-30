@@ -4,23 +4,33 @@
  *
  *   pnpm test:a11y
  *
+ * `--dir`, `--only` and `--report` point it at another build, a path prefix
+ * within it, and another report file. `pnpm test:a11y:dev` uses them to check
+ * just the `/dev/*` specimens in a `DN_DEV_PAGES=1` build.
+ *
  * Requires Node >= 22.18, which runs TypeScript without a build step.
  */
 
 import { access, mkdir, writeFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import {
 	type A11yPageResult,
 	checkPageAccessibility,
 } from "../src/lib/a11y.ts";
+import { parseA11yArgs } from "../src/lib/a11y-args.ts";
 import { findHtmlFiles, pagePath } from "../src/lib/dist-pages.ts";
 import { startDistServer } from "../src/lib/dist-server.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
-const DIST_DIR = join(ROOT, "dist");
-const REPORT_PATH = join(ROOT, "reports/a11y/report.json");
+const args = parseA11yArgs(process.argv.slice(2));
+const DIST_DIR = resolve(ROOT, args.dir);
+const REPORT_PATH = resolve(ROOT, args.report);
+const BUILD_HINT =
+	args.dir === "dist-dev"
+		? "Run `pnpm build:dev-pages` first."
+		: "Run `pnpm build` first.";
 
 // height is fixed; only width varies between a phone and a laptop layout.
 const WIDTHS = [320, 1024];
@@ -46,15 +56,19 @@ function printResult(result: A11yPageResult): void {
 try {
 	await access(DIST_DIR);
 } catch {
-	throw new Error(
-		`No ${relative(ROOT, DIST_DIR)} directory. Run \`pnpm build\` first.`,
-	);
+	throw new Error(`No ${relative(ROOT, DIST_DIR)} directory. ${BUILD_HINT}`);
 }
 
-const allFiles = await findHtmlFiles(DIST_DIR);
+// With --only, a page outside the prefix is out of scope, not a failure. That
+// includes the 404 page, so the not-found probe below never runs for a
+// prefixed check.
+const allFiles = (await findHtmlFiles(DIST_DIR)).filter(
+	(file) =>
+		args.only === undefined || pagePath(DIST_DIR, file).startsWith(args.only),
+);
 if (allFiles.length === 0) {
 	throw new Error(
-		`No HTML files in ${relative(ROOT, DIST_DIR)}. Run \`pnpm build\` first.`,
+		`No HTML files${args.only === undefined ? "" : ` under ${args.only}`} in ${relative(ROOT, DIST_DIR)}. ${BUILD_HINT}`,
 	);
 }
 
@@ -126,12 +140,14 @@ const incompleteCount = results.reduce(
 
 // Written even when the crawl threw partway through, so a run that fails on
 // page 5 doesn't also lose the report for pages 1-4.
-await mkdir(join(ROOT, "reports/a11y"), { recursive: true });
+await mkdir(dirname(REPORT_PATH), { recursive: true });
 await writeFile(
 	REPORT_PATH,
 	JSON.stringify(
 		{
 			generatedAt: new Date().toISOString(),
+			dir: args.dir,
+			only: args.only ?? null,
 			widths: WIDTHS,
 			height: HEIGHT,
 			pagesPlanned: files.length + (hasNotFoundPage ? 1 : 0),
