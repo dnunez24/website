@@ -1,5 +1,7 @@
 # build output
 dist/
+# CI-only build that keeps /dev/* (DN_DEV_PAGES=1); never deployed
+dist-dev/
 # generated types
 .astro/
 # wrangler local state
