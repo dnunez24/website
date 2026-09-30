@@ -54,9 +54,10 @@ All commands are run from the root of the project, from a terminal:
 | `pnpm diagrams:browser`         | Installs the headless Chromium that renders Mermaid diagrams at build; run once after install          |
 | `pnpm dev`                      | Starts local dev server at `localhost:4321`                                                            |
 | `pnpm build`                    | Build your production site to `./dist/`                                                                |
-| `DN_DEV_PAGES=1 pnpm build`     | Build with the `/dev/*` design-system specimens included, for accessibility testing                    |
+| `pnpm build:dev-pages`          | Build with the `/dev/*` specimens included to `./dist-dev/` (`DN_DEV_PAGES=1`); never deploy it        |
 | `pnpm validate:structured-data` | Validates the built pages' JSON-LD against schema.org; run after `pnpm build`                          |
 | `pnpm test:a11y`                | Checks the built pages for accessibility violations with axe-core; run after `pnpm build`              |
+| `pnpm test:a11y:dev`            | Checks the `/dev/*` specimens in `./dist-dev/` with axe-core; run after `pnpm build:dev-pages`         |
 | `pnpm test:no-js`               | Fails if any built page ships a script or inline event handler; run after `pnpm build`                 |
 | `pnpm test:perf`                | Checks the built pages against performance/a11y/SEO budgets with Lighthouse CI; run after `pnpm build` |
 | `pnpm serve:dist`               | Serves `./dist/` the way it's deployed (trailing slashes, a real 404), at `localhost:4173`             |

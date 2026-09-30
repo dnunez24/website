@@ -64,7 +64,18 @@ jobs:
         with:
           name: dist
           path: dist/
+      # The steps below use !cancelled() so a failure here doesn't skip them:
+      # one run reports production and dev-page violations together.
       - run: pnpm test:a11y
+      # The /dev/* design-system specimens, from a separate CI-only build
+      # (DN_DEV_PAGES=1) in dist-dev/. It is never uploaded as the `dist`
+      # artifact and Workers Builds deploys from its own build, so it can't
+      # reach production. Built here rather than in `build` so that job's
+      # artifact stays the production output the other jobs check.
+      - if: '!cancelled()'
+        run: pnpm build:dev-pages
+      - if: '!cancelled()'
+        run: pnpm test:a11y:dev
       - if: always()
         uses: actions/upload-artifact@v7
         with:
