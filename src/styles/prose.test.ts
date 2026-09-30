@@ -59,6 +59,18 @@ describe("prose.css and components.css (compiled)", () => {
 		);
 	});
 
+	it("hides the footnotes heading itself, not via a generated `.sr-only`, and keeps it in the accessibility tree", async () => {
+		// No candidates: `.sr-only` isn't generated, so only the footnotes
+		// rule can hide the heading.
+		const css = await compileGlobalCss();
+		const footnotes = ruleBody(css, /&\s*\.footnotes\s*\{/);
+		const h2 = ruleBody(footnotes, /&\s*h2\s*\{/);
+		expect(h2).toMatch(/position:\s*absolute/);
+		expect(h2).toMatch(/clip-path:\s*inset\(50%\)/);
+		expect(h2).toMatch(/width:\s*1px/);
+		expect(h2).not.toMatch(/display:\s*none|visibility:\s*hidden/);
+	});
+
 	it("doesn't transform the hidden footnotes heading to uppercase, so its accessible name stays sentence case", async () => {
 		const css = await compileGlobalCss();
 		const footnotes = ruleBody(css, /&\s*\.footnotes\s*\{/);
