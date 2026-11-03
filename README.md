@@ -51,7 +51,7 @@ All commands are run from the root of the project, from a terminal:
 | Command                         | Action                                                                                                 |
 | :------------------------------ | :----------------------------------------------------------------------------------------------------- |
 | `pnpm install`                  | Installs dependencies                                                                                  |
-| `pnpm diagrams:browser`         | Installs the headless Chromium that renders Mermaid diagrams at build; run once after install          |
+| `pnpm test:browser`             | Installs the headless Chromium that browser tests and a11y checks use; run once after install          |
 | `pnpm dev`                      | Starts local dev server at `localhost:4321`                                                            |
 | `pnpm build`                    | Build your production site to `./dist/`                                                                |
 | `pnpm build:dev-pages`          | Build with the `/dev/*` specimens included to `./dist-dev/` (`DN_DEV_PAGES=1`); never deploy it        |

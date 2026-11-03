@@ -86,7 +86,7 @@ describe("forced colors (compiled)", () => {
 		expect(markForced).toMatch(/background-color:\s*SelectedItemText/);
 	});
 
-	it("m8: keeps Mermaid's own colors as one island, and takes CanvasText/Highlight for its frame and focus ring", async () => {
+	it("m8: keeps the diagram's token colors as one island, and takes CanvasText/Highlight for its frame and focus ring", async () => {
 		const css = await compileGlobalCss();
 		const frame = ruleBody(css, /\[data-diagram\]\s*\{/);
 		expect(frame).toMatch(/forced-color-adjust:\s*none/);
