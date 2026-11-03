@@ -27,6 +27,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
+        with:
+          browser: "false"
       - run: pnpm build
       - uses: actions/upload-artifact@v7
         with:
@@ -39,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      # Validates already-built HTML; doesn't render Mermaid, so no Chromium.
+      # Validates already-built HTML, so no browser.
       - uses: ./.github/actions/setup
         with:
           browser: "false"
@@ -72,9 +74,9 @@ jobs:
       # artifact and Workers Builds deploys from its own build, so it can't
       # reach production. Built here rather than in `build` so that job's
       # artifact stays the production output the other jobs check.
-      - if: '!cancelled()'
+      - if: "!cancelled()"
         run: pnpm build:dev-pages
-      - if: '!cancelled()'
+      - if: "!cancelled()"
         run: pnpm test:a11y:dev
       - if: always()
         uses: actions/upload-artifact@v7

@@ -764,7 +764,7 @@ describe("CodeBlock", () => {
 	});
 });
 
-describe("MermaidDiagram", { timeout: 60_000 }, () => {
+describe("MermaidDiagram", () => {
 	it("renders its code at build into the same figure as Markdown fences", async () => {
 		const doc = parse(
 			await render(MermaidDiagram, {

@@ -15,12 +15,6 @@ import { taskListState } from "./src/lib/markdown/task-list.ts";
 import { dropsDevPages, isDevRoute, isPublicPage } from "./src/lib/routes.ts";
 import { syntaxTheme, syntaxTransformers } from "./src/lib/syntax.ts";
 
-// This file's own directory is the project root, so the Mermaid plugin can
-// match a dev-page file below without assuming `process.cwd()` is the
-// root too: `astro build --root <path>` points Astro at the project
-// without moving the working directory.
-const projectRoot = new URL(".", import.meta.url);
-
 // Config files don't load .env files on their own, unlike application code's
 // import.meta.env. loadEnv does, so this is the one place DN_DEV_PAGES and
 // the Cloudflare Web Analytics build guard's inputs are read, letting a
@@ -196,7 +190,7 @@ export default defineConfig({
 			hastPlugins: [
 				...callouts(),
 				quoteAttribution(),
-				mermaidDiagrams(projectRoot, keepDevPages),
+				mermaidDiagrams(),
 				taskListState(),
 				tableScroll(),
 			],

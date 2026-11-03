@@ -129,7 +129,7 @@ let browser: Browser;
 let context: BrowserContext;
 let page: Page;
 
-// Chromium's cold start takes a few seconds, same as the Mermaid tests.
+// Chromium's cold start takes a few seconds.
 describe("checkPageAccessibility", { timeout: 60_000 }, () => {
 	beforeAll(async () => {
 		fixtureServer = createServer((req, res) => {

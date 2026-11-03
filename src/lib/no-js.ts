@@ -51,11 +51,11 @@ function isJavascriptUrl(value: string): boolean {
  *
  * Parsed with parse5, not happy-dom: happy-dom 20.14.5 silently drops
  * everything from an SVG `<style>` or `<script>` to the end of the
- * document, which made this check blind after a Mermaid diagram (whose
- * rendered SVG always has a `<style>`). parse5 is spec-compliant HTML5
- * parsing and doesn't have that bug; walking its tree also naturally covers
- * every namespace (HTML, SVG, MathML) in one pass, so `<script>` inside an
- * SVG is caught the same as anywhere else.
+ * document, which made this check blind after any inline SVG that carries a
+ * `<style>` (Mermaid's did; Pele's doesn't, but one an author writes might).
+ * parse5 is spec-compliant HTML5 parsing and doesn't have that bug; walking
+ * its tree also naturally covers every namespace (HTML, SVG, MathML) in one
+ * pass, so `<script>` inside an SVG is caught the same as anywhere else.
  */
 export function checkPageForScripts(html: string, page: string): NoJsIssue[] {
 	const issues: NoJsIssue[] = [];

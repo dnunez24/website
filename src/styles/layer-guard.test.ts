@@ -65,7 +65,7 @@ async function astroImageStyles(): Promise<string> {
 	return generateImageStylesCSS();
 }
 
-// Chromium's cold start takes a few seconds, same as the Mermaid and a11y tests.
+// Chromium's cold start takes a few seconds, same as the a11y tests.
 describe("astro.images ranks below utilities", { timeout: 60_000 }, () => {
 	it("lets h-* and object-* on an <Image> beat Astro's height: auto and fit rules", async () => {
 		// A built page's order: global.css first, Astro's styles after it.

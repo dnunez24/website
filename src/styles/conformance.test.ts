@@ -292,12 +292,10 @@ describe("DS-100 sync guards", () => {
 			},
 		);
 
-		it("gives Mermaid SVG text the mono label's zero, not code's normal", () => {
+		it("gives the diagram's SVG text the mono label's zero, not code's normal", () => {
 			const [block] = ruleBlocks("[data-diagram] svg");
 			expect(block).toBeDefined();
-			expect(lastDeclaration(block ?? "", "font-feature-settings")).toBe(
-				'"zero" !important',
-			);
+			expect(block).toMatch(/& text \{[^}]*font-feature-settings:\s*"zero";/);
 		});
 	});
 });

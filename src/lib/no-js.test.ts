@@ -200,32 +200,48 @@ describe("checkPageForScripts", () => {
 	});
 });
 
-// Chromium's cold start takes a few seconds, same as the Mermaid tests.
-describe("checkPageForScripts: a real Mermaid figure", {
-	timeout: 60_000,
-}, () => {
+describe("checkPageForScripts: a real Mermaid figure", () => {
 	const flowchart = `flowchart LR
   accTitle: Checkout flow
   accDescr: The product page hands off to checkout.
   A[Product page] --> B[Checkout MFE]`;
 
-	it("passes on its own — its <style> doesn't hide what follows it", async () => {
-		const figure = await renderMermaidFigure(flowchart);
-		const issues = checkPageForScripts(page(figure), "/fixture/");
+	it("passes on its own", () => {
+		const issues = checkPageForScripts(
+			page(renderMermaidFigure(flowchart)),
+			"/fixture/",
+		);
 		expect(issues).toEqual([]);
 	});
 
-	it("still catches a script and an onclick placed after it", async () => {
-		// Regression case: happy-dom 20.14.5 silently drops everything from an
-		// SVG <style> (which every rendered Mermaid figure has) to the end of
-		// the document, so a script placed after a diagram was invisible to
-		// the old implementation.
-		const figure = await renderMermaidFigure(flowchart);
+	it("still catches a script and an onclick placed after it", () => {
 		const html = page(
-			`${figure}<script>alert(1)</script><button onclick="x()">Go</button>`,
+			`${renderMermaidFigure(flowchart)}<script>alert(1)</script><button onclick="x()">Go</button>`,
 		);
-		const issues = checkPageForScripts(html, "/fixture/");
-		const messages = issues.map((issue) => issue.message);
+		const messages = checkPageForScripts(html, "/fixture/").map(
+			(issue) => issue.message,
+		);
+		expect(
+			messages.some((message) => message.includes("inline <script>")),
+		).toBe(true);
+		expect(messages.some((message) => message.includes('onclick="…"'))).toBe(
+			true,
+		);
+	});
+});
+
+// Regression case: happy-dom 20.14.5 silently drops everything from an SVG
+// <style> to the end of the document, so a script placed after such an SVG
+// was invisible to the old implementation. Pele's own figures have no
+// <style>, so the SVG is a literal fixture.
+describe("checkPageForScripts: an inline SVG with a <style>", () => {
+	it("still catches a script and an onclick placed after it", () => {
+		const html = page(
+			`<figure><svg><style>.a { fill: red }</style><rect class="a"/></svg></figure><script>alert(1)</script><button onclick="x()">Go</button>`,
+		);
+		const messages = checkPageForScripts(html, "/fixture/").map(
+			(issue) => issue.message,
+		);
 		expect(
 			messages.some((message) => message.includes("inline <script>")),
 		).toBe(true);

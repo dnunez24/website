@@ -1,7 +1,6 @@
-/* biome-ignore-all lint/complexity/noImportantStyles: Mermaid inlines id-scoped <style> rules that only !important overrides. */
 /*
  * Component rules that depend on markup the component doesn't own:
- * Shiki's <pre> and Mermaid's <svg>.
+ * Shiki's <pre> and the Mermaid figure's <svg>.
  */
 @layer components {
 	/*
@@ -68,6 +67,23 @@
 		 */
 		forced-color-adjust: none;
 
+		/*
+		 * Pele paints every part of a diagram with `var(--pele-*, fallback)`, so
+		 * the tokens go in here and inherit into the SVG. Nothing in the SVG
+		 * competes with them: no <style>, only presentation attributes.
+		 */
+		--pele-bg: var(--color-surface-inset);
+		--pele-fg: var(--color-ink);
+		--pele-muted: var(--color-ink-muted);
+		--pele-line: var(--color-concrete-600);
+		--pele-surface: var(--color-surface);
+		--pele-surface-alt: var(--color-surface-inset);
+		--pele-border: var(--color-brand);
+		--pele-accent: var(--color-brand);
+		--pele-radius: var(--radius-sm);
+		--pele-font: var(--font-mono);
+		--pele-font-mono: var(--font-mono);
+
 		@media (forced-colors: active) {
 			border-color: CanvasText;
 		}
@@ -79,51 +95,32 @@
 	}
 
 	/*
-	 * Mermaid embeds <style> rules scoped to the svg's id, so these need
-	 * !important. The font size stays at the 13px Mermaid measured with, so
-	 * labels keep fitting their boxes.
+	 * The font size stays at the 13px Pele measured with, so labels keep
+	 * fitting their boxes. The rules below only move what the --pele-*
+	 * variables can't: the zero, quieter subgraph borders and edge labels, and
+	 * the `:::alt` class. An author's inline `classDef` fill still wins, as an
+	 * inline style beats a stylesheet rule.
 	 */
 	[data-diagram] svg {
 		@apply mx-auto block h-auto max-w-none;
-		font-family: var(--font-mono) !important;
-		font-feature-settings: "zero" !important;
-		fill: var(--color-ink) !important;
 
-		& .node :is(rect, circle, ellipse, polygon, path) {
-			fill: var(--color-surface) !important;
-			stroke: var(--color-brand) !important;
-			stroke-width: 1px !important;
+		& .pele-cluster > rect {
+			stroke: var(--color-line);
 		}
-		& .node.alt :is(rect, circle, ellipse, polygon, path) {
-			fill: var(--color-topic-ground) !important;
-			stroke: var(--color-fungus-700) !important;
+		& .pele-edge-label text {
+			fill: var(--color-ink-muted);
 		}
-		/* Boxes take radius-sm, like buttons and topics. rx and ry as CSS
-		   follow the token; Safari before 17.4 shows square corners. */
-		& :is(.node > rect, .cluster > rect, rect.actor, rect.note) {
-			rx: var(--radius-sm);
-			ry: var(--radius-sm);
+		& .pele-node.alt :is(rect, circle, ellipse, polygon, path) {
+			fill: var(--color-topic-ground);
+			stroke: var(--color-fungus-700);
 		}
-		& :is(.edgePaths .path, .flowchart-link) {
-			stroke: var(--color-concrete-600) !important;
-			fill: none !important;
-		}
-		& :is(.marker, .arrowMarkerPath) {
-			fill: var(--color-concrete-600) !important;
-			stroke: var(--color-concrete-600) !important;
-		}
-		& .label :is(text, tspan) {
-			fill: var(--color-ink) !important;
-		}
-		& .edgeLabel :is(text, tspan) {
-			fill: var(--color-ink-muted) !important;
-		}
-		& .edgeLabel rect {
-			fill: var(--color-surface-inset) !important;
-		}
-		& .cluster rect {
-			fill: var(--color-surface-inset) !important;
-			stroke: var(--color-line) !important;
+
+		/*
+		 * On the text, not the <svg>: Pele's inline `font:` shorthand on the
+		 * root resets font-feature-settings, and an inline style beats this sheet.
+		 */
+		& text {
+			font-feature-settings: "zero";
 		}
 	}
 }

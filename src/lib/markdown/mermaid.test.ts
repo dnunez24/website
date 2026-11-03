@@ -1,55 +1,40 @@
 import { pathToFileURL } from "node:url";
 import { markdownToHtml } from "satteri";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { renderMermaidFigure } from "../mermaid";
 import { mermaidDiagrams } from "./mermaid";
 
-// The renderer launches headless Chromium; these tests are about whether
-// mermaidDiagrams calls it at all, so it's stubbed rather than run for real.
-vi.mock("../mermaid", () => ({
-	renderMermaidFigure: vi.fn(async () => "<figure data-diagram>stub</figure>"),
-}));
+const named = "```mermaid\nflowchart LR\n  accTitle: Named\n  A --> B\n```\n";
+const unnamed = "```mermaid\nflowchart LR\n  A --> B\n```\n";
 
-const fence = "```mermaid\nflowchart LR\n  accTitle: Stub\n  A --> B\n```\n";
-
-const root = pathToFileURL(`${process.cwd()}/`);
 const fileURLFor = (path: string) => pathToFileURL(`${process.cwd()}/${path}`);
 const devPageURL = fileURLFor("src/pages/dev/design-system-markdown.md");
-const articleURL = fileURLFor("src/pages/writing/first-post.md");
 
-const render = async (fileURL: URL) => {
-	const { html } = await markdownToHtml(fence, {
-		hastPlugins: [mermaidDiagrams(root)],
-		fileURL,
-	});
-	return html;
-};
+const render = (markdown: string, fileURL: URL) =>
+	markdownToHtml(markdown, { hastPlugins: [mermaidDiagrams()], fileURL });
 
 afterEach(() => {
 	vi.unstubAllEnvs();
-	vi.mocked(renderMermaidFigure).mockClear();
 });
 
-describe("mermaidDiagrams, in a production build (drops dev pages)", () => {
-	it("leaves a dev-page fence as an unrendered pre", async () => {
+describe("mermaidDiagrams", () => {
+	// Dev pages used to be skipped in production so the build never launched
+	// Chromium. Pele needs no browser, so a dev-page fence renders like any
+	// other, and a broken one fails the build the same way.
+	it("renders a dev-page fence in a production build", () => {
 		vi.stubEnv("PROD", true);
-		const html = await render(devPageURL);
-		expect(renderMermaidFigure).not.toHaveBeenCalled();
-		expect(html).toContain('<pre><code class="language-mermaid">');
+		const { html } = render(named, devPageURL);
+		expect(html).toMatch(/^<figure data-diagram[^>]*><svg /);
+		expect(html).not.toContain("language-mermaid");
 	});
 
-	it("still renders a fence outside src/pages/dev/", async () => {
-		vi.stubEnv("PROD", true);
-		const html = await render(articleURL);
-		expect(renderMermaidFigure).toHaveBeenCalledOnce();
-		expect(html).toContain("<figure data-diagram>");
-	});
-});
-
-describe("mermaidDiagrams, outside a production build", () => {
-	it("renders a dev-page fence (astro dev and vitest never drop dev pages)", async () => {
-		const html = await render(devPageURL);
-		expect(renderMermaidFigure).toHaveBeenCalledOnce();
-		expect(html).toContain("<figure data-diagram>");
+	it("starts an unnamed fence's error with the file's path", () => {
+		let message = "";
+		try {
+			render(unnamed, devPageURL);
+		} catch (error) {
+			message = (error as Error).message;
+		}
+		expect(message.startsWith(`${devPageURL.pathname}: `)).toBe(true);
+		expect(message).toContain("accTitle or accDescr");
 	});
 });
