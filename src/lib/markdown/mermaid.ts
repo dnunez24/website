@@ -4,14 +4,15 @@ import { renderMermaidFigure } from "../mermaid";
 /**
  * Renders ```mermaid fences to SVG at build, in the MermaidDiagram figure.
  * Shiki runs before user plugins, so `markdown.syntaxHighlight.excludeLangs`
- * must leave these fences unhighlighted.
+ * must leave these fences unhighlighted. Pele renders in process, so every
+ * fence renders, on dev pages too.
  */
 export const mermaidDiagrams = () =>
 	defineHastPlugin({
 		name: "mermaid-diagrams",
 		element: {
 			filter: ["pre"],
-			async visit(pre, ctx) {
+			visit(pre, ctx) {
 				const code = pre.children.find(
 					(child) => child.type === "element" && child.tagName === "code",
 				);
@@ -23,7 +24,7 @@ export const mermaidDiagrams = () =>
 				try {
 					return {
 						type: "raw",
-						value: await renderMermaidFigure(ctx.textContent(code)),
+						value: renderMermaidFigure(ctx.textContent(code)),
 					};
 				} catch (error) {
 					const file = ctx.fileURL?.pathname ?? "Markdown";

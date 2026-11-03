@@ -1,6 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-	<title>DN</title>
-	<!-- Placeholder monogram until the design system's favicon asset is exported. -->
-	<rect width="32" height="32" fill="oklch(94.6% 0.001 106.4)" />
-	<text x="16" y="22" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="600" fill="oklch(29.1% 0.011 139.4)">DN</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#495944"></rect><path fill="#fcfcfb" d="M9.03 27L9.03 12.33L12.51 12.33L12.51 14.14Q13.29 13.04 14.47 12.47Q15.66 11.89 17 11.89Q18.57 11.89 19.92 12.64Q21.28 13.38 22.12 14.83Q22.97 16.27 22.97 18.3L22.97 27L19.1 27L19.1 18.81Q19.1 17.47 18.3 16.42Q17.49 15.36 16 15.36Q15.19 15.36 14.47 15.74Q13.75 16.12 13.31 16.87Q12.87 17.61 12.87 18.76L12.87 27L9.03 27ZM11.45 10.3L10.48 7.52Q10.97 6.54 11.8 6.03Q12.63 5.51 13.63 5.51Q14.51 5.51 15.23 5.82Q15.95 6.12 16.65 6.44Q17.35 6.76 18.05 6.76Q18.84 6.76 19.39 6.3Q19.94 5.83 20.25 5L21.23 7.79Q20.74 8.76 19.91 9.28Q19.08 9.79 18.08 9.79Q17.25 9.79 16.5 9.49Q15.76 9.18 15.07 8.86Q14.39 8.54 13.68 8.54Q12.9 8.54 12.35 9.01Q11.8 9.47 11.45 10.3Z"></path></svg>

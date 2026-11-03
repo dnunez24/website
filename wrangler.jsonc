@@ -1,0 +1,35 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	// One Worker, one config file. Cloudflare Workers Builds (Cloudflare's
+	// GitHub app) is the only thing that deploys: on `prod` it runs `pnpm
+	// exec wrangler deploy`; on every other branch, including `main`, it runs
+	// `pnpm exec wrangler preview`. See README.md's "Deploys" section for the
+	// dashboard settings behind each command.
+	"name": "website",
+	"compatibility_date": "2026-09-23",
+
+	"assets": {
+		"directory": "./dist",
+		// The nearest `404.html` with a 404 status.
+		"not_found_handling": "404-page",
+		// Default value, set explicitly: files serve without a trailing slash,
+		// folder `index.html` files serve with one (redirecting the other form),
+		// matching directory-format output and `trailingSlash: "always"`.
+		"html_handling": "auto-trailing-slash"
+	},
+
+	// The production route, davidanunez.com. `wrangler deploy` attaches it
+	// (and, run outside a terminal, silently replaces the domain's existing
+	// DNS records to do so) — so a local `wrangler deploy` must never run:
+	// only Workers Builds runs it, only on `prod`. Every push to `prod` runs
+	// this; it replaces the domain's DNS records only once, at the first
+	// release, since the route is already attached after that.
+	"routes": [{ "pattern": "davidanunez.com", "custom_domain": true }],
+	"workers_dev": false,
+	// workers.dev Worker Preview URLs, behind Cloudflare Access.
+	// `wrangler preview` (every branch but `prod`) never applies routes —
+	// only `wrangler deploy` above can.
+	"preview_urls": true,
+	// Required by `wrangler preview`. Empty: a static site has no bindings.
+	"previews": {}
+}

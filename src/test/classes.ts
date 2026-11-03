@@ -1,7 +1,8 @@
+import { realpathSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
-import { __unstable__loadDesignSystem } from "tailwindcss";
+import { __unstable__loadDesignSystem, compile } from "tailwindcss";
 
 const require = createRequire(import.meta.url);
 export const ROOT = resolve(import.meta.dirname, "../..");
@@ -20,6 +21,82 @@ export async function loadDesignSystem() {
 		base: dirname(entry),
 		loadStylesheet,
 	});
+}
+
+/**
+ * Compiles global.css the way `astro build` does, minus the Vite/Lightning
+ * CSS minification pass, so hand-written rules (custom properties, selectors)
+ * can be asserted on directly instead of via a single utility's own CSS.
+ * `candidates` are the utility classes to generate; hand-written rules
+ * compile regardless, since they aren't gated by usage scanning. Nesting
+ * (`&`) is preserved as written, not flattened.
+ */
+export async function compileGlobalCss(candidates: string[] = []) {
+	const entry = join(ROOT, "src/styles/global.css");
+	const { build } = await compile(await readFile(entry, "utf8"), {
+		base: dirname(entry),
+		loadStylesheet,
+	});
+	return build(candidates);
+}
+
+type SourceEntry = { base: string; pattern: string; negated: boolean };
+
+/** The part of @tailwindcss/oxide's scanner that scannedFiles uses. */
+interface OxideScanner {
+	scan(): string[];
+	readonly files: string[];
+}
+
+/**
+ * The files Tailwind reads for class names when it builds global.css, found
+ * the way @tailwindcss/vite finds them: the project root, unless global.css
+ * sets its own with `source()`, plus global.css's `@source` rules. Omits the
+ * dev-page exclusion astro.config.ts adds to production builds. `css`
+ * replaces global.css's contents, for mutation tests.
+ */
+export async function scannedFiles(css?: string): Promise<string[]> {
+	const entry = join(ROOT, "src/styles/global.css");
+	const { root, sources } = await compile(
+		css ?? (await readFile(entry, "utf8")),
+		{ base: dirname(entry), loadStylesheet },
+	);
+	// Not a direct dependency: loaded through @tailwindcss/vite's own
+	// dependencies, so the scan runs on the same scanner build as `astro build`.
+	const { Scanner } = createRequire(
+		realpathSync(join(ROOT, "node_modules/@tailwindcss/vite/package.json")),
+	)("@tailwindcss/oxide") as {
+		Scanner: new (options: { sources: SourceEntry[] }) => OxideScanner;
+	};
+	const rootSources: SourceEntry[] =
+		root === "none"
+			? []
+			: root === null
+				? [{ base: ROOT, pattern: "**/*", negated: false }]
+				: [{ ...root, negated: false }];
+	const scanner = new Scanner({ sources: [...rootSources, ...sources] });
+	scanner.scan();
+	return scanner.files;
+}
+
+/**
+ * The declarations inside `selector {`, matching brace depth so a rule
+ * containing further nested `&` rules still returns its whole body.
+ * `selector` is matched as written in source, including a literal `&`.
+ */
+export function ruleBody(css: string, selector: RegExp): string {
+	const match = selector.exec(css);
+	if (!match) throw new Error(`rule not found in compiled CSS: ${selector}`);
+	let depth = 1;
+	let i = match.index + match[0].length;
+	const start = i;
+	while (depth > 0 && i < css.length) {
+		if (css[i] === "{") depth++;
+		else if (css[i] === "}") depth--;
+		i++;
+	}
+	if (depth !== 0) throw new Error(`unbalanced braces after: ${selector}`);
+	return css.slice(start, i - 1);
 }
 
 const CLASS_TOKEN = /^[!a-z0-9:*\-/.]+$/;

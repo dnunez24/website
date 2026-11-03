@@ -3,10 +3,13 @@ import type { HTMLAttributes } from "astro/types";
 
 type Variant = "filled" | "outline" | "ghost";
 
+/** `aria-current` value for a nav Button: `"page"` for the page itself, `"true"` for the section it sits in. */
+type Current = "page" | "true";
+
 type Props = {
 	variant?: Variant;
-	/** Marks the current page: `aria-current="page"`, bold brand label over a rule in the same color. Ghost only. */
-	current?: boolean;
+	/** Marks this link current: `"page"` for an exact match, `"true"` for the section the page is in. Both show the same bold brand label over a rule. Ghost only. */
+	current?: Current | undefined;
 	class?: string;
 } & (
 	| ({ href: string } & Omit<HTMLAttributes<"a">, "class">)
@@ -15,7 +18,7 @@ type Props = {
 
 const {
 	variant = "filled",
-	current = false,
+	current,
 	href,
 	class: className,
 	...attrs
@@ -30,25 +33,25 @@ const variants: Record<Variant, string> = {
 	ghost: "relative border-transparent f6y-px-2 hover:bg-surface-hover",
 };
 // The rule is currentColor, so it always matches the label. Hover brings in
-// the ground and fades the rule; the bold label still marks the page.
+// the ground and fades the rule; the bold label still marks the page or
+// section, whichever `current` says.
 const ghostState = current
 	? "font-bold text-brand after:absolute after:bottom-1 after:h-0.5 after:bg-current after:f6y-inset-x-2 after:transition-opacity hover:after:opacity-0"
 	: "font-normal text-ink";
 
 const classes = [
-	"inline-flex cursor-pointer items-center justify-center gap-1 rounded-sm border f6y-py-2 font-mono text-label no-underline transition-colors active:duration-64",
+	"inline-flex cursor-pointer items-center justify-center gap-1 rounded-sm border f6y-py-2 font-mono text-label no-underline transition-colors-no-outline active:duration-64",
 	variants[variant],
 	variant === "ghost" && ghostState,
 	className,
 ];
-const ariaCurrent = current ? "page" : undefined;
 ---
 
 {
 	href === undefined ? (
 		<button
 			type="button"
-			aria-current={ariaCurrent}
+			aria-current={current}
 			data-button
 			class:list={classes}
 			{...(attrs as Omit<HTMLAttributes<"button">, "class">)}
@@ -58,7 +61,7 @@ const ariaCurrent = current ? "page" : undefined;
 	) : (
 		<a
 			href={href}
-			aria-current={ariaCurrent}
+			aria-current={current}
 			data-button
 			class:list={classes}
 			{...(attrs as Omit<HTMLAttributes<"a">, "class">)}

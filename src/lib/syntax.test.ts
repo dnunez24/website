@@ -61,20 +61,57 @@ describe("code fences in Markdown", () => {
 		const doc = await render(
 			'```ts title="src/lib/writing.ts"\nconst a = 1;\n```\n',
 		);
-		const figure = doc.querySelector("figure[data-codeblock]");
-		expect(figure?.querySelector("[data-codeblock-file]")?.textContent).toBe(
+		const frame = doc.querySelector("[data-codeblock]");
+		expect(frame?.querySelector("[data-codeblock-file]")?.textContent).toBe(
 			"src/lib/writing.ts",
 		);
-		expect(figure?.querySelector("[data-codeblock-lang]")?.textContent).toBe(
+		expect(frame?.querySelector("[data-codeblock-lang]")?.textContent).toBe(
 			"ts",
 		);
-		const pre = figure?.querySelector("pre");
+		const pre = frame?.querySelector("pre");
 		expect(pre?.getAttribute("data-language")).toBe("ts");
 		expect(pre?.getAttribute("role")).toBe("group");
 		expect(pre?.getAttribute("aria-label")).toBe(
 			"Code: src/lib/writing.ts, ts",
 		);
 		expect(pre?.getAttribute("tabindex")).toBe("0");
+	});
+
+	it("wraps a long file name at each slash with <wbr>, keeping the text intact", async () => {
+		const doc = await render(
+			'```ts title="src/components/navigation/PrimaryNavigation.astro"\nconst a = 1;\n```\n',
+		);
+		const file = doc.querySelector("[data-codeblock-file]");
+		expect(file?.innerHTML).toBe(
+			"src/<wbr>components/<wbr>navigation/<wbr>PrimaryNavigation.astro",
+		);
+		expect(file?.textContent).toBe(
+			"src/components/navigation/PrimaryNavigation.astro",
+		);
+	});
+
+	it("adds no <wbr> to a file name without a slash", async () => {
+		const doc = await render('```ts title="answer.ts"\nconst a = 1;\n```\n');
+		const file = doc.querySelector("[data-codeblock-file]");
+		expect(file?.innerHTML).toBe("answer.ts");
+	});
+
+	it("never splits a leading separator or a run of separators alone", async () => {
+		const doc = await render(
+			'```ts title="/etc/nginx/nginx.conf"\nconst a = 1;\n```\n',
+		);
+		const file = doc.querySelector("[data-codeblock-file]");
+		// A leading "/" has nothing before it to wrap away from, and the two
+		// slashes in "https://" never separate from each other.
+		expect(file?.innerHTML).toBe("/etc/<wbr>nginx/<wbr>nginx.conf");
+	});
+
+	it("escapes markup in a file name and still breaks it at each slash", async () => {
+		const doc = await render('```ts title="a<b>/c&d.ts"\nconst a = 1;\n```\n');
+		const file = doc.querySelector("[data-codeblock-file]");
+		expect(file?.querySelector("b")).toBeNull();
+		expect(file?.querySelectorAll("wbr")).toHaveLength(1);
+		expect(file?.textContent).toBe("a<b>/c&d.ts");
 	});
 
 	it("names a fence without a language plain text and shows no file", async () => {
@@ -88,10 +125,28 @@ describe("code fences in Markdown", () => {
 		);
 	});
 
-	it("adds a caption below the code when the fence has one", async () => {
+	it("hides the header from assistive technology: the pre's own label already names it", async () => {
+		const doc = await render(
+			'```ts title="src/lib/writing.ts"\nconst a = 1;\n```\n',
+		);
+		expect(
+			doc.querySelector("[data-codeblock-header]")?.getAttribute("aria-hidden"),
+		).toBe("true");
+	});
+
+	it("frames a block without a caption as a div, not a figure", async () => {
+		const doc = await render(
+			'```ts title="src/lib/writing.ts"\nconst a = 1;\n```\n',
+		);
+		expect(doc.querySelector("figure[data-codeblock]")).toBeNull();
+		expect(doc.querySelector("div[data-codeblock]")).not.toBeNull();
+	});
+
+	it("adds a caption below the code when the fence has one, and keeps the figure", async () => {
 		const doc = await render(
 			'```sh caption="Run it from the repo root."\npnpm build\n```\n',
 		);
+		expect(doc.querySelector("div[data-codeblock]")).toBeNull();
 		const caption = doc.querySelector("figure[data-codeblock] > figcaption");
 		expect(caption?.textContent).toBe("Run it from the repo root.");
 		expect(caption?.previousElementSibling?.tagName).toBe("PRE");

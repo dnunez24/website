@@ -1,0 +1,29 @@
+---
+import ArticleList from "@components/ArticleList.astro";
+import Pagination from "@components/Pagination.astro";
+import { writingPageHref } from "@lib/writing";
+
+interface ArticleItem {
+	title: string;
+	href: string;
+	date: Date;
+	summary?: string;
+}
+
+interface Props {
+	articles: ArticleItem[];
+	/** This page's number. */
+	current: number;
+	/** Total pages; Pagination only shows once there is more than one. */
+	total: number;
+}
+
+const { articles, current, total } = Astro.props;
+---
+
+<ArticleList articles={articles} />
+{
+	total > 1 && (
+		<Pagination current={current} total={total} href={writingPageHref} />
+	)
+}

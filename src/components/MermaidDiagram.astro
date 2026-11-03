@@ -9,7 +9,7 @@ interface Props {
 const { code } = Astro.props;
 // Rendered at build by the same renderer as Markdown fences, so both share
 // one markup; components.css styles it.
-const figure = await renderMermaidFigure(code);
+const figure = renderMermaidFigure(code);
 ---
 
 <Fragment set:html={figure} />
