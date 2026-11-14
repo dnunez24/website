@@ -33,7 +33,7 @@
 		"@astrojs/rss": "^4.0.19",
 		"@astrojs/sitemap": "^3.7.4",
 		"@tailwindcss/vite": "^4.3.3",
-		"astro": "^7.3.4",
+		"astro": "^7.4.7",
 		"fluidity-tailwind": "^0.1.1",
 		"harfbuzzjs": "^1.6.2",
 		"pele": "1.13.0",
